@@ -1,0 +1,100 @@
+<?php
+ini_set('soap.wsdl_cache_enabled', false);
+ini_set('soap.wsdl_cache_enabled', '0');
+ini_set('oap.wsdl_cache_ttl', '60');
+
+define('__WEBSERVOO_WSDL__', "http://147.94.102.108/otx/webservoo/Servel/lib/webservoo.wsdl");
+define('__WEBSERVOO_LOCATION__', "http://147.94.102.108/otx/");
+    /* UNCOMMENT => barts devel testing
+    define('__WEBSERVOO_WSDL__', "http://barts.devel.revues.org/ServOO2/webservoo/Servel/lib/webservoo.wsdl");
+    define('__WEBSERVOO_LOCATION__', "http://barts.devel.revues.org/ServOO2/");
+    */
+
+class ServOOClient extends SoapClient
+{
+	private $_authorizedParams;
+	public $contents;
+	public $status;
+	public $error;
+
+	public function __construct(&$request) 
+	{
+		$this->status = null;
+		$this->error = 0;
+		$this->_authorizedParams = array('servoo.username'=>true,'servoo.passwd'=>true,'servoo.url'=>true, 'servoo.proxyhost'=>false, 'servoo.proxyport'=>false, 'request'=>true, 'lodel_user'=>true, 'lodel_site'=>true);
+		$options = array();
+		$options['trace'] = TRUE;
+		$options['location'] = __WEBSERVOO_LOCATION__;
+		$options['soap_version'] = SOAP_1_2;
+		$options['exceptions'] = TRUE;
+		$options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
+		$options['encoding'] = SOAP_LITERAL;
+
+		try {
+			$this->_checkParams($request);
+			// hash the password
+			$request['servoo.passwd'] = md5($request['servoo.username'].$request['servoo.passwd']);
+			
+			$wsdl = $request['servoo.url'].'?wsdl'; 
+			$options['login'] = $request['servoo.username'];
+			$options['password'] = $request['servoo.passwd'];
+			if(isset($request['servoo.proxyhost']))
+			{
+				$options['proxy_host'] = $request['servoo.proxyhost'];
+				$options['proxy_port'] = (int)$request['servoo.proxyport'];
+				$options['proxy_login'] = $request['servoo.username'];
+				$options['proxy_password'] = $request['servoo.passwd'];
+			}
+
+			parent::__construct($wsdl, $options);
+			// get session token from server and create password hash
+			$token = $this->webservooToken();
+			$passwd = md5($options['password'].$token->sessionToken);
+			$auth = new SoapVar(array('login'=>$options['login'], 'password'=>$passwd, 'lodel_user'=>$request['lodel_user'], 'lodel_site'=>$request['lodel_site']), SOAP_ENC_OBJECT);
+			unset($passwd, $token);
+			// try to auth
+			$this->webservooAuth($auth);
+			unset($auth);
+			// let's do it !
+			$Return = $this->webservooRequest(new SoapVar(array('request'=>$request['request']), SOAP_ENC_OBJECT));
+			$this->contents =& $Return->tei;
+			$this->status = $Return->status;
+		}
+		catch (SoapFault $fault) {
+			$this->error = true;
+			$this->status = "\n<servoo type=\"SoapFault\">";
+			$this->status .= "\n<faultcode><![CDATA[".$fault->faultcode."]]></faultcode>";
+			$this->status .= "\n<faultstring><![CDATA[".$fault->faultstring."]]></faultstring>";
+			/*
+			echo "<lastrequest><![CDATA[" .$WebClient->__getLastRequest() ."]]></lastrequest>\n";
+			echo "<lastresponse><![CDATA[" .$WebClient->__getLastResponse() ."]]></lastresponse>\n";
+			echo "<vardump><![CDATA["; var_dump($fault); echo "]]></vardump>";
+			*/
+			$this->status .=  "\n<error>" .$Return['status'] ."</error>";
+			$this->status .=  "\n</servoo>";
+		}
+	}
+
+	private function _checkParams(&$request)
+	{
+		$r = array();
+		foreach($this->_authorizedParams as $k=>$v)
+		{
+			if(!isset($request[$k])) 
+			{
+				if($v) throw new SoapFault("WebServOO FaultError", //faultcode
+                                   	'Missing parameter '.$k, //faultstring
+					'', // faultactor, TODO ?
+					"Soap authentification",  // detail
+					"UTF-8" // faultname
+					/*$headerfault // headerfault */ );
+				continue;
+			}
+			$r[$k] = $request[$k];
+		}
+
+		$request = $r;
+	}
+}
+
+?>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:prism="http://prismstandard.org/namespaces/1.2/basic/">
+<dc:source>http://mots.revues.org/lodel/sources/entite-844.source</dc:source><dc:title>Usages et usagers du mot d&#xE9;mocratie et de ses d&#xE9;riv&#xE9;s. Une &#xE9;tude des professions de foi des candidats aux &#xE9;lections l&#xE9;gislatives et cantonales</dc:title><dc:date>2009-03-01</dc:date><dc:identifier>http://mots.revues.org/index844.html</dc:identifier><dc:type>article</dc:type><dc:language>fr</dc:language><dcterms:isPartOf>oai:revues.org:mots/72</dcterms:isPartOf><prism:creationDate>2007-03-01</prism:creationDate><dc:creator rdf:parseType="Literal">
+<prism:person>C&#xE9;cile Sourd</prism:person>
+<name>
+<firstname>C&#xE9;cile</firstname>
+<lastname>Sourd</lastname>
+</name>
+</dc:creator>
+<dc:creator rdf:parseType="Literal">
+<prism:person>Aur&#xE9;lie Morin</prism:person>
+<name>
+<firstname>Aur&#xE9;lie</firstname>
+<lastname>Morin</lastname>
+</name>
+</dc:creator>
+</rdf:RDF>
