@@ -8,7 +8,6 @@
  * @copyright 2008-2009, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
-error_reporting(E_ALL | E_STRICT);
 include_once('inc/utils.inc.php');
 
 
@@ -286,7 +285,6 @@ $this->_param['modelpath'] = $modelpath;
                                         break;
                                     case 'surrounding':
                                         $row[$attr->value] = $tag->nodeValue;
-                                        echo "<li>{$attr->value} : {$tag->nodeValue}</li>";
                                         break;
                                     case "otx":
                                         $row[$attr->value] = $tag->nodeValue;
@@ -347,7 +345,6 @@ $this->_param['modelpath'] = $modelpath;
         // more++
         $this->EModel['FootnoteSymbol'] = "footnotesymbol";
         $this->EModel['Standard'] = "standard";
-echo"<pre>";print_r($this->EModel);echo"</pre>";
         unset($Model);
         unset($OOTX);
 
@@ -363,7 +360,6 @@ echo"<pre>";print_r($this->EModel);echo"</pre>";
                     $attribute = $attributes->getNamedItem("name");
                     $key = $attribute->value;
                     $value = $child->nodeValue;
-                    echo "<ul>";
                     switch ($key) {
                         case "style":
                             break;
@@ -375,20 +371,16 @@ echo"<pre>";print_r($this->EModel);echo"</pre>";
                             list($otxkey,$otxvalue) = explode(":", $value);
                             break;
                     }
-                    echo "</ul>";
                 }
                 if ($otxkey and $otxvalue) {
                         $this->EMotx[$otxvalue]['key'] = $otxkey;
                         $this->EMotx[$otxvalue]['surround'] = $surrounding;
-                    echo "<li>$otxkey : $otxvalue = $surrounding</li>";
                 }
             }
         }
         // default
         $this->EMotx['standard']['key'] = "text";
         $this->EMotx['standard']['surround'] = "*-";
-
-echo "<h3>Model</h3><pre>";print_r($this->EMotx);echo "</pre>";
 
         unset($domxml);
         return true;
@@ -692,16 +684,13 @@ EOD;
                     // xml:lang ?
                     if ($this->rendition[$rendition]['lang']!='') {
                         $lang = $this->rendition[$rendition]['lang'];
-                        //echo "<li>=> xml:lang=$lang ($rendition)</li>";
                         $item->setAttribute("xml:lang", $lang);
                     }
                     // css style
                     if ($this->rendition[$rendition]['rendition']!='') {
                         $tagsdecl[$rendition] = $this->rendition[$rendition]['rendition'];
-                        //echo "<li>=> {$tagsdecl[$rendition]} ($rendition)</li>";
                     } else {
                         $item->removeAttribute("rendition");
-                        //echo "<li>=> remove ($rendition)</li>";
                     }
                 }
             }
@@ -715,23 +704,19 @@ EOD;
                 if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
                     $rend = $this->automatic[$value];
                     $item->setAttribute("rend", $rend);
-                    echo "<li>=> rend=$rend ($value)</li>";
                 }
                 else {
                     if ( isset($this->rendition[$value])) {
                         // xml:lang ?
                         if ($this->rendition[$value]['lang']!='') {
                             $lang = $this->rendition[$value]['lang'];
-                            echo "<li>=> xml:lang=$lang ($value)</li>";
                             $item->setAttribute("xml:lang", $lang);
                         }
                         // css style
                         if ($this->rendition[$value]['rendition']!='') {
                             $tagsdecl[$value] = $this->rendition[$value]['rendition'];
-                            echo "<li><b>=> {$tagsdecl[$value]} ($value)</b></li>";
                         } else {
                             $item->removeAttribute("rendition");
-                            echo "<li><b>=> remove ($value)</b></li>";
                         }
                     }
                 }
@@ -748,14 +733,12 @@ EOD;
                     // xml:lang ?
                     if ($this->rendition[$rendition]['lang']!='') {
                         $lang = $this->rendition[$rendition]['lang'];
-                        //echo "<li>=> xml:lang=$lang ($rendition)</li>";
                         $item->setAttribute("xml:lang", $lang);
                     }
                     // css style
                     if ($this->rendition[$rendition]['rendition']!='') {
                         $tagsdecl[$key] = $this->rendition[$rendition]['rendition'];
                         $item->setAttribute("rendition", $key);
-                        //echo "<li>=> {$tagsdecl[$key]} ($rendition=>$key)</li>";
                     }
                 }
             }
@@ -764,7 +747,6 @@ EOD;
         $entries = $xpath->query("//tei:p[@rend]");
         foreach ($entries as $item) {
             $rend = $item->getAttribute("rend");
-            echo "<li>P $rend</li>";
             $key = '';
             if ($item->getAttribute("rendition")) {
                 $key = $item->getAttribute("rendition");
@@ -776,17 +758,14 @@ EOD;
                 // xml:lang ?
                 if ($this->rendition[$rendition]['lang']!='') {
                     $lang = $this->rendition[$rendition]['lang'];
-                    echo "<li>=> xml:lang=$lang ($rendition)</li>";
                     $item->setAttribute("xml:lang", $lang);
                 }
                 // css style
                 if ($this->rendition[$rendition]['rendition']!='') {
                     $tagsdecl[$key] = $this->rendition[$rendition]['rendition'];
                     $item->setAttribute("rendition", $key);
-                    echo "<li>=> {$tagsdecl[$key]} ($key)</li>";
                 } else {
                     $item->removeAttribute("rendition");
-                    echo "<li>=> remove ($rendition)</li>";
                 }
             }
         }
@@ -804,7 +783,6 @@ EOD;
         ksort($Pdecl); ksort($Tdecl);
 
         $header = $dom->getElementsByTagName('teiHeader')->item(0);
-        echo "<h3>".$header->nodeName."</h3>";
         $newnode = $dom->createElement("encodingDesc");
         $encodingDesc = $header->appendChild($newnode);
         $newnode = $dom->createElement("tagsDecl");
@@ -823,12 +801,10 @@ EOD;
         }
 
         # surrounding internalstyles
-        echo "<hr/><h2>surrounding internalstyles</h2>";
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
-        echo "<ul>";
         $entries = $xpath->query("//tei:body/tei:*");
         $current = $prev = $next = array();
         $newsection = $section = "";
@@ -837,15 +813,12 @@ EOD;
             // prev
             $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
             if ($previtem) {
-            echo "<ul>[{$previtem['section']}] p@{$previtem['rend']} => {$previtem['key']} ({$previtem['surround']})</ul>";
             }
             // current
             $current = $this->greedy($item);
-            echo "<li>[$section] {$item->nodeName}@{$current['rend']} => {$current['key']} ({$current['surround']})</li>";
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
             if ($nextitem) {
-            echo "<ul>[{$nextitem['section']}] p@{$nextitem['rend']} => {$nextitem['key']} ({$nextitem['surround']})</ul><br/>";
             }
 
             if ($current == null) { // normal paragraph
@@ -869,8 +842,6 @@ EOD;
                             if ($newsection=="back" and isset($previtem['rend'])) {
                                 $newbacksection = $previtem['rend'];
                             }
-                            echo "<h4>-* : section=$section , prevsection=$newsection ($newbacksection)</h4>"; 
-                            echo "<h3><= $newsection</h3>";
                         }
                         break;
                     case "*-":
@@ -879,8 +850,6 @@ EOD;
                             if ($newsection=="back" and isset($nextitem['rend'])) {
                                 $newbacksection = $nextitem['rend'];
                             }
-                            echo "<h4>-* : section=$section , nextsection=$newsection ($newbacksection)</h4>"; 
-                            echo "<h3>=> $newsection</h3>";
                         }
                         break;
                 }
@@ -914,12 +883,10 @@ EOD;
                         }
                         break;
                 }
-                echo "<hr/>";
             }
             $div->appendChild($item);
 
         }
-        echo "</ul>";
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = true;
@@ -1093,12 +1060,10 @@ EOD;
 
         /** lodel-cleanup **/
         private function lodelcleanup(&$dom) {
-    echo "<hr/><h3>cleanup</h3>\n";
             $patterns = array('/\s+/', '/\(/', '/\)/', '/\[/', '/\]/');
 
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//@*");
-    echo "<ul>\n";
             foreach ($entries as $entry) {
                 switch ($entry->nodeName) {
                     case 'style:name':
@@ -1114,24 +1079,19 @@ EOD;
                         if ( isset( $this->EModel[$nodevalue])) {
                             $nodevalue = $this->EModel[$nodevalue];
                             $entry->nodeValue = $nodevalue;
-                            echo "<li><b>".$entry->nodeName." : ".$entry->nodeValue."</b></li>\n";
                         } 
                         else if ( preg_match("/^(titre|heading)(\d*)$/i", $nodevalue, $match)) {
                             $nodevalue = "heading".$match[2];
                             $entry->nodeValue = $nodevalue;
-                            echo "<li><b>".$entry->nodeName." : ".$entry->nodeValue."</b></li>\n";
                         }
-                        else { echo "<li><i>".$entry->nodeName." : ".$entry->nodeValue."</i></li>\n"; }
+                        else { }
                         break;
                     default:
-                        echo "<li>".$entry->nodeName." : ".$entry->nodeValue."</li>\n";
                 }
             }
-    echo "</ul>\n";
         }
 
         private function lodelpictures(&$dom, &$za) {
-    echo"<hr/><h3>lodelpictures</h3>";
             $imgindex = 0;
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//draw:image");
@@ -1161,7 +1121,6 @@ EOD;
         }
 
         private function ooautomaticstyles(&$dom) {
-    echo "<ul><h3>ooautomaticstyles()</h3>\n";
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//style:style");
             foreach ($entries as $item) {
@@ -1169,7 +1128,6 @@ EOD;
                 $attributes = $item->attributes;
                 if ($attrname=$attributes->getNamedItem("name")) {
                     $name = $attrname->nodeValue;
-                    echo "<li>style:name = $name</li>";
                     $key = "#".$name;
                     if ( preg_match("/^T(\d+)$/", $name, $match)) {
                         $this->Tnum = $match[1];
@@ -1177,7 +1135,6 @@ EOD;
                 }
                 if ($attrparent=$attributes->getNamedItem("parent-style-name")) {
                     $parent = $attrparent->nodeValue;
-                    echo "<li>parent-style-name = $parent</li>";
                     if ( preg_match("/^P(\d+)$/", $name, $match) and $parent!="standard") {
                         $this->automatic["#".$name] = $parent;
                         $this->automatic[$parent] = "#".$name;
@@ -1185,13 +1142,11 @@ EOD;
                         $key = $parent."#".$name;
                     }
                 }
-                echo "<ul>";
                 if ($item->hasChildNodes()) {
                     foreach ($item->childNodes as $child) {
                         switch ($child->nodeName) {
                             case 'style:paragraph-properties':
                             case 'style:text-properties':
-                            echo "<li>{$child->nodeName}</li>";
                                 $childattributes = $child->attributes;
                                 foreach ($childattributes as $childattr) {
                                     if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) {
@@ -1204,24 +1159,16 @@ EOD;
                                 break;
                         }
                     }
-                    echo "<li>"; print_r($properties); echo "</li>";
-                    echo "<li>key = $key</li>";
                     list($lang, $rendition) = $this->styles2csswhitelist($properties);
                     $this->rendition[$key]['lang'] = $lang;
                     $this->rendition[$key]['rendition'] = $rendition;
-                    echo "<ul>";
-                    echo "<li>lang = $lang</li>";
-                    echo "<li>rendition = $rendition</li>";
-                    echo "</ul>";
                 }
-                echo "</ul>";
             }
-    echo "</ul>";
+
             return true;
         }
 
         private function oostyles(&$dom) {
-    echo "<ul><h3>oostyles()</h3>\n";
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//style:style");
             foreach ($entries as $item) {
@@ -1229,38 +1176,31 @@ EOD;
                 $attributes = $item->attributes;
                 if ($attrname=$attributes->getNamedItem("name")) {
                     $name = $attrname->nodeValue;
-                    echo "<li>style:name = $name</li>";
                     $key = $name;
                 }
                 if ($attrfamily=$attributes->getNamedItem("family")) {
                     $family = $attrfamily->nodeValue;
-                    echo "<li>family = family</li>";
                     if (! isset($this->automatic[$name])) {
                         switch ($family) {
                             case "paragraph":
                                 $P = "#P".++$this->Pnum;
                                 $this->automatic[$name] = $P;
-                                echo "<li><b>$name => $P</b></li>";
                                 break;
                             case "text":
                                 $T = "#T".++$this->Tnum;
                                 $this->automatic[$name] = $T;
-                                echo "<li><b>$name => $T</b></li>";	
                                 break;
                         }
                     }
                     if ( isset($this->automatic[$name])) {
                         $key = $name.$this->automatic[$name];
-                        echo "<li><b>key => $key</b></li>";
                     }
                 }
-                echo "<ul>";
                 if ($item->hasChildNodes()) {
                     foreach ($item->childNodes as $child) {
                         switch ($child->nodeName) {
                             case 'style:paragraph-properties':
                             case 'style:text-properties':
-                                echo "<li>{$child->nodeName}</li>";
                                 $childattributes = $child->attributes;
                                 foreach ($childattributes as $childattr) {
                                     if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) {
@@ -1273,27 +1213,18 @@ EOD;
                                 break;
                         }
                     }
-                    echo "<li>"; print_r($properties); echo "</li>";
-                    echo "<li>key = $key</li>";
                     list($lang, $rendition) = $this->styles2csswhitelist($properties);
                     if ( isset($this->rendition[$key])) {
                         // TODO : merge ?
-                        if ($this->rendition[$key]['lang']=='') 
-                            $this->rendition[$key]['lang'] = $lang;
-                        if ($this->rendition[$key]['rendition']=='') 
-                            $this->rendition[$key]['rendition'] = $rendition;
+                        if ($this->rendition[$key]['lang']=='')         $this->rendition[$key]['lang'] = $lang;
+                        if ($this->rendition[$key]['rendition']=='')    $this->rendition[$key]['rendition'] = $rendition;
                     } else {
                         $this->rendition[$key]['lang'] = $lang;
                         $this->rendition[$key]['rendition'] = $rendition;
                     }
-                    echo "<ul>";
-                    echo "<li>lang = $lang</li>";
-                    echo "<li>rendition = $rendition</li>";
-                    echo "</ul>";
                 }
-                echo "</ul>";
             }
-    echo "</ul>";
+
             return true;
         }	
 

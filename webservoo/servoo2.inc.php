@@ -6,9 +6,10 @@
  * @copyright 2008-2009, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
+error_reporting(E_ALL);
 
 # --- soap cache--------------------------------------------------------------
-    // cf http://fr.php.net/manual/fr/soap.configuration.php
+// cf http://fr.php.net/manual/fr/soap.configuration.php
 ini_set('soap.wsdl_cache_enabled', TRUE);
 ini_set('soap.wsdl_cache_enabled', '1');
 ini_set('soap.wsdl_cache_dir', "/tmp");

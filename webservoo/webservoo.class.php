@@ -7,8 +7,6 @@
  * @copyright 2008-2009, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
-
-error_reporting(E_ALL | E_STRICT);
 if (! class_exists('Servel', FALSE))
     require_once('servel/servel.class.php');
 

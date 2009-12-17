@@ -7,7 +7,6 @@
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
 header("content-type: application/xml");
-error_reporting(E_ALL | E_STRICT);
 ini_set("max_execution_time", "180");
 ini_set("max_input_time", "180");
 ini_set("post_max_size", "32M");
