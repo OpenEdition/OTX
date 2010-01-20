@@ -66,7 +66,7 @@ else {
             echo "\n<handle>";
             $functions = $WebServOO->getFunctions();
             foreach($functions as $func) {
-            echo "\n<function>". $func ."</function>";
+                echo "\n<function>". $func ."</function>";
             }
             echo "\n</handle>";
             //echo "<soapfault><![CDATA[" .$WebServOO->fault('Client', 'Invalid Request') ."]]></soapfault>";

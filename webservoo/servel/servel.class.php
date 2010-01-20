@@ -217,11 +217,13 @@ sleep(1); //TODO
     error_log("<h3>Schema2OO()</h3>\n", 3, self::_DEBUGFILE_);
 
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
+        /*
             // $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.otx.xml";
             // $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model_lodel.otx.xml";
-//$modelpath = "/data/home/barts/public_html/otx/webservoo/Servel/debug/in/otxmodel.xml";
-$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."otxmodel.xml"; //TODO!
-$this->_param['modelpath'] = $modelpath;
+            //$modelpath = "/data/home/barts/public_html/otx/webservoo/Servel/debug/in/otxmodel.xml";
+        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."otxmodel.xml"; //TODO!
+        $this->_param['modelpath'] = $modelpath;
+        */
         error_log("<h3>ME: $modelpath</h3>\n", 3, self::_DEBUGFILE_);
 
         $domxml = new DOMDocument;
@@ -812,14 +814,10 @@ EOD;
         foreach ($entries as $item) {
             // prev
             $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
-            if ($previtem) {
-            }
             // current
             $current = $this->greedy($item);
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
-            if ($nextitem) {
-            }
 
             if ($current == null) { // normal paragraph
                 $newsection = "body";
@@ -884,8 +882,11 @@ EOD;
                         break;
                 }
             }
+            if ($backsection and $backsection!=$current['rend']) {
+                $item->setAttribute('rend', "$backsection-{$current['rend']}");
+                error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DEBUGFILE_);
+            }
             $div->appendChild($item);
-
         }
 
         $dom->encoding = "UTF-8";
@@ -1229,7 +1230,8 @@ EOD;
         }	
 
         /** styles to css white list ! **/
-        private function styles2csswhitelist(&$properties) {
+        private function styles2csswhitelist(&$properties, $type="strict") {
+        error_log("<h3>styles2csswhitelist() [type=$type]</h3>\n", 3, self::_DEBUGFILE_);
             $lang = ""; $rendition = "";
             $csswhitelist = array();
             foreach ($properties as $prop) {
@@ -1241,17 +1243,6 @@ EOD;
                     array_push($csswhitelist, "vertical-align:bottom");
                     continue;
                 }
-                /* TODO ? */
-                if ( preg_match("/^font-size:/", $prop)) {
-                    array_push($csswhitelist, $prop);
-                    continue;
-                }
-                /* TODO ? */
-                if ( preg_match("/^font-name:(.*)$/", $prop, $match)) {
-                    array_push($csswhitelist, "font-family:'{$match[1]}'");
-                }
-                /* TODO ?
-                    line-height ?? */
                 if ( preg_match("/^language:(.*)$/", $prop, $match)) {
                     $lang = $match[1];
                     continue;
@@ -1261,17 +1252,9 @@ EOD;
                     case 'font-weight:bold':
                     case 'font-weight:normal':
                     case 'font-variant:small-caps':
-                    case 'text-align:center':
-                    case 'text-align:justify':
                     case 'text-transform:uppercase':
                     case 'text-transform:lowercase':
                         array_push($csswhitelist, $prop);
-                        break;
-                    case 'text-align:start':
-                        array_push($csswhitelist, "text-align:left");
-                        break;
-                    case 'text-align:end':
-                        array_push($csswhitelist, "text-align:right");
                         break;
                     case 'font-variant:uppercase':
                         array_push($csswhitelist, "text-transform:uppercase");
@@ -1289,8 +1272,34 @@ EOD;
                         array_push($csswhitelist, "direction:rtl");
                         break;
                     default:
-                        //echo "<ul><i>TODO: $prop ?!</i></ul>";
+                    //error_log("<li><i>TODO: $prop ?! [strict mode]</i></li>\n",3,self::_DEBUGFILE_);
                         break;
+                }
+                if ($type==="large") {
+                    if ( preg_match("/^font-size:/", $prop)) {
+                        array_push($csswhitelist, $prop);
+                        continue;
+                    }
+                    if ( preg_match("/^font-name:(.*)$/", $prop, $match)) {
+                        array_push($csswhitelist, "font-family:'{$match[1]}'");
+                    }
+                    /* TODO ?
+                        line-height ?? */
+                    switch ($prop) {
+                        case 'text-align:center':
+                        case 'text-align:justify':
+                            array_push($csswhitelist, $prop);
+                            break;
+                        case 'text-align:start':
+                            array_push($csswhitelist, "text-align:left");
+                            break;
+                        case 'text-align:end':
+                            array_push($csswhitelist, "text-align:right");
+                            break;
+                        default:
+                        //error_log("<li><i>TODO: $prop ?! [large mode]</i></li>\n",3,self::_DEBUGFILE_);
+                            break;
+                    }
                 }
             }
             $rendition = implode(";", $csswhitelist);
@@ -1343,8 +1352,8 @@ EOD;
         if ($this->_param['mime'] !== "OpenDocument Text") {
             //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
             //$command = "python ". $this->SERVOO_LIB ."DocumentConverter.py ". $inputDoc ." ". $inputODT;
-            $command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter-cli.jar -f odt ". $sourcepath;
-            $this->_trace.="<li>command : $command</li>\n\n";
+            $command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter-cli.jar -f odt ". "\"$sourcepath\"";
+            error_log("<li>command : $command</li>\n", 3, self::_DEBUGFILE_);
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
             if ($returnvar!=0) {
@@ -1566,20 +1575,21 @@ EOD;
             switch ($mime) {
                 case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
                 case "text/rtf":
-                    $this->_trace.= "<li>Rich Text Format data</li>\n\n";
+                error_log("<li>Rich Text Format data</li>\n", 3, self::_DEBUGFILE_);
                     $extension = ".rtf";
                     break;
                 case "Microsoft Office Document":
                 case "application/msword":
-                    $this->_trace.= "<li>Microsoft Office Document</li>\n\n";
+                error_log("<li>Microsoft Office Document</li>\n", 3, self::_DEBUGFILE_);
                     $extension = ".doc";
                     break;
                 case "OpenOffice.org 1.x Writer document":
                 case "application/vnd.sun.xml.writer":
-                    $this->_trace.= "<li>OpenOffice.org 1.x Writer document</li>\n\n";
+                error_log("<li>OpenOffice.org 1.x Writer document</li>\n", 3, self::_DEBUGFILE_);
                     $extension = ".sxw";
                     break;
                 default:
+                error_log("<li>Warning: extension based</li>\n", 3, self::_DEBUGFILE_);
                     # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
                     $temp = explode(".", $sourcepath);
                     $ext = trim( array_pop($temp));
@@ -1784,7 +1794,6 @@ $debugfile = $this->_SERVEL_TMP."body.txt";
 
     protected function otix() {
     error_log("<h3>otix()</h3>\n", 3, self::_DEBUGFILE_);
-echo "<h3>otix()</h3>\n";
         $cleanup = array('/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
         $odtfile = $this->_param['odtpath'];
@@ -1932,11 +1941,8 @@ echo "<h3>otix()</h3>\n";
 
         // 1. office:automatic-styles
         $this->ooautomaticstyles($domlodelcontent);
-echo "<hr/><pre>";print_r($this->automatic);print_r($this->rendition);echo "</pre><hr/>";		
         // 2. office:styles
         $this->oostyles($domlodelstyles);
-echo "<hr/><pre>";print_r($this->automatic);print_r($this->rendition);echo "</pre><hr/>";		
-
 
         # LodelODT
         if (! $za->addFromString('meta.xml', $domlodelmeta->saveXML())) {
@@ -2054,8 +2060,7 @@ EOD;
     }
 
     protected function lodeltei(&$dom) {
-echo "<hr/><h3>lodeltei</h3>";
-echo"<ul>";
+    error_log("<h3>lodeltei</h3>\n",3,self::_DEBUGFILE_);
         $tagsdecl = array();
 
         $xpath = new DOMXPath($dom);
@@ -2093,29 +2098,24 @@ echo"<ul>";
                 if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
                     $rend = $this->automatic[$value];
                     $item->setAttribute("rend", $rend);
-                    echo "<li>=> rend=$rend ($value)</li>";
                 }
                 else {
                     if ( isset($this->rendition[$value])) {
                         // xml:lang ?
                         if ($this->rendition[$value]['lang']!='') {
                             $lang = $this->rendition[$value]['lang'];
-                            echo "<li>=> xml:lang=$lang ($value)</li>";
                             $item->setAttribute("xml:lang", $lang);
                         }
                         // css style
                         if ($this->rendition[$value]['rendition']!='') {
                             $tagsdecl[$value] = $this->rendition[$value]['rendition'];
-                            echo "<li><b>=> {$tagsdecl[$value]} ($value)</b></li>";
                         } else {
                             $item->removeAttribute("rendition");
-                            echo "<li><b>=> remove ($value)</b></li>";
                         }
                     }
                 }
             }
         }
-    echo "</ul>";
 
         $entries = $xpath->query("//tei:hi[@rend]");
         foreach ($entries as $item) {
@@ -2127,14 +2127,12 @@ echo"<ul>";
                     // xml:lang ?
                     if ($this->rendition[$rendition]['lang']!='') {
                         $lang = $this->rendition[$rendition]['lang'];
-                        //echo "<li>=> xml:lang=$lang ($rendition)</li>";
                         $item->setAttribute("xml:lang", $lang);
                     }
                     // css style
                     if ($this->rendition[$rendition]['rendition']!='') {
                         $tagsdecl[$key] = $this->rendition[$rendition]['rendition'];
                         $item->setAttribute("rendition", $key);
-                        //echo "<li>=> {$tagsdecl[$key]} ($rendition=>$key)</li>";
                     }
                 }
             }
@@ -2143,7 +2141,6 @@ echo"<ul>";
         $entries = $xpath->query("//tei:p[@rend]");
         foreach ($entries as $item) {
             $rend = $item->getAttribute("rend");
-            echo "<li>P $rend</li>";
             $key = '';
             if ($item->getAttribute("rendition")) {
                 $key = $item->getAttribute("rendition");
@@ -2155,22 +2152,17 @@ echo"<ul>";
                 // xml:lang ?
                 if ($this->rendition[$rendition]['lang']!='') {
                     $lang = $this->rendition[$rendition]['lang'];
-                    echo "<li>=> xml:lang=$lang ($rendition)</li>";
                     $item->setAttribute("xml:lang", $lang);
                 }
                 // css style
                 if ($this->rendition[$rendition]['rendition']!='') {
                     $tagsdecl[$key] = $this->rendition[$rendition]['rendition'];
                     $item->setAttribute("rendition", $key);
-                    echo "<li>=> {$tagsdecl[$key]} ($key)</li>";
                 } else {
                     $item->removeAttribute("rendition");
-                    echo "<li>=> remove ($rendition)</li>";
                 }
             }
         }
-
-echo"</ul>";
 
         foreach ($tagsdecl as $key=>$value) {
             if ( preg_match("/^#P(\d+)$/", $key, $match)) {
@@ -2185,7 +2177,6 @@ echo"</ul>";
         ksort($Pdecl); ksort($Tdecl);
 
         $header = $dom->getElementsByTagName('teiHeader')->item(0);
-        echo "<h3>".$header->nodeName."</h3>";
         $newnode = $dom->createElement("encodingDesc");
         $encodingDesc = $header->appendChild($newnode);
         $newnode = $dom->createElement("tagsDecl");
@@ -2204,12 +2195,12 @@ echo"</ul>";
         }
 
         # surrounding internalstyles
-        echo "<hr/><h2>surrounding internalstyles</h2>";
+        error_log("<h4># surrounding internalstyles</h4>\n",3,self::_DEBUGFILE_);
+
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
-        echo "<ul>";
         $entries = $xpath->query("//tei:body/tei:*");
         $current = $prev = $next = array();
         $newsection = $section = "";
@@ -2217,17 +2208,10 @@ echo"</ul>";
         foreach ($entries as $item) {
             // prev
             $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
-            if ($previtem) {
-            echo "<ul>[{$previtem['section']}] p@{$previtem['rend']} => {$previtem['key']} ({$previtem['surround']})</ul>";
-            }
             // current
             $current = $this->greedy($item);
-            echo "<li>[$section] {$item->nodeName}@{$current['rend']} => {$current['key']} ({$current['surround']})</li>";
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
-            if ($nextitem) {
-            echo "<ul>[{$nextitem['section']}] p@{$nextitem['rend']} => {$nextitem['key']} ({$nextitem['surround']})</ul><br/>";
-            }
 
             # surrounding internal styles
             if ($current == null) { // normal paragraph
@@ -2251,8 +2235,6 @@ echo"</ul>";
                             if ($newsection=="back" and isset($previtem['rend'])) {
                                 $newbacksection = $previtem['rend'];
                             }
-                            echo "<h4>-* : section=$section , prevsection=$newsection ($newbacksection)</h4>"; 
-                            echo "<h3><= $newsection</h3>";
                         }
                         break;
                     case "*-":
@@ -2261,8 +2243,6 @@ echo"</ul>";
                             if ($newsection=="back" and isset($nextitem['rend'])) {
                                 $newbacksection = $nextitem['rend'];
                             }
-                            echo "<h4>-* : section=$section , nextsection=$newsection ($newbacksection)</h4>"; 
-                            echo "<h3>=> $newsection</h3>";
                         }
                         break;
                 }
@@ -2296,12 +2276,10 @@ echo"</ul>";
                         }
                         break;
                 }
-                echo "<hr/>";
             }
             $div->appendChild($item);
 
         }
-        echo "</ul>";
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = true;

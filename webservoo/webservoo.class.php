@@ -174,7 +174,7 @@ class WebServoo
                                     "UTF-8"
                                     /*$headerfault // headerfault */ );
             }
-        } //@chmod(self::__SCHEMAPATH__, 0660);@chgrp(self::__SCHEMAPATH__, "www-data");
+        }
         // source document (entity lodel)
         if ($input->attachment != '') {
             @unlink(self::__ATTACHMENTPATH__); 
@@ -186,7 +186,7 @@ class WebServoo
                                     "UTF-8"
                                     /*$headerfault // headerfault */ );
             }
-        } //@chmod(self::__ATTACHMENTPATH__, 0660);@chgrp(self::__ATTACHMENTPATH__, "www-data");
+        }
 
 
         // singleton pattern
