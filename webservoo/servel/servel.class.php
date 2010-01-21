@@ -893,13 +893,15 @@ EOD;
         $dom->resolveExternals = true;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
+        # <hi> cleanup 
+        $lodeltei = "". preg_replace("/<hi>(.+?)<\/hi>/s", '\1', $dom->saveXML());
+        $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
         $this->_param['lodelTEI'] = "". $dom->saveXML();
-
         return true;
     }
 
