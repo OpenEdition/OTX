@@ -217,14 +217,7 @@ sleep(1); //TODO
     error_log("<h3>Schema2OO()</h3>\n", 3, self::_DEBUGFILE_);
 
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-        /*
-            // $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.otx.xml";
-            // $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model_lodel.otx.xml";
-            //$modelpath = "/data/home/barts/public_html/otx/webservoo/Servel/debug/in/otxmodel.xml";
-        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."otxmodel.xml"; //TODO!
-        $this->_param['modelpath'] = $modelpath;
-        */
-        error_log("<h3>ME: $modelpath</h3>\n", 3, self::_DEBUGFILE_);
+        error_log("<li>ME: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
         $domxml = new DOMDocument;
         $domxml->encoding = "UTF-8";
@@ -236,9 +229,15 @@ sleep(1); //TODO
             throw new Exception($this->_status);
         }
 
+        // OTX EM test
+        if (! strstr($domxml->saveXML(), "<col name=\"otx\">")) {
+            // TODO : warning and load a default OTX EM ?!
+            $this->_status="error: EM not OTX compliant";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+            throw new Exception($this->_status);
+        }
+
         $Model = array();
         $OOTX = array();
-
         $nbEmStyle = $nbOtxStyle = 0;
         foreach ($domxml->getElementsByTagName('row') as $node) {
             $value = $keys = $g_otx = '';
@@ -889,12 +888,27 @@ EOD;
             $div->appendChild($item);
         }
 
+        # <hi> cleanup (tag hi with no attribute)
+            // <hi> to <nop> ...
+        $entries = $xpath->query("//tei:hi"); 
+        foreach ($entries as $item) {
+            if (! $item->hasAttributes()) {
+                $parent = $item->parentNode;
+                $newitem = $dom->createElement("nop", $item->nodeValue);
+                if (! $parent->replaceChild($newitem, $item)) {
+                    $this->_status="error replaceChild";error_log("<h1>! {$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status);
+                }
+            }
+        }
+            // ... and delete <nop>
+        $search = array("<nop>", "</nop>");
+        $lodeltei = "". str_replace($search, "", $dom->saveXML());
+
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = true;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
-        # <hi> cleanup 
-        $lodeltei = "". preg_replace("/<hi>(.+?)<\/hi>/s", '\1', $dom->saveXML());
         $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
@@ -1098,6 +1112,7 @@ EOD;
             $imgindex = 0;
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//draw:image");
+            // TODO : test Pictures !
             foreach ($entries as $item) {
                 $attributes = $item->attributes;
                 $attribute = $attributes->getNamedItem("href");
@@ -1338,7 +1353,6 @@ EOD;
         }
 
 
-
     /**
     * transformation d'un document en odt 
     * system call inside (soffice)
@@ -1354,7 +1368,7 @@ EOD;
         if ($this->_param['mime'] !== "OpenDocument Text") {
             //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
             //$command = "python ". $this->SERVOO_LIB ."DocumentConverter.py ". $inputDoc ." ". $inputODT;
-            $command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter-cli.jar -f odt ". "\"$sourcepath\"";
+            $command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter-cli.jar -f odt ". escapeshellarg($sourcepath);
             error_log("<li>command : $command</li>\n", 3, self::_DEBUGFILE_);
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
