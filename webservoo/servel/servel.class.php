@@ -55,8 +55,10 @@ class Servel
     const _SERVEL_LIB_          = __SERVEL_LIB__;
     const _SERVEL_SERVER_       = __SERVEL_SERVER__;
     const _SERVEL_PORT_         = __SERVEL_PORT__;
+    const _SOFFICE_PYTHONPATH_  = __SOFFICE_PYTHONPATH__;
 
-    // A private constructor; prevents direct creation of object (singleton because)
+
+    /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
     error_log("<ul id=\"".date("Y-m-d H:i:s")."\">\n<h3>__construct()</h3>\n", 3, self::_DEBUGFILE_);
         touch(self::_WEBSERVOO_LOCKFILE_);
@@ -85,7 +87,7 @@ class Servel
         $this->_param['SERVERPORT'] = self::_SERVEL_PORT_;
         $this->_param['DEBUGPATH'] = self::_DEBUGFILE_;
     }
-    // Prevent users to clone the instance (singleton because)
+    /** Prevent users to clone the instance (singleton because) **/
     public function __clone() {
         $this->_status="Cannot duplicate a singleton !";$this->_iserror=true;
         throw new Exception($this->_status);
@@ -198,6 +200,7 @@ class Servel
                 break;
             default:
                 $this->_status="error: unknown action ($action)";$this->_iserror=true;
+                error_log("<li>! error: {$this->_status}</li>\n", 3, self::_DEBUGFILE_);
                 throw new Exception($this->_status);
         }
 
@@ -214,7 +217,7 @@ sleep(1); //TODO
  * dynamic mapping of Lodel EM
 **/
     protected function Schema2OO() {
-    error_log("<h3>Schema2OO()</h3>\n", 3, self::_DEBUGFILE_);
+    error_log("<h2>Schema2OO()</h2>\n", 3, self::_DEBUGFILE_);
 
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
         error_log("<li>ME: $modelpath</li>\n",3,self::_DEBUGFILE_);
@@ -225,11 +228,11 @@ sleep(1); //TODO
         $domxml->preserveWhiteSpace = false;
         $domxml->formatOutput = true;
         if (! $domxml->load($this->_param['modelpath'])) {
-            $this->_status="error load model.xml";error_log("<h1>{$this->_status}</h1>\n", 3, self::_DEBUGFILE_);
+            $this->_status="error load model.xml";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
             throw new Exception($this->_status);
         }
 
-        // OTX EM test
+        # OTX EM test
         if (! strstr($domxml->saveXML(), "<col name=\"otx\">")) {
             // TODO : warning and load a default OTX EM ?!
             $this->_status="error: EM not OTX compliant";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
@@ -315,6 +318,7 @@ sleep(1); //TODO
                 }
             }
         }
+        error_log("<li>parse EM ok</li>\n", 3, self::_DEBUGFILE_);
 
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
@@ -350,27 +354,30 @@ sleep(1); //TODO
         unset($OOTX);
 
         # surrounding
+        error_log("<li>surrounding</li>\n",3,self::_DEBUGFILE_);
         $xpath = new DOMXPath($domxml);
         $query = '/lodelEM/table[@name="#_TP_internalstyles"]/datas/row';
         $entries = $xpath->query($query);
         foreach ($entries as $item) {
             if ($item->hasChildNodes()) {
                 foreach ($item->childNodes as $child) {
-                $value = $otxkey = $otxvalue = "";
-                    $attributes = $child->attributes;
-                    $attribute = $attributes->getNamedItem("name");
-                    $key = $attribute->value;
-                    $value = $child->nodeValue;
-                    switch ($key) {
-                        case "style":
-                            break;
-                        case "surrounding":
-                            $surrounding = $value;
-                            break;
-                        case "otx":
-                            if ($value == '') continue;
-                            list($otxkey,$otxvalue) = explode(":", $value);
-                            break;
+                    $value = $otxkey = $otxvalue = "";
+                    if ($child->hasAttributes()) {
+                        $attributes = $child->attributes;
+                        $attribute = $attributes->getNamedItem("name");
+                        $key = $attribute->value;
+                        $value = $child->nodeValue;
+                        switch ($key) {
+                            case "style":
+                                break;
+                            case "surrounding":
+                                $surrounding = $value;
+                                break;
+                            case "otx":
+                                if ($value == '') continue;
+                                list($otxkey,$otxvalue) = explode(":", $value);
+                                break;
+                        }
                     }
                 }
                 if ($otxkey and $otxvalue) {
@@ -383,6 +390,7 @@ sleep(1); //TODO
         $this->EMotx['standard']['key'] = "text";
         $this->EMotx['standard']['surround'] = "*-";
 
+        error_log("<li>DONE.</li>\n", 3, self::_DEBUGFILE_);
         unset($domxml);
         return true;
     }
@@ -1092,23 +1100,29 @@ EOD;
                     case 'text:citation-style-name':
                     case 'text:citation-body-style-name':
                     case 'text:style-name':
-                        $nodevalue = _makeSortKey( preg_replace($patterns, "", $entry->nodeValue));
-                        if ( isset( $this->EModel[$nodevalue])) {
-                            $nodevalue = $this->EModel[$nodevalue];
-                            $entry->nodeValue = $nodevalue;
-                        } 
-                        else if ( preg_match("/^(titre|heading)(\d*)$/i", $nodevalue, $match)) {
-                            $nodevalue = "heading".$match[2];
-                            $entry->nodeValue = $nodevalue;
+                        if (! preg_match("/^[TP]\d+$/", $entry->nodeValue)) {
+                            $nodevalue = _makeSortKey( preg_replace($patterns, "", $entry->nodeValue));
+                            if ( isset( $this->EModel[$nodevalue])) {
+                                $nodevalue = $this->EModel[$nodevalue];
+                                $entry->nodeValue = $nodevalue;
+                            }
+                            else if ( preg_match("/^(titre|heading)(\d*)$/i", $nodevalue, $match)) {
+                                $nodevalue = "heading".$match[2];
+                                $entry->nodeValue = $nodevalue;
+                            }
+                            else { 
+                                $entry->nodeValue = $nodevalue;
+                            }
                         }
-                        else { }
                         break;
                     default:
+                        break;
                 }
             }
         }
 
         private function lodelpictures(&$dom, &$za) {
+        error_log("<h3>lodelpictures()</h3>\n", 3, self::_DEBUGFILE_);
             $imgindex = 0;
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//draw:image");
@@ -1139,6 +1153,7 @@ EOD;
         }
 
         private function ooautomaticstyles(&$dom) {
+        error_log("<h3>ooautomaticstyles()</h3>\n", 3, self::_DEBUGFILE_);
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//style:style");
             foreach ($entries as $item) {
@@ -1187,6 +1202,7 @@ EOD;
         }
 
         private function oostyles(&$dom) {
+        error_log("<h3>oostyles()</h3>\n", 3, self::_DEBUGFILE_);
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//style:style");
             foreach ($entries as $item) {
@@ -1234,11 +1250,15 @@ EOD;
                     list($lang, $rendition) = $this->styles2csswhitelist($properties);
                     if ( isset($this->rendition[$key])) {
                         // TODO : merge ?
-                        if ($this->rendition[$key]['lang']=='')         $this->rendition[$key]['lang'] = $lang;
-                        if ($this->rendition[$key]['rendition']=='')    $this->rendition[$key]['rendition'] = $rendition;
+                        if ($this->rendition[$key]['lang']=='') {
+                            $this->rendition[$key]['lang'] = $lang;
+                        }
+                        if ($this->rendition[$key]['rendition']=='') {
+                            $this->rendition[$key]['rendition'] = $rendition;
+                        }
                     } else {
                         $this->rendition[$key]['lang'] = $lang;
-                        $this->rendition[$key]['rendition'] = $rendition;
+                        //$this->rendition[$key]['rendition'] = $rendition;
                     }
                 }
             }
@@ -1252,12 +1272,14 @@ EOD;
             $lang = ""; $rendition = "";
             $csswhitelist = array();
             foreach ($properties as $prop) {
+                // xhtml:sup
                 if ( preg_match("/^text-position:super/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:top");
+                    array_push($csswhitelist, "vertical-align:top;font-size:80%");
                     continue;
                 }
+                // xhtml:sub
                 if ( preg_match("/^text-position:sub/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:bottom");
+                    array_push($csswhitelist, "vertical-align:bottom;font-size:80%");
                     continue;
                 }
                 if ( preg_match("/^language:(.*)$/", $prop, $match)) {
@@ -1326,6 +1348,7 @@ EOD;
 
         /** @return array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
         private function greedy(&$node) {
+        //error_log("<h3>greedy()</h3>\n", 3, self::_DEBUGFILE_);
             $section = $surround = $key = $rend = null;
             if ($rend=$node->getAttribute("rend")) {
                 if ( isset($this->EMotx[$rend]['surround'])) {
@@ -1583,7 +1606,8 @@ EOD;
         error_log("<li>[getmime] sourcepath = $sourcepath</li>\n\n", 3, self::_DEBUGFILE_);
         $mime = mime_content_type($sourcepath);
         if ($mime === "application/x-zip" OR $mime === "application/zip") {
-            list($mime, $tmp) = explode(",", system("file -b {$sourcepath}"));
+            $file = escapeshellarg($sourcepath);
+            list($mime, $tmp) = explode(",", system("file -b $file"));
         }
 
         $extension = ".odt";
@@ -1749,7 +1773,7 @@ EOD;
         }
 
         # pdftotext -raw pdffile
-        $command = 'pdftotext -raw "' .$pdffile .'"';
+        $command = 'pdftotext -raw "'.escapeshellarg($pdffile).'"';
         $output = array(); $returnvar=0;
         $result = ''. exec($command, $output, $returnvar);
         if ($returnvar != 0) {
@@ -2211,8 +2235,7 @@ EOD;
         }
 
         # surrounding internalstyles
-        error_log("<h4># surrounding internalstyles</h4>\n",3,self::_DEBUGFILE_);
-
+        error_log("<li>surrounding internalstyles</li>\n", 3, self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);

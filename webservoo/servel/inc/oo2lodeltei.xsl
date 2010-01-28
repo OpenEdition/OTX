@@ -941,20 +941,18 @@ These seem to have no obvious translation
     </xsl:template>
     -->
 
+    <!-- TODO : warnings ?! -->
+
     <xsl:template match="text:section">
-        <xsl:apply-templates/>
     </xsl:template>
-
     <xsl:template match="text:sequence-decl">
-        <xsl:apply-templates/>
     </xsl:template>
-
     <xsl:template match="text:sequence-decls">
-        <xsl:apply-templates/>
     </xsl:template>
-
     <xsl:template match="text:sequence">
-        <xsl:apply-templates/>
+    </xsl:template>
+    <!-- revision mode ? -->
+    <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
     </xsl:template>
 
     <xsl:template match="text:section-source"/>
@@ -969,10 +967,6 @@ These seem to have no obvious translation
             </xsl:with-param>
             </xsl:call-template>
         </xsl:if>
-    </xsl:template>
-
-    <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
-        <xsl:apply-templates/>
     </xsl:template>
 
     <xsl:template match="text:table-of-content"/>
