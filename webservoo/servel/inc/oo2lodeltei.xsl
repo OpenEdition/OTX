@@ -618,7 +618,6 @@
         </xsl:template>
         -->
     <xsl:template match="text:note-citation"/>
-
     <xsl:template match="text:note-body">
         <xsl:apply-templates/>
     </xsl:template>
@@ -633,7 +632,7 @@
                 <xsl:attribute name="place">foot</xsl:attribute>
             </xsl:when>
         </xsl:choose>
-        <xsl:if test="text:note-citation">
+        <xsl:if test="descendant::text:note-citation">
             <xsl:attribute name="n">
                 <xsl:value-of select="text:note-citation"/>
             </xsl:attribute>

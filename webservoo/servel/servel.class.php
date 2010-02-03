@@ -94,7 +94,7 @@ class Servel
     }
     public function __destruct() {
     error_log("\n<h3>__destruct</h3></ul>", 3, self::_DEBUGFILE_);
-        @unlink($this->_param['sourcepath']);
+        //@unlink($this->_param['sourcepath']);
 /*
         //@unlink($this->_param['DEBUGPATH']);
         $handle=fopen($this->_param['DEBUGPATH'],"a+");
@@ -405,6 +405,7 @@ sleep(1); //TODO
         $cleanup = array('/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
         $odtfile = $this->_param['odtpath'];
+error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         $this->_param['lodelodtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
         $lodelodtfile = $this->_param['lodelodtpath'];
         if (! copy($odtfile, $lodelodtfile)) {
@@ -902,16 +903,27 @@ EOD;
         foreach ($entries as $item) {
             if (! $item->hasAttributes()) {
                 $parent = $item->parentNode;
-                $newitem = $dom->createElement("nop", $item->nodeValue);
+                $newitem = $dom->createElement("nop");
+                if ($item->hasChildNodes()) {
+                    foreach ($item->childNodes as $child) {
+                        $clone = $child->cloneNode(true);
+                        $newitem->appendChild($clone);
+                    }
+                }
+                else {
+                    $newitem->nodeValue = $item->nodeValue;
+                }
                 if (! $parent->replaceChild($newitem, $item)) {
                     $this->_status="error replaceChild";error_log("<h1>! {$this->_status}</h1>\n",3,self::_DEBUGFILE_);
                     throw new Exception($this->_status);
                 }
             }
         }
+//$debugfile=$this->_param['TMPPATH']."nop.debug.xml";@file_put_contents($debugfile, $dom->saveXML());
             // ... and delete <nop>
         $search = array("<nop>", "</nop>");
         $lodeltei = "". str_replace($search, "", $dom->saveXML());
+//$debugfile=$this->_param['TMPPATH']."nonop.debug.xml";@file_put_contents($debugfile, $lodeltei);
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = true;
@@ -1396,12 +1408,12 @@ EOD;
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
             if ($returnvar!=0) {
-                @copy($sourcepath, $sourcepath.".error"); @unlink($sourcepath);
+                @copy($sourcepath, $sourcepath.".error"); //@unlink($sourcepath);
                 $this->_status = "error soffice : $returnvar"; 
                 throw new Exception($this->_status);
             }
         }
-        $odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".odt";
+        $odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['sourcename'].".odt";
     }
 
     /**
@@ -1660,8 +1672,17 @@ EOD;
             }
         }
 
+        if (! rename($sourcepath, $sourcepath.$extension)) {
+            $this->_status="error: rename [$sourcepath]";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+            throw new Exception($this->_status);
+        }
+        $this->_param['sourcepath'] = $sourcepath.$extension;
+error_log("<li>{$this->_param['sourcepath']}</li>\n",3,self::_DEBUGFILE_);
+
         $this->_param['extension'] = $extension;
         $this->_param['mime'] = $mime;
+
+        return true;
     }
 
     private function params() {
