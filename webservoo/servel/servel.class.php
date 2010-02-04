@@ -899,26 +899,7 @@ EOD;
 
         # <hi> cleanup (tag hi with no attribute)
             // <hi> to <nop> ...
-        $entries = $xpath->query("//tei:hi"); 
-        foreach ($entries as $item) {
-            if (! $item->hasAttributes()) {
-                $parent = $item->parentNode;
-                $newitem = $dom->createElement("nop");
-                if ($item->hasChildNodes()) {
-                    foreach ($item->childNodes as $child) {
-                        $clone = $child->cloneNode(true);
-                        $newitem->appendChild($clone);
-                    }
-                }
-                else {
-                    $newitem->nodeValue = $item->nodeValue;
-                }
-                if (! $parent->replaceChild($newitem, $item)) {
-                    $this->_status="error replaceChild";error_log("<h1>! {$this->_status}</h1>\n",3,self::_DEBUGFILE_);
-                    throw new Exception($this->_status);
-                }
-            }
-        }
+        $this->hicleanup($dom, $xpath);
 //$debugfile=$this->_param['TMPPATH']."nop.debug.xml";@file_put_contents($debugfile, $dom->saveXML());
             // ... and delete <nop>
         $search = array("<nop>", "</nop>");
@@ -939,7 +920,33 @@ EOD;
         return true;
     }
 
-
+        private function hicleanup(&$dom, &$xpath) {
+            $bool = false;
+            $entries = $xpath->query("//tei:hi", $dom); 
+            foreach ($entries as $item) {
+                if (! $item->hasAttributes()) {
+                    $parent = $item->parentNode;
+                    $newitem = $dom->createElement("nop");
+                    if ($item->hasChildNodes()) {
+                        foreach ($item->childNodes as $child) {
+                            $clone = $child->cloneNode(true);
+                            $newitem->appendChild($clone);
+                        }
+                    }
+                    else {
+                        $newitem->nodeValue = $item->nodeValue;
+                    }
+                    if (! $parent->replaceChild($newitem, $item)) {
+                        $this->_status="error replaceChild";error_log("<h1>! {$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                        throw new Exception($this->_status);
+                    }
+                    $bool = true;
+                }
+            }
+            if ($bool) {
+                $this->hicleanup($dom, $xpath);
+            }
+        }
 
 /**
  * transformation d'un lodel-odt en xml (TEI P5)
