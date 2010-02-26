@@ -236,6 +236,13 @@ class WebServoo
             $this->lodelxml = $return['lodelxml'];
         }
 
+// debug/dump
+ob_start();
+var_dump($Servel);
+file_put_contents(__DUMP__, ob_get_contents());
+ob_end_clean();
+
+
         return $this->webservooResponse();
     }
 

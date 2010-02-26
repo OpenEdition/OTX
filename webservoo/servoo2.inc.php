@@ -42,4 +42,5 @@ define('__SERVEL_CACHETIME__',  60); // TODO
 
 # debug
 define('__DEBUG__', "/data/www/_SERVEL/tmp/otx.debug.xml");
+define('__DUMP__', "/data/www/_SERVEL/tmp/otx.dump.txt");
 ?>
