@@ -40,7 +40,9 @@ define('__SERVEL_CACHE__',      "/data/www/_SERVEL/CACHE/");
 define('__SERVEL_CACHETIME__',  60); // TODO
 
 
+# --- soofice ----------------------------------------------------------------
+define("__SOFFICE_PYTHONPATH__",    "/opt/openoffice.org3/program/python");
+
 # debug
 define('__DEBUG__', "/data/www/_SERVEL/tmp/otx.debug.xml");
-define('__DUMP__', "/data/www/_SERVEL/tmp/otx.dump.txt");
 ?>
