@@ -1,10 +1,10 @@
 #
-# PyODConverter (Python OpenDocument Converter) v1.0.0 - 2008-05-05
+# PyODConverter (Python OpenDocument Converter) v1.1 - 2009-11-14
 #
 # This script converts a document from one office format to another by
 # connecting to an OpenOffice.org instance via Python-UNO bridge.
 #
-# Copyright (C) 2008 Mirko Nasato <mirko@artofsolving.com>
+# Copyright (C) 2008-2009 Mirko Nasato <mirko@artofsolving.com>
 # Licensed under the GNU LGPL v2.1 - http://www.gnu.org/licenses/lgpl-2.1.html
 # - or any later version.
 #
@@ -17,35 +17,109 @@ from com.sun.star.task import ErrorCodeIOException
 from com.sun.star.connection import NoConnectException
 
 FAMILY_TEXT = "Text"
+FAMILY_WEB = "Web"
 FAMILY_SPREADSHEET = "Spreadsheet"
 FAMILY_PRESENTATION = "Presentation"
 FAMILY_DRAWING = "Drawing"
 
-FILTER_MAP = {
+#---------------------#
+# Configuration Start #
+#---------------------#
+
+# see http://wiki.services.openoffice.org/wiki/Framework/Article/Filter
+
+# most formats are auto-detected; only those requiring options are defined here
+IMPORT_FILTER_MAP = {
+    "txt": {
+        "FilterName": "Text (encoded)",
+        "FilterOptions": "utf8"
+    },
+    "csv": {
+        "FilterName": "Text - txt - csv (StarCalc)",
+        "FilterOptions": "44,34,0"
+    }
+}
+
+EXPORT_FILTER_MAP = {
     "pdf": {
-        FAMILY_TEXT: "writer_pdf_Export",
-        FAMILY_SPREADSHEET: "calc_pdf_Export",
-        FAMILY_PRESENTATION: "impress_pdf_Export",
-        FAMILY_DRAWING: "draw_pdf_Export"
+        FAMILY_TEXT: { "FilterName": "writer_pdf_Export" },
+        FAMILY_WEB: { "FilterName": "writer_web_pdf_Export" },
+        FAMILY_SPREADSHEET: { "FilterName": "calc_pdf_Export" },
+        FAMILY_PRESENTATION: { "FilterName": "impress_pdf_Export" },
+        FAMILY_DRAWING: { "FilterName": "draw_pdf_Export" }
     },
     "html": {
-        FAMILY_TEXT: "HTML (StarWriter)",
-        FAMILY_SPREADSHEET: "HTML (StarCalc)",
-        FAMILY_PRESENTATION: "impress_html_Export"
+        FAMILY_TEXT: { "FilterName": "HTML (StarWriter)" },
+        FAMILY_SPREADSHEET: { "FilterName": "HTML (StarCalc)" },
+        FAMILY_PRESENTATION: { "FilterName": "impress_html_Export" }
     },
-    "odt": { FAMILY_TEXT: "writer8" },
-    "doc": { FAMILY_TEXT: "MS Word 97" },
-    "rtf": { FAMILY_TEXT: "Rich Text Format" },
-    "txt": { FAMILY_TEXT: "Text" },
-    "ods": { FAMILY_SPREADSHEET: "calc8" },
-    "xls": { FAMILY_SPREADSHEET: "MS Excel 97" },
-    "odp": { FAMILY_PRESENTATION: "impress8" },
-    "ppt": { FAMILY_PRESENTATION: "MS PowerPoint 97" },
-    "swf": { FAMILY_PRESENTATION: "impress_flash_Export" }
-}
-# see http://wiki.services.openoffice.org/wiki/Framework/Article/Filter
-# for more available filters
+    "odt": {
+        FAMILY_TEXT: { "FilterName": "writer8" },
+        FAMILY_WEB: { "FilterName": "writerweb8_writer" }
+    },
+    "doc": {
+        FAMILY_TEXT: { "FilterName": "MS Word 97" }
+    },
+    "rtf": {
+        FAMILY_TEXT: { "FilterName": "Rich Text Format" }
+    },
+    "txt": {
+        FAMILY_TEXT: {
+            "FilterName": "Text",
+            "FilterOptions": "utf8"
+        }
+    },
+    "ods": {
+        FAMILY_SPREADSHEET: { "FilterName": "calc8" }
+    },
+    "xls": {
+        FAMILY_SPREADSHEET: { "FilterName": "MS Excel 97" }
+    },
+    "csv": {
+        FAMILY_SPREADSHEET: {
+            "FilterName": "Text - txt - csv (StarCalc)",
+            "FilterOptions": "44,34,0"
+        }
+    },
+    "odp": {
+        FAMILY_PRESENTATION: { "FilterName": "impress8" }
+    },
+    "ppt": {
+        FAMILY_PRESENTATION: { "FilterName": "MS PowerPoint 97" }
+    },
+    "swf": {
+        FAMILY_DRAWING: { "FilterName": "draw_flash_Export" },
+        FAMILY_PRESENTATION: { "FilterName": "impress_flash_Export" }
+    },   
 
+# Nicolas Barts, copyleft 2010, CLEO / Revues.org
+    "xhtml": {
+        FAMILY_TEXT: { "FilterName": "XHTML Writer File" },
+        FAMILY_SPREADSHEET: { "FilterName": "XHTML Calc File" },
+        FAMILY_PRESENTATION: { "FilterName": "XHTML Draw File" }
+    },
+    # teioop5
+    "teixml": {
+        FAMILY_TEXT: { "FilterName": "TEI" },
+    }
+}
+
+PAGE_STYLE_OVERRIDE_PROPERTIES = {
+    FAMILY_SPREADSHEET: {
+        #--- Scale options: uncomment 1 of the 3 ---
+        # a) 'Reduce / enlarge printout': 'Scaling factor'
+        "PageScale": 100,
+        # b) 'Fit print range(s) to width / height': 'Width in pages' and 'Height in pages'
+        #"ScaleToPagesX": 1, "ScaleToPagesY": 1000,
+        # c) 'Fit print range(s) on number of pages': 'Fit print range(s) on number of pages'
+        #"ScaleToPages": 1,
+        "PrintGrid": False
+    }
+}
+
+#-------------------#
+# Configuration End #
+#-------------------#
 
 class DocumentConversionException(Exception):
 
@@ -71,36 +145,54 @@ class DocumentConverter:
 
         inputUrl = self._toFileUrl(inputFile)
         outputUrl = self._toFileUrl(outputFile)
+
+        loadProperties = { "Hidden": True }
+        inputExt = self._getFileExt(inputFile)
+        if IMPORT_FILTER_MAP.has_key(inputExt):
+            loadProperties.update(IMPORT_FILTER_MAP[inputExt])
         
-        document = self.desktop.loadComponentFromURL(inputUrl, "_blank", 0, self._toProperties(Hidden=True))
+        document = self.desktop.loadComponentFromURL(inputUrl, "_blank", 0, self._toProperties(loadProperties))
         try:
-          document.refresh()
+            document.refresh()
         except AttributeError:
-          pass
+            pass
+
+        family = self._detectFamily(document)
+        self._overridePageStyleProperties(document, family)
         
         outputExt = self._getFileExt(outputFile)
-        filterName = self._filterName(document, outputExt)
+        storeProperties = self._getStoreProperties(document, outputExt)
 
         try:
-            document.storeToURL(outputUrl, self._toProperties(FilterName=filterName))
+            document.storeToURL(outputUrl, self._toProperties(storeProperties))
         finally:
             document.close(True)
 
-    def _filterName(self, document, outputExt):
+    def _overridePageStyleProperties(self, document, family):
+        if PAGE_STYLE_OVERRIDE_PROPERTIES.has_key(family):
+            properties = PAGE_STYLE_OVERRIDE_PROPERTIES[family]
+            pageStyles = document.getStyleFamilies().getByName('PageStyles')
+            for styleName in pageStyles.getElementNames():
+                pageStyle = pageStyles.getByName(styleName)
+                for name, value in properties.items():
+                    pageStyle.setPropertyValue(name, value)
+
+    def _getStoreProperties(self, document, outputExt):
         family = self._detectFamily(document)
         try:
-            filterByFamily = FILTER_MAP[outputExt]
+            propertiesByFamily = EXPORT_FILTER_MAP[outputExt]
         except KeyError:
             raise DocumentConversionException, "unknown output format: '%s'" % outputExt
         try:
-            return filterByFamily[family]
+            return propertiesByFamily[family]
         except KeyError:
             raise DocumentConversionException, "unsupported conversion: from '%s' to '%s'" % (family, outputExt)
     
     def _detectFamily(self, document):
+        if document.supportsService("com.sun.star.text.WebDocument"):
+            return FAMILY_WEB
         if document.supportsService("com.sun.star.text.GenericTextDocument"):
-            # NOTE: a GenericTextDocument is either a TextDocument, a WebDocument, or a GlobalDocument
-            # but this further distinction doesn't seem to matter for conversions
+            # must be TextDocument or GlobalDocument
             return FAMILY_TEXT
         if document.supportsService("com.sun.star.sheet.SpreadsheetDocument"):
             return FAMILY_SPREADSHEET
@@ -118,13 +210,13 @@ class DocumentConverter:
     def _toFileUrl(self, path):
         return uno.systemPathToFileUrl(abspath(path))
 
-    def _toProperties(self, **args):
+    def _toProperties(self, dict):
         props = []
-        for key in args:
-	    prop = PropertyValue()
-	    prop.Name = key
-	    prop.Value = args[key]
-	    props.append(prop)
+        for key in dict:
+            prop = PropertyValue()
+            prop.Name = key
+            prop.Value = dict[key]
+            props.append(prop)
         return tuple(props)
 
 
@@ -142,7 +234,7 @@ if __name__ == "__main__":
         converter = DocumentConverter()    
         converter.convert(argv[1], argv[2])
     except DocumentConversionException, exception:
-        print "ERROR!" + str(exception)
+        print "ERROR! " + str(exception)
         exit(1)
     except ErrorCodeIOException, exception:
         print "ERROR! ErrorCodeIOException %d" % exception.ErrCode

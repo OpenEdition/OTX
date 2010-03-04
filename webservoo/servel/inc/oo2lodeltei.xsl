@@ -4,8 +4,11 @@
  # the GNU Lesser General Public License Version 2.1
 
  # Nicolas Barts, Cléo/Revue.org
- # copyright 2009
+ # copyright 2009, 2010
 
+ # OpenOffice v3.x
+-->
+<!--
  # This stylesheet is derived from the OpenOffice to TEIP5 conversion
  # Sebastian Rahtz / University of Oxford, copyright 2005
  #  derived from the OpenOffice to Docbook conversion
@@ -80,77 +83,72 @@
     </TEI>
     </xsl:template>
 
-<!-- 
-    teiHeader
--->
     <xsl:template name="teiHeader">
-    <teiHeader>
-      <fileDesc>
-        <titleStmt>
-          <title>
-            <xsl:value-of select="/office:document/office:meta/dc:title"/>
-          </title>
-          <author>
-            <xsl:value-of select="/office:document/office:meta/meta:initial-creator"/>
-          </author>
-        </titleStmt>
-        <editionStmt>
-          <edition>
-            <date>
-              <xsl:value-of select="/office:document/office:meta/meta:creation-date"/>
-            </date>
-          </edition>
-        </editionStmt>
-        <publicationStmt>
-          <authority/>
-        </publicationStmt>
-        <sourceDesc>
-          <p>
-	    <xsl:apply-templates select="/office:document/office:meta/meta:generator"/>
-	    <xsl:text>Written by OpenOffice</xsl:text>
-	  </p>
-        </sourceDesc>
-      </fileDesc>
-      <xsl:if test="/office:document/office:meta/dc:language|/office:document/office:meta/meta:keyword">
-	<profileDesc>
-	  <xsl:if test="/office:document/office:meta/dc:language">
-	    <langUsage>
-	      <language>
-		<xsl:attribute name="ident">
-		  <xsl:value-of select="/office:document/office:meta/dc:language"/>
-		</xsl:attribute>
-		<xsl:value-of select="/office:document/office:meta/dc:language"/>
-	      </language>
-	    </langUsage>
-	  </xsl:if>
-	  <xsl:if test="/office:document/office:meta/meta:keyword">
-	    <textClass>
-	      <keywords>
-		<list>
-		  <xsl:for-each select="/office:document/office:meta/meta:keyword">
-		    <item><xsl:value-of select="."/></item>
-		  </xsl:for-each>
-		</list>
-	      </keywords>
-	    </textClass>
-	  </xsl:if>
-	</profileDesc>
-      </xsl:if>
-      <encodingDesc>
-      </encodingDesc>
-      <revisionDesc>
-	<change>
-	  <name>
-	    <xsl:apply-templates select="/office:document/office:meta/dc:creator"/>
-	  </name>
-	  <date>
-	    <xsl:apply-templates select="/office:document/office:meta/dc:date"/>
-	  </date>
-	</change>
-      </revisionDesc>
-    </teiHeader>
-  </xsl:template>
-
+        <teiHeader xml:lang="en">
+            <fileDesc>
+                <titleStmt>
+                    <title>
+                        <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                    </title>
+                    <author>
+                        <xsl:value-of select="/office:document/office:meta/dc:creator"/>
+                    </author>
+                </titleStmt>
+                <publicationStmt>
+                    <publisher>Revues.org</publisher>
+                    <availability status="free">
+                        <p>Open Access</p>
+                    </availability>
+                    <date>
+                        <xsl:value-of select="/office:document/office:meta/dc:date"/>
+                    </date>
+                </publicationStmt>
+                <sourceDesc>
+                    <biblFull>
+                        <titleStmt>
+                            <title>
+                                <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                            </title>
+                            <author>
+                                <xsl:value-of select="/office:document/office:meta/meta:initial-creator"/>
+                            </author>
+                        </titleStmt>
+                        <publicationStmt>
+                            <date>
+                                <xsl:value-of select="/office:document/office:meta/meta:creation-date"/>
+                            </date>
+                        </publicationStmt>
+                    </biblFull>
+                </sourceDesc>
+            </fileDesc>
+            <encodingDesc>
+                <projectDesc>
+                    <p>Revues.org: centre for open electronic publishing</p>
+                    <p>Revues.org is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
+                </projectDesc>
+                <appInfo>
+                    <application version="2.04" ident="OTX">
+                        <label>Opentext - CLEO / Revues.org</label>
+                        <desc>
+                            <ref target="http://www.tei-c.org/">Powered by TEI</ref>
+                        </desc>
+                    </application>
+                </appInfo>
+            </encodingDesc>
+            <profileDesc>
+                <langUsage>
+                    <language ident="fr"/>
+                </langUsage>
+                <textClass>
+                    <keywords scheme="lodel">
+                        <term>Lodel</term>
+                        <term>Opentext</term>
+                        <term>TEI P5</term>
+                    </keywords>
+                </textClass>
+            </profileDesc>
+        </teiHeader>
+    </xsl:template>
 
 <!-- office:body -->
     <xsl:template match="/office:document/office:body">
@@ -255,10 +253,15 @@
 
     <!-- headings -->
     <xsl:template match="text:list[@text:style-name='outline']">
-        <xsl:apply-templates/>
+        <xsl:if test="descendant::text:h[@text:outline-level]">
+            <xsl:apply-templates/>
+        </xsl:if>
     </xsl:template>
-    <xsl:template match="text:list[@text:continue-numbering='true']">
-        <xsl:apply-templates/>
+
+    <xsl:template match="text:list[@text:continue-numbering]">
+        <xsl:if test="descendant::text:h[@text:outline-level]">
+            <xsl:apply-templates/>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="text:h[@text:outline-level]">
@@ -266,29 +269,34 @@
             <xsl:value-of select="concat('heading',@text:outline-level)"/>
         </xsl:variable>
         <p rend="{$rend}">
-        <xsl:apply-templates/>
+            <xsl:apply-templates/>
         </p>
     </xsl:template>
 
-    <!-- list -->
+    <!-- list-item -->
     <xsl:template match="text:list">
         <xsl:choose>
-            <xsl:when test="text:list-item/text:h">
+            <xsl:when test="descendant::text:h[@text:outline-level]">
+                <xsl:apply-templates/>
+            </xsl:when>
+            <!--
+            <xsl:when test="text:list-item/text:p">
                 <xsl:for-each select="text:list-item">
                     <xsl:apply-templates/>
                 </xsl:for-each>
             </xsl:when>
+            -->
             <xsl:when test="@text:style-name='Var List'">
                 <list><xsl:apply-templates/></list>
             </xsl:when>
             <xsl:when test="starts-with(@text:style-name,'ordered')">
                 <list type="ordered">
-                <xsl:apply-templates/>
+                    <xsl:apply-templates/>
                 </list>
             </xsl:when>
             <xsl:otherwise>
                 <list type="unordered">
-                <xsl:apply-templates/>
+                    <xsl:apply-templates/>
                 </list>
             </xsl:otherwise>
         </xsl:choose>
@@ -300,10 +308,13 @@
 
     <xsl:template match="text:list-item">
         <xsl:choose>
-            <xsl:when test="parent::text:list/@text:style-name='outline'">
+            <xsl:when test="descendant::text:h[@text:outline-level]">
                 <xsl:apply-templates/>
             </xsl:when>
-            <xsl:when test="parent::text:list/@text:continue-numbering='true'">
+            <xsl:when test="ancestor::text:list[@text:style-name='outline']">
+                <xsl:apply-templates/>
+            </xsl:when>
+            <xsl:when test="ancestor::text:list[@text:continue-numbering='true']">
                 <xsl:apply-templates/>
             </xsl:when>
             <xsl:when test="parent::text:list/@text:style-name='Var List'">
@@ -617,7 +628,9 @@
             <xsl:apply-templates/>
         </xsl:template>
         -->
-    <xsl:template match="text:note-citation"/>
+    <xsl:template match="text:note-citation">
+    </xsl:template>
+
     <xsl:template match="text:note-body">
         <xsl:apply-templates/>
     </xsl:template>
@@ -632,7 +645,7 @@
                 <xsl:attribute name="place">foot</xsl:attribute>
             </xsl:when>
         </xsl:choose>
-        <xsl:if test="descendant::text:note-citation">
+        <xsl:if test="text:note-citation">
             <xsl:attribute name="n">
                 <xsl:value-of select="text:note-citation"/>
             </xsl:attribute>
@@ -908,6 +921,11 @@ These seem to have no obvious translation
     <xsl:template match="text:outline-style"/>
     <xsl:template match="text:s"/>
 
+    <!-- TODO : warnings ?! -->
+    <xsl:template match="draw:rect"/>
+    <!-- anchor : mode revision -->
+    <xsl:template match='anchor'/>
+    <!-- unkwnon tag -->
     <xsl:template match="text:*"> 
         [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]
     </xsl:template>
@@ -940,19 +958,13 @@ These seem to have no obvious translation
     </xsl:template>
     -->
 
-    <!-- TODO : warnings ?! -->
-
     <xsl:template match="text:section">
+        <xsl:apply-templates/>
     </xsl:template>
-    <xsl:template match="text:sequence-decl">
-    </xsl:template>
-    <xsl:template match="text:sequence-decls">
-    </xsl:template>
-    <xsl:template match="text:sequence">
-    </xsl:template>
-    <!-- revision mode ? -->
-    <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
-    </xsl:template>
+
+    <xsl:template match="text:sequence-decl"/>
+    <xsl:template match="text:sequence-decls"/>
+    <xsl:template match="text:sequence"/>
 
     <xsl:template match="text:section-source"/>
 
@@ -966,6 +978,10 @@ These seem to have no obvious translation
             </xsl:with-param>
             </xsl:call-template>
         </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
+        <xsl:apply-templates/>
     </xsl:template>
 
     <xsl:template match="text:table-of-content"/>

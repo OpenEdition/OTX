@@ -14,8 +14,8 @@ ini_set("upload_max_filesize", "32M");
 ini_set("memory_limit", "256M");
 set_time_limit(0);
 
-if(file_exists("Devel/devel.inc.php"))
-    include_once('Devel/devel.inc.php');  // DEVEL(debug) MODE
+if(file_exists("Devel/otix/devel.inc.php"))
+    include_once('Devel/otix/devel.inc.php');  // DEVEL(debug) MODE
 else 
     include_once('webservoo/servoo2.inc.php');
 
