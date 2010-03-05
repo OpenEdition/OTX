@@ -632,7 +632,6 @@
 
 
     <!-- notes -->
-
         <!-- we don't need the footnotesymbol style 
         <xsl:template match="text:span[contains(@text:style-name,'footnotesymbol')]">
             <xsl:apply-templates/>
