@@ -1,15 +1,6 @@
 <?php
 
 /**
-* LODEL: Transforme une chaine de caractère UTF8 en minuscules désaccentuées
-*
-* Cette fonction prends en entrée une chaîne en UTF8 et donne en sortie une chaîne
-* o les accents ont été remplacés par leur équivalent désaccentué. De plus les caractères
-* sont mis en minuscules et les espaces en début et fin de chaine sont enlevés.
-*
-* Cette fonction est utilisée pour les entrees d'index ainsi que dans le moteur de recherche
-* et pour le calcul des identifiants littéraux.
-*
 * @param string $text le texte à passer en entrée
 * @return le texte transformé en minuscule
 */

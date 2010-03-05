@@ -38,7 +38,6 @@ if (!empty($_GET)) {
     }
 }
 else {
-
 # create the server instantiation
     try {
         $options = array();
@@ -119,7 +118,7 @@ function _soffice(&$status) {
     else {
         $status = "running";
     }
-    
+
     $ps['cpu'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $3'}");
     $ps['mem'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $4'}");
     $ps['pid'] = $pid = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $2'}");

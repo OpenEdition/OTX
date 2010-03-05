@@ -608,9 +608,14 @@
 
     <xsl:template match="table:table-cell">
         <cell>
-        <xsl:if test="@table:number-columns-spanned &gt;'1'">
+        <xsl:if test="@table:number-columns-spanned">
             <xsl:attribute name="cols">
             <xsl:value-of select="@table:number-columns-spanned"/>
+            </xsl:attribute>
+        </xsl:if>
+        <xsl:if test="@table:number-rows-spanned">
+            <xsl:attribute name="rows">
+            <xsl:value-of select="@table:number-rows-spanned"/>
             </xsl:attribute>
         </xsl:if>
         <xsl:if test="text:h">

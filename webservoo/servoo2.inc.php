@@ -28,7 +28,6 @@ define('__WEBSERVOO_LOG__',         "/data/www/_SERVEL/tmp/otx.log");
 define('__WEBSERVOO_ERRORLOG__',    "/data/www/_SERVEL/tmp/otx.error.log");
 define('__WEBSERVOO_LOCK__',        "/tmp/webservoo.lock");
 
-
 # --- servel  ----------------------------------------------------------------
 
 define('__SERVEL_SERVER__',     "http://otx.revues.org/");

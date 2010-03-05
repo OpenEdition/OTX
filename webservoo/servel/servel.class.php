@@ -330,7 +330,7 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                 }
             }
         }
-        error_log("<li>parse EM ok</li>\n", 3, self::_DEBUGFILE_);
+        error_log("<li>parse EM ok</li>\n",3,self::_DEBUGFILE_);
 
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
@@ -403,7 +403,7 @@ $debug="<li>EMotx</li><ul><pre>".print_r($this->EModel,true)."</pre></ul>\n";err
         // default
         $this->EMotx['standard']['key'] = "text";
 //        $this->EMotx['standard']['surround'] = "*-";
-$debug="<li>EMotx</li><ul><pre>".print_r($this->EMotx,true)."</pre></ul>\n";error_log($debug, 3, self::_DEBUGFILE_);
+$debug="<li>EMotx</li><ul><pre>".print_r($this->EMotx,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
 
         error_log("<li>DONE.</li>\n", 3, self::_DEBUGFILE_);
         unset($domxml);
@@ -775,7 +775,6 @@ error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n", 3, self::_DEBUGFILE
             }
         }
 
-
         $entries = $xpath->query("//tei:hi[@rend]");
         foreach ($entries as $item) {
             $value = $item->getAttribute("rend");
@@ -822,7 +821,6 @@ error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n", 3, self::_DEBUGFILE
                 }
             }
         }
-
 
         foreach ($tagsdecl as $key=>$value) {
             if ( preg_match("/^#P(\d+)$/", $key, $match)) {
@@ -1339,8 +1337,8 @@ error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
             }
         }
         else {
-// TODO : warning no author defined
-error_log("<li>? [Warning] no author defined</li>\n",3,self::_DEBUGFILE_);
+        // TODO : warning no author defined
+        error_log("<li>? [Warning] no author defined</li>\n",3,self::_DEBUGFILE_);
         }
         # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
@@ -1410,8 +1408,8 @@ error_log("<li># /tei/teiHeader/profileDesc</li>\n",3,self::_DEBUGFILE_);
             $parent->removeChild($entry);
         }
         else {
-// TODO : warning no date defined
-error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
+            // TODO : warning no date defined
+            error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
         }
 
         # /tei/teiHeader/profileDesc/textClass
@@ -1682,7 +1680,6 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:p[@rend='bibliography']");
 
 
-
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
@@ -1690,7 +1687,6 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
         $this->_param['TEI'] = "". $dom->saveXML();
         return true;
     }
-
 
 
     /**
@@ -1708,10 +1704,10 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
         switch($suffix) {
             case 'odt':
             case 'pdf':
-            //case 'html': //TODO ?
             case 'doc': 
             case 'rtf':
             case 'txt':
+            //case 'html': //TODO ?
             case "xhtml":
             case "tei":
                 break;
@@ -1784,7 +1780,7 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
                         # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
                         $temp = explode(".", $sourcepath);
                         $ext = trim( array_pop($temp));
-                        error_log("<li>Warning : mime detection based on document extension ($ext)</li>\n\n", 3, self::_DEBUGFILE_);
+                        error_log("<li>Warning : mime detection based on document extension ($ext)</li>\n",3,self::_DEBUGFILE_);
                         switch ($ext) {
                             case "rtf":
                                 error_log("<li>warning: .rtf</li>\n", 3, self::_DEBUGFILE_);
@@ -2814,6 +2810,7 @@ EOD;
     }
 
 
+
         private function _oodate($ladatepubli) {
             $patterns = array ('/janvier/', '/février/', '/mars/', '/avril/', '/mai/', '/juin/', '/juillet/', '/aout/', '/septembre/', '/octobre/', '/novembre/', '/décembre/');
             $replace = array ('january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december');
@@ -2842,52 +2839,5 @@ EOD;
 
 // end of Servel class.
 }
-
-
-
-
-
-# Document Type
-/*
-editorial
-
-article
-<tei:title level="a" type="main">article title</tei:title>
-<tei:title level="a" type="sub">article subtitle</tei:title>
-
-actualite
-
-compterendu (compte rendu)
-
-notedelecture
-
-chronique
-
-informations
-
-*/
-/*
-journal/revue
-<tei:title level="j">journal title</tei:title>
-<tei:title level="j" type="short">nom court de la revue</tei:title>
-
-serie/collection 
-<tei:title level="s">journal title</tei:title>
-
-monographie/livre
-<tei:title level="m">journal title</tei:title>
-
-unpublished/theses/memoires
-<tei:title level="u">journal title</tei:title>
-*/
-
-# publicationStmt (mention de publication) regroupe des informations concernant la publication ou la diffusion d’un texte électronique ou d’un autre type de texte.
-/*
-It may contain either a simple prose description organized as one or more paragraphs, or one or more elements from the model.publicationStmt class. This class groups a number of elements which are discussed in order below.
-
-    * publisher (éditeur) donne le nom de l'organisme responsable de la publication ou de la distribution d'un élément bibliographique.
-    * distributor (Diffuseur) donne le nom d’une personne ou d’un organisme responsable de la diffusion d’un texte.
-    * authority (responsable de la publication.) donne le nom de la personne ou de l'organisme responsable de la publication d’un fichier électronique, autre qu’un éditeur ou un distributeur.
-*/
 
 ?>
