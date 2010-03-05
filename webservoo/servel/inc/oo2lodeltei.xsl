@@ -608,6 +608,11 @@
 
     <xsl:template match="table:table-cell">
         <cell>
+        <xsl:if test="@table:style-name">
+            <xsl:attribute name="rendition">
+            <xsl:value-of select="@table:style-name"/>
+            </xsl:attribute>
+        </xsl:if>
         <xsl:if test="@table:number-columns-spanned">
             <xsl:attribute name="cols">
             <xsl:value-of select="@table:number-columns-spanned"/>
