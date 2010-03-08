@@ -127,7 +127,7 @@
                     <p>Revues.org is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
                 </projectDesc>
                 <appInfo>
-                    <application version="2.04" ident="OTX">
+                    <application version="2.32" ident="OTX">
                         <label>Opentext - CLEO / Revues.org</label>
                         <desc>
                             <ref target="http://www.tei-c.org/">Powered by TEI</ref>
@@ -211,7 +211,7 @@
         </xsl:choose>
     </xsl:template>
 
-    <!-- normal paragraphs
+<!-- normal paragraphs
     <xsl:template match="text:p">
         <xsl:choose>
             <xsl:when test="parent::text:list-item">
@@ -354,7 +354,7 @@
     </xsl:template>
 
 
-
+<!--
     <xsl:template name="applyStyle">
         <xsl:param name="tag">TODO</xsl:param>
         <xsl:param name="level"/>
@@ -376,7 +376,7 @@
         <xsl:choose>
             <xsl:when test="string-length(.)=0"/>
             <xsl:when test="text:note">
-                <!-- TODO -->
+                # - TODO -
                 <xsl:attribute name="rendition">
                     <xsl:text>#footnotesymbol</xsl:text>
                 </xsl:attribute>
@@ -387,10 +387,10 @@
                 <xsl:variable name="contents">
                     <xsl:apply-templates/>
                 </xsl:variable>
-<!--
+# -
                 <xsl:variable name="rend">
                 </xsl:variable>
--->
+# -
                 <xsl:for-each select="key('STYLES',$name)">
                     <xsl:if test="@style:parent-style-name">
                         <xsl:if test="not(starts-with($name,'T'))"> 
@@ -412,7 +412,7 @@
                         </xsl:attribute>
                     </xsl:if>
                     <xsl:attribute name="rend">
-<!--
+# -
 <style:paragraph-properties fo:text-align="end" style:justify-single-word="false"/>
 </style:style> 
 ! text-align:right;
@@ -420,14 +420,14 @@
 <style:style style:name="P4" style:family="paragraph" style:parent-style-name="standard">
 <style:paragraph-properties fo:text-align="justify" 
 ! text-align:justify;
--->
+# -
                         <xsl:for-each select="style:text-properties/@*">
-                            <!--[[[<xsl:value-of select="name(.)"/>:<xsl:value-of select="."/>]]]-->
+                            # -[[[<xsl:value-of select="name(.)"/>:<xsl:value-of select="."/>]]]-
                             <xsl:variable name="value">
                                 <xsl:value-of select="."/>
                             </xsl:variable>
                             <xsl:choose>
-<!--TODO dir: ltr / rtl -->
+# -TODO dir: ltr / rtl -
                                 <xsl:when test="contains(name(.),'asian')"/>
                                 <xsl:when test="contains(name(.),'complex')"/>
                                 <xsl:when test="name(.)='fo:language'"/>
@@ -524,7 +524,7 @@
         </xsl:choose>
 </xsl:element>
     </xsl:template>
-
+-->
 
     <!-- tables -->
     <xsl:template match="table:table">

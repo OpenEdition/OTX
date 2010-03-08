@@ -34,6 +34,7 @@ class Servel
     private $rendition = array();
     private $Pnum = 0;
     private $Tnum = 0;
+    private $tagsDecl = array();
 
     private $_param = array();
     private $_data = array();
@@ -749,28 +750,26 @@ $toto=$item->getAttribute("rendition");error_log("<li>[oo2lodelxml] $value : $to
 error_log("<li>[oo2lodelxml] rend = $rend</li>\n", 3, self::_DEBUGFILE_);
                         $item->setAttribute("rend", $rend);
                     }
-                    //else {
-error_log("<li>[oo2lodelxml] else ???</li>\n", 3, self::_DEBUGFILE_);
-                        if ( isset($this->rendition[$value])) {
+                    // rendition ?
+                    if ( isset($this->rendition[$value])) {
 error_log("<li>[oo2lodelxml] => rendition</li>\n", 3, self::_DEBUGFILE_);
-                            // xml:lang ?
-                            if ($this->rendition[$value]['lang']!='') {
-                                $lang = $this->rendition[$value]['lang'];
-                                $item->setAttribute("xml:lang", $lang);
-                            }
-                            // css style
-                            if ($this->rendition[$value]['rendition']!='') {
-                                $rendition = $this->rendition[$value]['rendition'];
-                                $item->setAttribute("rendition", $value);
-                                $tagsdecl[$value] = $rendition;
+                        // xml:lang ?
+                        if ($this->rendition[$value]['lang']!='') {
+                            $lang = $this->rendition[$value]['lang'];
+                            $item->setAttribute("xml:lang", $lang);
+                        }
+                        // css style
+                        if ($this->rendition[$value]['rendition']!='') {
+                            $rendition = $this->rendition[$value]['rendition'];
+                            $item->setAttribute("rendition", $value);
+                            $tagsdecl[$value] = $rendition;
 error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n", 3, self::_DEBUGFILE_);
-                            } else {
-                                $item->removeAttribute("rendition");
-                            }
                         } else {
                             $item->removeAttribute("rendition");
                         }
-                    //}
+                    } else {
+                        $item->removeAttribute("rendition");
+                    }
                 }
             }
         }
@@ -821,6 +820,8 @@ error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n", 3, self::_DEBUGFILE
                 }
             }
         }
+
+        $this->tagsDecl = $tagsdecl;
 
         foreach ($tagsdecl as $key=>$value) {
             if ( preg_match("/^#P(\d+)$/", $key, $match)) {
@@ -1233,7 +1234,7 @@ error_log("<li># /tei/teiHeader/publicationStmt</li>\n",3,self::_DEBUGFILE_);
             $entry = $entries->item(0);
             $parent = $entry->parentNode;
             $newnode = $dom->createElement('date', $entry->nodeValue);
-            $newnode->setAttribute('when', $this->_oodate($entry->nodeValue));
+            $newnode->setAttribute('when', "");
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1354,7 +1355,7 @@ error_log("<li># LodelEM:creationdate</li>\n",3,self::_DEBUGFILE_);
             $entry = $entries->item(0);
             $parent = $entry->parentNode;
             $new = $dom->createElement('date', $entry->nodeValue);
-            $new->setAttribute('when', $entry->nodeValue);//$new->setAttribute('when', $this->_oodate($entry->nodeValue));
+            $new->setAttribute('when', "");
             $pubstmt->appendChild($new);
             $parent->removeChild($entry);
         }
@@ -1675,9 +1676,86 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
         }
 
         # /tei/text/back
+error_log("<li># /tei/text/back</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
-        # /tei/text/back/div@type=bibliogr
         $entries = $xpath->query("//tei:p[@rend='bibliography']");
+        if ($entries->length) {
+            # /tei/text/back/div@type=bibliogr
+error_log("<li># /tei/text/back/div@type=bibliogr</li>\n",3,self::_DEBUGFILE_);
+            $div = $dom->createElement("div");
+            $div->setAttribute('type', "bibliogr");
+            $back->appendChild($div);
+            $listbibl = $dom->createElement("listBibl");
+            $div->appendChild($listbibl);
+            foreach ($entries as $item) {
+                $parent = $item->parentNode;
+                if ( preg_match("/^appendix-(.+)$/", $item->getAttribute("rend"), $matches)) {
+                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                        $bibl = $dom->createElement("head", $item->nodeValue);
+                        $bibl->setAttribute('subtype', "level".$match[1]);
+                        $list->appendChild($bibl);
+                        $parent->removeChild($item);
+                        continue;
+                    }
+                }
+                $bibl = $dom->createElement("bibl");
+                foreach ($item->childNodes as $child) {
+                    $clone = $child->cloneNode(true);
+                    $bibl->appendChild($clone);
+                }
+                $listbibl->appendChild($bibl);
+                $parent->removeChild($item);
+            }
+        }
+        # Appendix
+error_log("<li># Appendix</li>\n",3,self::_DEBUGFILE_);
+        $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
+        if ($entries->length) {
+            $lodel = $entries->item(0);
+            $parent = $lodel->parentNode;
+error_log("<li>lodel({$entries->length}) : {$lodel->nodeName}={$lodel->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+            $appendix = $dom->createElement("div");
+            $appendix->setAttribute('type', "appendix");
+            $back->appendChild($appendix);
+error_log("<li># /tei/text/back/div@type=appendix</li>\n",3,self::_DEBUGFILE_);
+            $list = $dom->createElement("list");
+            $appendix->appendChild($list);
+            $tags = $lodel->childNodes;
+            foreach ($tags as $tag) {
+error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                if ( preg_match("/^appendix-(.+)$/", $tag->getAttribute("rend"), $matches)) {
+                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                        $item = $dom->createElement("head", $tag->nodeValue);
+                        $item->setAttribute('subtype', "level".$match[1]);
+                        $list->appendChild($item);
+                        continue;
+                    }
+                }
+                $item = $dom->createElement("item");
+                $list->appendChild($item);
+                $clone = $tag->cloneNode(true);
+                $item->appendChild($clone);
+            }
+            $parent->removeChild($lodel);
+        }
+
+
+        # 
+error_log("<li>\n\n*** rendition ***</li>\n\n",3,self::_DEBUGFILE_);
+        $entries = $xpath->query("//@rendition");
+        foreach ($entries as $attr) {
+            $element = $attr->ownerElement;
+            $tagdeclid = $element->getAttribute("rendition");
+            $rend = $this->tagsdecl2rendition($tagdeclid);
+            if ( isset($rend)) {
+                $element->removeAttribute("rendition");
+                $element->setAttribute("rend", $rend);
+error_log("<li>{$element->nodeName} : $tagdeclid => rend = $rend</li>\n\n",3,self::_DEBUGFILE_);
+            } else {
+error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n\n",3,self::_DEBUGFILE_);
+            }
+        }
+
 
 
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
@@ -2094,7 +2172,7 @@ error_log("<li>[rendition] key : $rendition</li>\n", 3, self::_DEBUGFILE_);
                         break;
                     // table no-border
                     case 'border-right:none':
-                    case 'boder-left:none':
+                    case 'border-left:none':
                     case 'border-top:none':
                     case 'border-bottom:none':
 error_log("<li>[styles2csswhitelist] no-border</li>\n", 3, self::_DEBUGFILE_);
@@ -2179,6 +2257,71 @@ error_log("<li>[greedy] {$node->nodeName} : rend=$rend, key=$key, surround=$surr
                 return null;
             }
         }
+
+        /** css tagsDecl to tei:hi rendition ! **/
+        private function tagsdecl2rendition($tagdeclid, $type="strict") {
+        error_log("<h4>tagsdecl2rendition() [tagdeclid=$tagdeclid][type=$type]</h4>\n",3,self::_DEBUGFILE_);
+            if (! isset($this->tagsDecl[$tagdeclid])) {
+error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
+                return null;
+            }
+            $tagdecl = $this->tagsDecl[$tagdeclid];
+            switch ($tagdecl) {
+                case 'font-style:italic':
+                    $rend = "italic";
+                    break;
+                case 'font-weight:bold':
+                    $rend = "bold";
+                    break;
+                case 'text-decoration:underline':
+                    $rend = "underline";
+                    break;
+                case 'font-weight:normal':
+                    $rend = "normal";
+                    break;
+                case 'font-variant:small-caps':
+                    $rend = "small-caps";
+                    break;
+                case 'text-transform:uppercase':
+                    $rend = "sup";
+                    break;
+                case 'text-transform:lowercase':
+                    $rend = "sub";
+                    break;
+                case 'text-transform:uppercase':
+                    $rend = "uppercase";
+                    break;
+                case 'text-transform:lowercase':
+                    $rend = "lowercase";
+                    break;
+                case 'direction:ltr':
+                    $rend = "left-to-right";
+                    break;
+                case 'direction:rtl':
+                    $rend = "right-to-left";
+                    break;
+                // table no-border
+                case 'border-right:none':
+                    $rend = "border-right(none)";
+                    break;
+                case 'border-left:none':
+                    $rend = "border-left(none)";
+                    break;
+                case 'border-top:none':
+                    $rend = "border-top(none)";
+                    break;
+                case 'border-bottom:none':
+                    $rend = "border-bottom(none)";
+                    break;
+                default:
+error_log("<li>??? $tagsdecl ???</li>\n",3,self::_DEBUGFILE_);
+                    break;
+            }
+
+            return $rend;
+        }
+
+
 
         /** get meta from lodel document **/
         private function oolodel2meta(&$dom) {

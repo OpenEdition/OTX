@@ -78,7 +78,6 @@ else {
             echo "\n</soffice>";
             echo "\n</servoo>";
 	}
-
     } 
     catch (SoapFault $fault) {
             echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
