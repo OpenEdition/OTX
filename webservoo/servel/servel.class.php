@@ -887,6 +887,7 @@ error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n", 3, self::_DEBUGFILE
 error_log("<li>surround = $surround</li>\n",3,self::_DEBUGFILE_);
                     switch($surround) {
                         case "-*":
+error_log("<li>case PREV</li>\n",3,self::_DEBUGFILE_);
                         if ( isset($previtem['section'])) {
                             $newsection = $previtem['section'];
 error_log("<li>! PREV-section = $newsection</li>\n",3,self::_DEBUGFILE_);
@@ -894,15 +895,26 @@ error_log("<li>! PREV-section = $newsection</li>\n",3,self::_DEBUGFILE_);
                                 $newbacksection = $previtem['rend'];
 error_log("<li>! newbacksection = $newbacksection</li>\n",3,self::_DEBUGFILE_);
                             }
+                        } else {
+                            if ( isset($current['section'])) {
+                                $newsection = $current['section'];
+error_log("<li>default-new-section = $newsection</li>\n",3,self::_DEBUGFILE_);
+                            }
                         }
                         break;
                     case "*-":
+error_log("<li>case NEXT</li>\n",3,self::_DEBUGFILE_);
                         if ( isset($nextitem['section'])) {
                             $newsection = $nextitem['section'];
 error_log("<li>! NEXT-section = $newsection</li>\n",3,self::_DEBUGFILE_);
                             if ($newsection=="back" and isset($nextitem['rend'])) {
                                 $newbacksection = $nextitem['rend'];
 error_log("<li>! newbacksection = $newbacksection</li>\n",3,self::_DEBUGFILE_);
+                            }
+                        } else {
+                            if ( isset($current['section'])) {
+                                $newsection = $current['section'];
+error_log("<li>default-new-section = $newsection</li>\n",3,self::_DEBUGFILE_);
                             }
                         }
                         break;
@@ -1738,7 +1750,37 @@ error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFI
             }
             $parent->removeChild($lodel);
         }
-
+        // clean Lodel sections
+        $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
+        if ($entries->length) {
+            $lodelmeta = $entries->item(0);
+            if (! $lodelmeta->hasChildNodes()) {
+                $parent = $lodelmeta->parentNode;
+                $parent->removeChild($lodelmeta);
+            } else {
+                error_log("<li>? [Warning] /text/front/div[@rend='LodelMeta'] not empty !</li>\n",3,self::_DEBUGFILE_);
+            }
+        }
+        $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
+        if ($entries->length) {
+            $lodelbiblgr = $entries->item(0);
+            if (! $lodelbiblgr->hasChildNodes()) {
+                $parent = $lodelbiblgr->parentNode;
+                $parent->removeChild($lodelbiblgr);
+            } else {
+                error_log("<li>? [Warning] /back/div[@rend=LodelBibliography] not empty !</li>\n",3,self::_DEBUGFILE_);
+            }
+        }
+        $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
+        if ($entries->length) {
+            $lodelappdx = $entries->item(0);
+            if (! $lodelappdx->hasChildNodes()) {
+                $parent = $lodelappdx->parentNode;
+                $parent->removeChild($lodelappdx);
+            } else {
+                error_log("<li>? [Warning] /back/div[@rend='LodelAppendix'] not empty !</li>\n",3,self::_DEBUGFILE_);
+            }
+        }
 
         # 
 error_log("<li>\n\n*** rendition ***</li>\n\n",3,self::_DEBUGFILE_);
@@ -1750,14 +1792,27 @@ error_log("<li>\n\n*** rendition ***</li>\n\n",3,self::_DEBUGFILE_);
             if ( isset($rend)) {
                 $element->removeAttribute("rendition");
                 $element->setAttribute("rend", $rend);
+                list($tmp, $id) = explode("#", $tagdeclid);
+                $query = "//tei:rendition[@xml:id='$id']";
+                $entry = $xpath->query($query); 
+                if ($entry->length) {
+error_log("<li>query = $query ({$entry->length})</li>\n\n",3,self::_DEBUGFILE_);
+                    $node = $entry->item(0);
+                    $parent = $node->parentNode;
+                    $parent->removeChild($node);
+                }
 error_log("<li>{$element->nodeName} : $tagdeclid => rend = $rend</li>\n\n",3,self::_DEBUGFILE_);
             } else {
 error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n\n",3,self::_DEBUGFILE_);
             }
         }
+        //$entries = $xpath->query("//tagsDecl");
 
+        // clean++
+        $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
+        $dom->loadXML($otxml);
 
-
+        $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
@@ -2150,9 +2205,7 @@ error_log("<li>[rendition] key : $rendition</li>\n", 3, self::_DEBUGFILE_);
                     case 'font-weight:normal':
                     case 'font-variant:small-caps':
                     case 'text-transform:uppercase':
-                        // <tei:hi rend="sup">
                     case 'text-transform:lowercase':
-                        // <tei:hi rend="sub">
                         array_push($csswhitelist, $prop);
                         break;
                     case 'font-variant:uppercase':
@@ -2282,10 +2335,10 @@ error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
                 case 'font-variant:small-caps':
                     $rend = "small-caps";
                     break;
-                case 'text-transform:uppercase':
+                case 'vertical-align:top;font-size:80%':
                     $rend = "sup";
                     break;
-                case 'text-transform:lowercase':
+                case 'vertical-align:bottom;font-size:80%':
                     $rend = "sub";
                     break;
                 case 'text-transform:uppercase':
@@ -2295,11 +2348,12 @@ error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
                     $rend = "lowercase";
                     break;
                 case 'direction:ltr':
-                    $rend = "left-to-right";
+                    $rend = "direction(ltr)";
                     break;
                 case 'direction:rtl':
-                    $rend = "right-to-left";
+                    $rend = "direction(rtl)";
                     break;
+/*
                 // table no-border
                 case 'border-right:none':
                     $rend = "border-right(none)";
@@ -2313,6 +2367,7 @@ error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
                 case 'border-bottom:none':
                     $rend = "border-bottom(none)";
                     break;
+*/
                 default:
 error_log("<li>??? $tagsdecl ???</li>\n",3,self::_DEBUGFILE_);
                     break;
