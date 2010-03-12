@@ -443,7 +443,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         }
         $dommeta = new DOMDocument;
         $dommeta->encoding = "UTF-8";
-        $dommeta->resolveExternals = true;
+        $dommeta->resolveExternals = false;
         $dommeta->preserveWhiteSpace = false;
         $dommeta->formatOutput = true;
         if (! $dommeta->loadXML($OOmeta)) {
@@ -456,7 +456,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         # lodel
         $domlodelmeta = new DOMDocument;
         $domlodelmeta->encoding = "UTF-8";
-        $domlodelmeta->resolveExternals = true;
+        $domlodelmeta->resolveExternals = false;
         $domlodelmeta->preserveWhiteSpace = false;
         $domlodelmeta->formatOutput = true;
         if (! $domlodelmeta->loadXML($lodelmeta)) {
@@ -474,7 +474,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         }
         $domsettings = new DOMDocument;
         $domsettings->encoding = "UTF-8";
-        $domsettings->resolveExternals = true;
+        $domsettings->resolveExternals = false;
         $domsettings->preserveWhiteSpace = false;
         $domsettings->formatOutput = true;
         if (! $domsettings->loadXML($OOsettings)) {
@@ -487,7 +487,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         # lodel
         $domlodelsettings = new DOMDocument;
         $domlodelsettings->encoding = "UTF-8";
-        $domlodelsettings->resolveExternals = true;
+        $domlodelsettings->resolveExternals = false;
         $domlodelsettings->preserveWhiteSpace = false;
         $domlodelsettings->formatOutput = true;
         if (! $domlodelsettings->loadXML($lodelsettings)) {
@@ -505,7 +505,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         }
         $domstyles = new DOMDocument;
         $domstyles->encoding = "UTF-8";
-        $domstyles->resolveExternals = true;
+        $domstyles->resolveExternals = false;
         $domstyles->preserveWhiteSpace = false;
         $domstyles->formatOutput = true;
         if (! $domstyles->loadXML($OOstyles)) {
@@ -518,7 +518,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         # lodel
         $domlodelstyles = new DOMDocument;
         $domlodelstyles->encoding = "UTF-8";
-        $domlodelstyles->resolveExternals = true;
+        $domlodelstyles->resolveExternals = false;
         $domlodelstyles->preserveWhiteSpace = false;
         $domlodelstyles->formatOutput = true;
         if (! $domlodelstyles->loadXML($lodelstyles)) {
@@ -651,7 +651,7 @@ EOD;
         // fodt xml
         $domfodt = new DOMDocument;
         $domfodt->encoding = "UTF-8";
-        $domfodt->resolveExternals = true;
+        $domfodt->resolveExternals = false;
         $domfodt->preserveWhiteSpace = false;
         $domfodt->formatOutput = true;
         if (! $domfodt->loadXML($xmlfodt)) {
@@ -677,7 +677,7 @@ EOD;
 
         $domteifodt = new DOMDocument;
         $domteifodt->encoding = "UTF-8";
-        $domteifodt->resolveExternals = true;
+        $domteifodt->resolveExternals = false;
         $domteifodt->preserveWhiteSpace = false;
         $domteifodt->formatOutput = true;
         if (! $domteifodt->loadXML($teifodt)) {
@@ -990,7 +990,7 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
 //$debugfile=$this->_param['TMPPATH']."nonop.debug.xml";@file_put_contents($debugfile, $lodeltei);
 
         $dom->encoding = "UTF-8";
-        $dom->resolveExternals = true;
+        $dom->resolveExternals = false;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         $dom->loadXML($lodeltei);
@@ -999,7 +999,7 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-        $dom->resolveExternals = true;
+//        $dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             error_log("\n<li>? [Warning] Lodel TEI-Lite is not valid !</li>\n",3,self::_DEBUGFILE_);
@@ -1050,7 +1050,7 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         # domloodxml to domxml
         $dom = new DOMDocument;
         $dom->encoding = "UTF-8";
-        $dom->resolveExternals = true;
+        $dom->resolveExternals = false;
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         if (! $dom->loadXML($this->_param['lodelTEI'])) {
@@ -1860,7 +1860,7 @@ error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n",3,self::_
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-        $dom->resolveExternals = true;
+//        $dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             error_log("<li>\n? [Warning] TEI-P5 is not valid !</li>\n",3,self::_DEBUGFILE_);
@@ -2635,7 +2635,7 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
 
 	    $xml = new DOMDocument;
             $xml->encoding = "UTF-8";
-            $xml->resolveExternals = true;
+            $xml->resolveExternals = false;
             $xml->preserveWhiteSpace = false;
             $xml->formatOutput = true;
 	    if (! $xml->loadXML($xmlLodelODT)) {
@@ -2643,7 +2643,7 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
                 throw new Exception($this->_status);
 	    }
             $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-odt.lodel.xml";@$xml->save($debugFile);
-            $xml->resolveExternals = true;
+            $xml->resolveExternals = false;
 
             # --------- teioop5 xsl ------------------------------------------
             $xmltei = "";
@@ -2662,7 +2662,7 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
             $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-tei.xslt.xml";file_put_contents($debugFile, $xmltei);
 
             $domTEI = new DOMDocument;
-            $domTEI->resolveExternals = true;
+            $domTEI->resolveExternals = false;
             $domTEI->preserveWhiteSpace = false;
             $domTEI->encoding = "UTF-8";
             $domTEI->formatOutput = true;
@@ -2691,7 +2691,7 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
             }
 
             $domTEI = new DOMDocument;
-            $domTEI->resolveExternals = true;
+            $domTEI->resolveExternals = false;
             $domTEI->preserveWhiteSpace = true;
             $domTEI->encoding = "UTF-8";
             $domTEI->formatOutput = true;
@@ -2732,7 +2732,7 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
         }
         $dommeta = new DOMDocument;
         $dommeta->encoding = "UTF-8";
-        $dommeta->resolveExternals = true;
+        $dommeta->resolveExternals = false;
         $dommeta->preserveWhiteSpace = false;
         $dommeta->formatOutput = true;
         if (! $dommeta->loadXML($meta)) {

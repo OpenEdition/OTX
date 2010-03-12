@@ -131,14 +131,13 @@
             </fileDesc>
             <encodingDesc>
                 <projectDesc>
-                    <p>Revues.org: centre for open electronic publishing</p>
-                    <p>Revues.org is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
+                    <p>Revues.org -centre for open electronic publishing- is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
                 </projectDesc>
                 <appInfo>
                     <application version="2.32" ident="OTX">
                         <label>Opentext - CLEO / Revues.org</label>
                         <desc>
-                            <ref target="http://www.tei-c.org/">Powered by TEI</ref>
+                            <ref target="http://www.tei-c.org/">we use TEI</ref>
                         </desc>
                     </application>
                 </appInfo>
@@ -148,11 +147,6 @@
                     <language ident="fr"/>
                 </langUsage>
                 <textClass>
-                    <keywords scheme="lodel">
-                        <term>Lodel</term>
-                        <term>Opentext</term>
-                        <term>TEI P5</term>
-                    </keywords>
                 </textClass>
             </profileDesc>
         </teiHeader>
