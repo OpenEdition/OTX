@@ -840,8 +840,13 @@ error_log("<li>[oo2lodelxml] rendition = $rendition</li>\n",3,self::_DEBUGFILE_)
         ksort($Pdecl); ksort($Tdecl); ksort($decl);
 
         $header = $dom->getElementsByTagName('teiHeader')->item(0);
-        $newnode = $dom->createElement("encodingDesc");
-        $encodingDesc = $header->appendChild($newnode);
+        $entries = $xpath->query("//tei:teiHeader/tei:encodingDesc");
+        if ($entries->length) {
+            $encodingDesc = $entries->item(0);
+        } else {
+            $newnode = $dom->createElement("encodingDesc");
+            $encodingDesc = $header->appendChild($newnode);
+        }
         $newnode = $dom->createElement("tagsDecl");
         $tagsDecl = $encodingDesc->appendChild($newnode);
         foreach ($Pdecl as $key=>$value) {
@@ -1696,12 +1701,18 @@ error_log("<li># authornote</li>\n",3,self::_DEBUGFILE_);
             $front->appendChild($div);
             $parent->removeChild($item);
         }
+        # ...
         $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
         if ($entries->length) {
             foreach ($entries as $entry) {
                 if ($entry->hasChildNodes()) {
+                    // TODO warnings ?
                     foreach ($entry->childNodes as $child) {
                         $div = $dom->createElement("div");
+                        if ( $lang=$child->getAttribute('xml:lang')) {
+                            $div->setAttribute('xml:lang', $lang);
+                            $child->removeAttribute('xml:lang');
+                        }
                         if ($child->hasAttributes()) {
                             foreach ($child->attributes as $attr) {
                                 $div->setAttribute($attr->name, $attr->value);
@@ -1780,6 +1791,7 @@ error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFI
             }
             $parent->removeChild($lodel);
         }
+
         // clean Lodel sections
         $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
         if ($entries->length) {
@@ -1850,7 +1862,26 @@ error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n",3,self::_
                 $parent->removeChild($tagsDecl);
             }
         }
-
+        $entries = $xpath->query("//tei:encodingDesc");
+        if ($entries->length) {
+            $encodingDesc = $entries->item(0);
+            if (! $encodingDesc->hasChildNodes()) {
+                $parent = $encodingDesc->parentNode;
+                $parent->removeChild($encodingDesc);
+            }
+        }
+/*
+        // headings
+error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
+        $entries = $xpath->query("//tei:body/tei:p[contains(@rend,'heading')]");
+        foreach ($entries as $entry) {
+            $parent = $entry->parentNode;
+            $rend = ;
+            preg_match("/^heading(\d+)$/", $entry->getAttribute("rend"), $match);
+            #<ab type="head" subtype="level1">Introduction</ab>
+error_log("<li>{$entry->nodeName} $rend : {$entry->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+        }
+*/
         // clean++
         $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
         $dom->loadXML($otxml);
