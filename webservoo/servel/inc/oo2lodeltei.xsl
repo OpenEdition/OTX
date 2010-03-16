@@ -137,7 +137,7 @@
                     <application version="2.32" ident="OTX">
                         <label>Opentext - CLEO / Revues.org</label>
                         <desc>
-                            <ref target="http://www.tei-c.org/">we use TEI</ref>
+                            <ref target="http://www.tei-c.org/">We use TEI</ref>
                         </desc>
                     </application>
                 </appInfo>

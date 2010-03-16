@@ -993,6 +993,7 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $search = array("<nop>", "</nop>");
         $lodeltei = "". str_replace($search, "", $dom->saveXML()); // ... and delete <nop>
 //$debugfile=$this->_param['TMPPATH']."nonop.debug.xml";@file_put_contents($debugfile, $lodeltei);
+        $lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);    // TODO Warning
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
@@ -1004,7 +1005,7 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-//        $dom->resolveExternals = true;
+        //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             error_log("\n<li>? [Warning] Lodel TEI-Lite is not valid !</li>\n",3,self::_DEBUGFILE_);
@@ -1266,8 +1267,8 @@ error_log("<li># /tei/teiHeader/publicationStmt</li>\n",3,self::_DEBUGFILE_);
             $parent->removeChild($entry);
         }
         else {
-// TODO : warning no date defined
-error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
+            // TODO : warning no date defined
+            error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
         }
 
         # /tei/teiHeader/publicationStmt/availability [lodel:license]
@@ -1332,8 +1333,8 @@ error_log("<li># /tei/teiHeader/sourceDesc</li>\n",3,self::_DEBUGFILE_);
             $parent->removeChild($entry);
         }
         else {
-// TODO : warning no title defined
-error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
+            // TODO : warning no title defined
+            error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
         }
         // Lodel:auteurs as tei:respStmt
         $entries=$xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor']");
@@ -1365,8 +1366,8 @@ error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
             }
         }
         else {
-        // TODO : warning no author defined
-        error_log("<li>? [Warning] no author defined</li>\n",3,self::_DEBUGFILE_);
+            // TODO : warning no author defined
+            error_log("<li>? [Warning] no author defined</li>\n",3,self::_DEBUGFILE_);
         }
         # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
@@ -1870,18 +1871,31 @@ error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n",3,self::_
                 $parent->removeChild($encodingDesc);
             }
         }
-/*
+
         // headings
 error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:body/tei:p[contains(@rend,'heading')]");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;
-            $rend = ;
             preg_match("/^heading(\d+)$/", $entry->getAttribute("rend"), $match);
             #<ab type="head" subtype="level1">Introduction</ab>
-error_log("<li>{$entry->nodeName} $rend : {$entry->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+            $head = $dom->createElement("ab", $entry->nodeValue);
+            $head->setAttribute("type", "head");
+            $head->setAttribute("subtype", "level".$match[1]);
+            $parent->replaceChild($head, $entry);
         }
-*/
+        // <floatingText type="box">
+        $entries = $xpath->query("//tei:body/tei:p[@rend='box']");
+        foreach ($entries as $entry) {
+            $parent = $entry->parentNode;
+            $clone = $entry->cloneNode(true);
+            $floatingText = $dom->createElement("floatingText");
+            $floatingBody = $dom->createElement("body");
+            $floatingText->appendChild($floatingBody);
+            $floatingBody->appendChild($clone);
+            $parent->replaceChild($floatingText, $entry);
+        }
+
         // clean++
         $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
         $dom->loadXML($otxml);
@@ -1891,7 +1905,7 @@ error_log("<li>{$entry->nodeName} $rend : {$entry->nodeValue}</li>\n",3,self::_D
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-//        $dom->resolveExternals = true;
+        //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             error_log("<li>\n? [Warning] TEI-P5 is not valid !</li>\n",3,self::_DEBUGFILE_);
@@ -2267,12 +2281,12 @@ error_log("<li>[rendition] key : $rendition</li>\n",3,self::_DEBUGFILE_);
             foreach ($properties as $prop) {
                 // xhtml:sup
                 if ( preg_match("/^text-position:super/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:top;font-size:80%");
+                    array_push($csswhitelist, "vertical-align:super");
                     continue;
                 }
                 // xhtml:sub
                 if ( preg_match("/^text-position:sub/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:bottom;font-size:80%");
+                    array_push($csswhitelist, "vertical-align:sub");
                     continue;
                 }
                 if ( preg_match("/^language:(.*)$/", $prop, $match)) {
@@ -2420,10 +2434,10 @@ error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
                     case 'font-variant:small-caps':
                         $rend .= "small-caps";
                         break;
-                    case 'vertical-align:top':
+                    case 'vertical-align:super':
                         $rend .= "sup";
                         break;
-                    case 'vertical-align:bottom':
+                    case 'vertical-align:sub':
                         $rend .= "sub";
                         break;
                     case 'font-size:80%':
