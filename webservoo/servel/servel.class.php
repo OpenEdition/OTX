@@ -98,19 +98,7 @@ class Servel
     public function __destruct() {
     error_log("\n<h3>__destruct</h3></ul>",3,self::_DEBUGFILE_);
         //@unlink($this->_param['sourcepath']);
-/*
-        //@unlink($this->_param['DEBUGPATH']);
-        $handle=fopen($this->_param['DEBUGPATH'],"a+");
-        fwrite($handle,"<ul id=\"".date("Y-m-d H:i:s")."\">\n".$this->_trace."</ul>\n");fflush($handle);
-        fclose($handle); @chmod($this->_param['DEBUGPATH'], 0660);
 
-        // TODO if debug mode
-        @unlink("/tmp/otx.debug.log");
-        $handle=fopen("/tmp/otx.debug.log","w+");
-        fwrite($handle,"\n".date("Y-m-d H:i:s")."\n");fflush($handle);
-        fwrite($handle, print_r( debug_backtrace(),true));fflush($handle);
-        fclose($handle);
-*/
         unlink(self::_WEBSERVOO_LOCKFILE_);
     }
     public function __wakeup(){
@@ -2312,7 +2300,10 @@ error_log("<li>[rendition] key : $rendition</li>\n",3,self::_DEBUGFILE_);
                         break;
                     case 'text-underline-style:solid':
                         array_push($csswhitelist, "text-decoration:underline");
-                        break;
+                        break; 
+                    case 'text-line-through-style:solid':
+                        array_push($csswhitelist, "text-decoration:line-through");
+                        break; 
                     case 'writing-mode:lr-tb':
                         array_push($csswhitelist, "direction:ltr");
                         break;
@@ -2425,11 +2416,14 @@ error_log("<li>!!! $tagsdeclid => return null</li>\n",3,self::_DEBUGFILE_);
                     case 'font-weight:bold':
                         $rend .= "bold";
                         break;
+                    case 'font-weight:normal':
+                        $rend .= "normal";
+                        break;
                     case 'text-decoration:underline':
                         $rend .= "underline";
                         break;
-                    case 'font-weight:normal':
-                        $rend .= "normal";
+                    case 'text-decoration:line-through':
+                        $rend .= "strike";
                         break;
                     case 'font-variant:small-caps':
                         $rend .= "small-caps";
