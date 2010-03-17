@@ -1945,7 +1945,14 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
             error_log("<li>command : $command</li>\n",3,self::_DEBUGFILE_);
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
+/*
+ob_start();
+passthru("<i>command</i>");
+$var = ob_get_contents();
+ob_end_clean(); //Use this instead of ob_flush()
+*/
             sleep(1);
+
 /*
             // TODO
             if ($returnvar!=0) {
@@ -2153,12 +2160,12 @@ error_log("<li>[ooautomaticstyles] KEY = $key</li>\n",3,self::_DEBUGFILE_);
                         $key = $parent."#".$name;
                     }
                 }
-
+/*
                 if ($parent and isset($this->EMotx[$parent])) {
 $toto=$this->EMotx[$key];error_log("<li>[ooautomaticstyles] SKIP $key : $toto</li>\n",3,self::_DEBUGFILE_);
                     continue; // Lodel style definition: skip
                 }
-
+*/
                 if ($item->hasChildNodes()) {
                     foreach ($item->childNodes as $child) {
                         switch ($child->nodeName) {
