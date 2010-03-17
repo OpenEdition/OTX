@@ -407,7 +407,7 @@ $debug="<li>EMotx</li><ul><pre>".print_r($this->EMotx,true)."</pre></ul>\n";erro
     protected function lodelodt() {
     error_log("<h3>lodelodt</h3>\n",3,self::_DEBUGFILE_);
 
-        $cleanup = array('/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
+        $cleanup = array('/_20_Car/', '/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
         $odtfile = $this->_param['odtpath'];
 error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
