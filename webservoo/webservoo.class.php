@@ -22,6 +22,7 @@ class WebServoo
     public $odt = null;     // return odt document
     public $lodelxml = "";  // return lodel xml
 
+
 //    protected $singleton;
     protected $mode;
     // authed user informations
@@ -56,9 +57,9 @@ class WebServoo
     public final function webservooToken()
     {
         error_log(date("Y-m-d H:i:s")." Token()\n", 3, self::__LOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Token()\n",3,__ERRORLOGFILE__);
 	$this->_sessionToken = md5(uniqid(mt_rand(),true));
 
-        //return new SoapVar( array('sessionToken' => $this->_sessionToken), SOAP_ENC_OBJECT);
 	return array('sessionToken' => $this->_sessionToken);
     }
 
@@ -73,6 +74,7 @@ class WebServoo
     public final function webservooAuth($input) 
     {
         error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__ERRORLOGFILE__);
 # TODO !!!
 /*
 	if ($this->_isLogged) {
@@ -121,6 +123,8 @@ class WebServoo
     **/
     public final function webservooAuthResponse($result) 
     {
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." AuthResponse()\n",3,__ERRORLOGFILE__);
+
 	if (!$result) {
             error_log(date("Y-m-d H:i:s")." authentication FALSE\n", 3, self::__LOGFILE__);
             // reset auth informations
@@ -142,7 +146,8 @@ class WebServoo
     **/
     public final function webservooRequest($input)
     {
-//        $Servel = null;
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__ERRORLOGFILE__);
+        // $Servel = null;
 
 	if (!$this->_isLogged) {
             throw new SoapFault("WebServOO FaultError", //faultcode
@@ -152,14 +157,14 @@ class WebServoo
                                 "UTF-8" // faultname
                                 /*$headerfault // headerfault */ );
 	}
-
+/*
         $is_locked = false;
         do {
             $is_locked = file_exists("/tmp/otx.lock"); 
             error_log(date("Y-m-d H:i:s")." waiting...\n", 3, self::__LOGFILE__);
             sleep(1);
         } while ($is_locked);
-
+*/
         $this->mode = $input->mode;
         error_log(date("Y-m-d H:i:s")." {$this->mode}\n", 3, self::__LOGFILE__);
 
@@ -236,13 +241,6 @@ class WebServoo
             $this->lodelxml = $return['lodelxml'];
         }
 
-// debug/dump
-ob_start();
-var_dump($Servel);
-file_put_contents(__DUMP__, ob_get_contents());
-ob_end_clean();
-
-
         return $this->webservooResponse();
     }
 
@@ -254,6 +252,14 @@ ob_end_clean();
     public final function webservooResponse()
     {
         error_log(date("Y-m-d H:i:s")." status: {$this->status}\n", 3, self::__LOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Response()\n",3,__ERRORLOGFILE__);
+
+        if ( defined('__DUMP__')) { // debug/dump
+            ob_start();
+            var_dump($Servel);
+            file_put_contents(__DUMP__, ob_get_contents());
+            ob_end_clean();
+        }
 
 	return array(  'status'     => $this->status,
                        'xml'        => $this->xml,
@@ -266,6 +272,5 @@ ob_end_clean();
 
 // End of WebServoo SoapServer Class
 }
-
 
 ?>

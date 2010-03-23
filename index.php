@@ -6,44 +6,89 @@
  * @copyright 2008-2009, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
-header("content-type: application/xml");
 ini_set("max_execution_time", "180");
 ini_set("max_input_time", "180");
 ini_set("post_max_size", "32M");
 ini_set("upload_max_filesize", "32M");
 ini_set("memory_limit", "256M");
-set_time_limit(0);
+set_time_limit(3600);
 
-if(file_exists("Devel/otix/devel.inc.php"))
-    include_once('Devel/otix/devel.inc.php');  // DEVEL(debug) MODE
-else 
-    include_once('webservoo/servoo2.inc.php');
-
-if(!class_exists('WebServoo', FALSE))
+include_once('otxconfig.inc.php');
+if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');else// DEVEL(debug) MODE
+include_once('webservoo/servoo2.inc.php');
+if (! class_exists('WebServoo', FALSE)) 
     require_once('webservoo/webservoo.class.php');
 
+/*
+$realm = 'Restricted area';
+//utilisateur => mot de passe
+$users = array('otx'=>"opentext", 'guest'=>'guest');
+
+if ( empty($_SERVER['PHP_AUTH_DIGEST'])) {
+    header('HTTP/1.1 401 Unauthorized');
+    header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.uniqid().'",opaque="'.md5($realm).'"');
+
+    die("Auhtentication failed! Logout.");
+}
+// analyse la variable PHP_AUTH_DIGEST
+if ( !($data=http_digest_parse($_SERVER['PHP_AUTH_DIGEST'])) || !isset($users[$data['username']]))
+    die('Mauvaise Pièce d\'identité!');
+
+// Génération de réponse valide
+$A1 = md5($data['username'] . ':' . $realm . ':' . $users[$data['username']]);
+$A2 = md5($_SERVER['REQUEST_METHOD'].':'.$data['uri']);
+$valid_response = md5($A1.':'.$data['nonce'].':'.$data['nc'].':'.$data['cnonce'].':'.$data['qop'].':'.$A2);
+
+if ($data['response'] != $valid_response)
+    die('Mauvaise Pièce d\'identitée!');
+
+// ok, utilisateur & mot de passe valide
+//echo 'Vous êtes identifié en tant que : ' . $data['username'];
+*/
 
 if (!empty($_GET)) {
     if (isset($_GET['wsdl'])) {
-        readfile('./webservoo.wsdl');
+        header("content-type: application/xml; charset=UTF-8",true);
+        readfile('./webservoo/webservoo.wsdl');
         die();
     }
-    if (isset($_GET['debug'])) {
-        header("content-type: application/xml");
-        echo '<?xml version="1.0" encoding="UTF-8"?>';
-        echo '<ul class="Servel">';
-        readfile(__DEBUG__);
-        echo '</ul>';
+    if ( isset($_GET['admin'])) {
+        $admin = $_GET['admin'];
+        switch ($admin) {
+            // TODO !
+            case 'log':
+                header("Content-Type: text/plain; charset=UTF-8",true); 
+                readfile(__OTX_PWD__."CACHE/tmp/otx.log");
+                break;
+            case 'report':
+                header("content-type: application/xml; charset=UTF-8",true);
+                readfile(__OTX_PWD__."CACHE/tmp/report.xml");
+                break;
+            case 'debug':
+                header("Content-Type: text/html; charset=UTF-8",true); 
+                readfile(__DEBUG__);
+                break;
+            case 'dump':
+                header("Content-Type: text/plain; charset=UTF-8",true); 
+                readfile(__DUMP__);
+                break;
+            default:
+                header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found",true,404);
+                header("Content-Type: text/plain; charset=UTF-8"); 
+                break;
+        }
         die();
     }
 }
 else {
+
+header("content-type: application/xml; charset=UTF-8", true);
 # create the server instantiation
     try {
         $options = array();
-        $options['trace'] = true;
+        $options['trace'] = TRUE;
         $options['soap_version'] = SOAP_1_2;
-        $options['exceptions'] = true;
+        $options['exceptions'] = TRUE;
         $options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
         $options['encoding'] = SOAP_LITERAL;
         $wsdl = __WEBSERVOO_WSDL__;
@@ -52,13 +97,10 @@ else {
         # Définit la classe qui gère les requêtes SOAP
         $WebServOO->setClass('WebServoo');
 
-
-	# In order to avoid using PHP-SOAP's default no HTTP_RAW_POST_DATA fault,
-	# we will expressly return this fault for no request (eg from a browser)
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
-		$WebServOO->setPersistence(SOAP_PERSISTENCE_SESSION);
-		$WebServOO->handle();
-	} 
+            $WebServOO->setPersistence(SOAP_PERSISTENCE_SESSION);
+            $WebServOO->handle();
+	}
         else {
             echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
             echo "\n<servoo type=\"welcome\">\n";
@@ -105,14 +147,6 @@ function _soffice(&$status) {
     $result = "" .exec("ps aux | grep soffice.bin | grep -v grep | grep -v su 2>&1", $_ouput, $_returnvar);
     if ($result=="" OR $_returnvar==1) {
         $status = "down";
-/*
-        $command = '/opt/openoffice.org2.4/program/soffice -headless -accept="socket,host=127.0.0.1,port=8100;urp;" -nofirststartwizard';
-        $result = shell_exec("$command >/tmp/soffice.log &");
-        echo "<result>$result</result>";
-        echo "<returnvar>$_returnvar</returnvar>";
-        echo "<output><![CDATA["; var_dump($_output); echo "]]></output>";
-        $status = "start";
-*/
     }
     else {
         $status = "running";
@@ -121,18 +155,29 @@ function _soffice(&$status) {
     $ps['cpu'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $3'}");
     $ps['mem'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $4'}");
     $ps['pid'] = $pid = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $2'}");
-    if (/*$ps['cpu'] < 5 AND*/ $ps['mem'] > 75) {
+    if ($ps['mem'] > 75) {
         $status = "to be restarted";
-/*
-        $status = "kill";
-        $result = "" .exec("kill $pid 2>&1", $_ouput, $_returnvar);
-        echo "<result>$result</result>";
-        echo "<returnvar>$_returnvar</returnvar>";
-        echo "<output><![CDATA["; var_dump($_output); echo "]]></output>";
-*/
     }
 
     return $ps;
+}
+
+// fonction pour analyser l'en-tête http auth
+function http_digest_parse($txt)
+{
+    // protection contre les données manquantes
+    $needed_parts = array('nonce'=>1, 'nc'=>1, 'cnonce'=>1, 'qop'=>1, 'username'=>1, 'uri'=>1, 'response'=>1);
+    $data = array();
+    $keys = implode('|', array_keys($needed_parts));
+ 
+    preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $txt, $matches, PREG_SET_ORDER);
+
+    foreach ($matches as $m) {
+        $data[$m[1]] = $m[3] ? $m[3] : $m[4];
+        unset($needed_parts[$m[1]]);
+    }
+
+    return $needed_parts ? false : $data;
 }
 
 ?>

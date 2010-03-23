@@ -14,34 +14,41 @@ ini_set('soap.wsdl_cache_enabled', TRUE);
 ini_set('soap.wsdl_cache_enabled', '1');
 ini_set('soap.wsdl_cache_dir', "/tmp");
 ini_set('soap.wsdl_cache', "WSDL_CACHE_BOTH");
-ini_set('soap.wsdl_cache_ttl', "60");
-ini_set('soap.wsdl_cache_limit', "60");
+ini_set('soap.wsdl_cache_ttl', "3600");
+ini_set('soap.wsdl_cache_limit', "3600");
 
 
 # --- webservoo --------------------------------------------------------------
 
-define('__WEBSERVOO_LOCATION__',    "http://ccsdrv10.in2p3.fr/otx/");
-define('__WEBSERVOO_WSDL__',        "http://ccsdrv10.in2p3.fr/otx/?wsdl");
+// OTX URI Location
+if (! defined('__OTX_URI__'))   define('__OTX_URI__',    "http://ccsdrv10.in2p3.fr/otx/");
+// OTX ROOT PATH Location
+if (! defined('__OTX_PWD__'))   define('__OTX_PWD__',    "/data/www/otx/");
+
+define('__WEBSERVOO_LOCATION__',    __OTX_URI__);
+define('__WEBSERVOO_WSDL__',        __OTX_URI__."?wsdl");
+define('__WEBSERVOO_LOG__',         __OTX_PWD__."CACHE/tmp/otx.log");
+define('__WEBSERVOO_ERRORLOG__',    __OTX_PWD__."CACHE/tmp/otx.error.log");
 define('__WEBSERVOO_ATTACHMENT__',  "/tmp/document.source");
 define('__WEBSERVOO_SCHEMA__',      "/tmp/model.xml");
-define('__WEBSERVOO_LOG__',         "/data/www/_SERVEL/tmp/otx.log");
-define('__WEBSERVOO_ERRORLOG__',    "/data/www/_SERVEL/tmp/otx.error.log");
 define('__WEBSERVOO_LOCK__',        "/tmp/webservoo.lock");
 
 # --- servel  ----------------------------------------------------------------
 
-define('__SERVEL_SERVER__',     "http://otx.revues.org/");
+define('__SERVEL_SERVER__',     __OTX_URI__);
 define('__SERVEL_PORT__',       ":80");
-define('__SERVEL_INC__',        "/data/www/otx/webservoo/servel/inc/");
-define('__SERVEL_LIB__',        "/data/www/otx/webservoo/servel/lib/");
-define('__SERVEL_TMP__',        "/data/www/_SERVEL/tmp/"); 
-define('__SERVEL_CACHE__',      "/data/www/_SERVEL/CACHE/");
-define('__SERVEL_CACHETIME__',  60); // TODO
-
+define('__SERVEL_INC__',        __OTX_PWD__."webservoo/servel/inc/");
+define('__SERVEL_LIB__',        __OTX_PWD__."webservoo/servel/lib/");
+define('__SERVEL_TMP__',        __OTX_PWD__."CACHE/tmp/"); 
+define('__SERVEL_CACHE__',      __OTX_PWD__."CACHE/");
+define('__SERVEL_CACHETIME__',  3600*24*28);
 
 # --- soofice ----------------------------------------------------------------
 define("__SOFFICE_PYTHONPATH__",    "/opt/openoffice.org3/program/python");
 
+
 # debug
-define('__DEBUG__', "/data/www/_SERVEL/tmp/otx.debug.xml");
+define('__DEBUG__', __OTX_PWD__."CACHE/tmp/otx.debug.xml");
+# dump
+define('__DUMP__', __OTX_PWD__."CACHE/tmp/otx.dump.txt");
 ?>

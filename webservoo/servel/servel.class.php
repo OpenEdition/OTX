@@ -165,7 +165,10 @@ class Servel
             $action = $this->_param['mode'];
             $suffix = "odt";
         }
-        $this->params();
+
+        if ($action !== "hello") {
+            $this->params();
+        }
         $this->_status = "todo: $action";
 error_log("<li>? action = $action</li>\n",3,self::_DEBUGFILE_);
 error_log("<li>? suffix = $suffix</li>\n",3,self::_DEBUGFILE_);
@@ -195,8 +198,13 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
                 break;
+            case 'partners':
             case 'cairn':
                 $this->_status = "todo: cairn";
+                break;
+            case 'hello':
+                $this->hello();
+                return $this->output;
                 break;
             default:
                 $this->_status="error: unknown action ($action)";$this->_iserror=true;
@@ -2187,6 +2195,7 @@ $toto=$this->EMotx[$key];error_log("<li>[ooautomaticstyles] SKIP $key : $toto</l
                     list($lang, $rendition) = $this->styles2csswhitelist($properties); // // white list
                     $this->rendition[$key]['lang'] = $lang;
                     $this->rendition[$key]['rendition'] = $rendition;
+                    $this->rendition[$key]['family'] = $family;
                 }
             }
 
@@ -2205,7 +2214,7 @@ $toto=$this->EMotx[$key];error_log("<li>[ooautomaticstyles] SKIP $key : $toto</l
                     $key = $name;
                 }
 error_log("<li>[oostyles] name : $name</li>\n",3,self::_DEBUGFILE_);
-
+                $family = '';
                 if ($attrfamily=$attributes->getNamedItem("family")) {
                     $family = $attrfamily->nodeValue;
                     if (! isset($this->automatic[$name])) {
@@ -2246,8 +2255,20 @@ $toto=$this->EMotx[$key];error_log("<li>[oostyles] SKIP $key : $toto</li>\n",3,s
                             default:
                                 break;
                         }
+                        if ($family == '') {
+                            if ($child->nodeName == 'style:paragraph-properties') {
+                                $family = "paragraph";
+error_log("<li>[OOSTYLES] FAMILY : $family</li>\n",3,self::_DEBUGFILE_);
+                            }
+                            if ($child->nodeName == 'style:text-properties') {
+                                $family = "text";
+error_log("<li>[OOSTYLES] FAMILY : $family</li>\n",3,self::_DEBUGFILE_);
+                            }
+                        }
                     }
                     list($lang, $rendition) = $this->styles2csswhitelist($properties);
+error_log("<li>[oosyles] family : $family</li>\n",3,self::_DEBUGFILE_);
+
                     if ( isset($this->rendition[$key])) { // from automaticstyle
                         // TODO : merge ?
                         if ($this->rendition[$key]['lang']=='') {
@@ -2256,8 +2277,12 @@ $toto=$this->EMotx[$key];error_log("<li>[oostyles] SKIP $key : $toto</li>\n",3,s
                         if ($this->rendition[$key]['rendition']=='') {
                             $this->rendition[$key]['rendition'] = $rendition;
                         }
+                        if ($this->rendition[$key]['family']=='') {
+                            $this->rendition[$key]['family'] = $family;
+                        }
                     } else {
                         $this->rendition[$key]['lang'] = $lang;
+                        $this->rendition[$key]['family'] = $family;
                         //$this->rendition[$key]['rendition'] = $rendition; # Lodel style
                     }
 error_log("<li>[rendition] key : $rendition</li>\n",3,self::_DEBUGFILE_);
@@ -3135,6 +3160,155 @@ EOD;
             @unlink($this->_param['sourcepath']);
             @unlink($this->_param['odtpath']);
         }
+
+
+    /** Hello world! **/
+    protected function Hello()
+    {
+        if (defined('__DEBUG__')) error_log("<h3>Hello()</h3>\n",3,self::_DEBUGFILE_);
+
+        $this->output['status'] = "HTTP/1.0 200 OK";
+        $this->output['xml'] = "";
+        $this->output['report'] = "Hello world!";
+        $this->output['contentpath'] = '';
+        $this->output['lodelxml'] = "";
+/*
+        array('sessionToken' => $this->_sessionToken);
+        $this->status = "HTTP/1.0 200 OK";
+
+        $this->xml = <<<EOD
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI SYSTEM "http://www.tei-c.org/release/xml/tei/custom/schema/dtd/tei_all.dtd">
+  <teiHeader xml:lang="en">
+    <fileDesc>
+      <titleStmt>
+        <title type="main" xml:lang="en">Open Text XML conversion server</title>
+        <author>
+          <name xml:lang="fr">Nicolas Barts</name>
+          <affiliation>Cléo / Revues.org - CNRS,EHESS,UP,UAPV</affiliation>
+        </author>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>Revues.org</publisher>
+        <availability status="GPL">
+          <p>GNU General Public License</p>
+        </availability>
+        <date>2010-03-17T12:00:00</date>
+      </publicationStmt>
+      <sourceDesc>
+        <biblFull>
+          <titleStmt>
+            <title>Open Text XML conversion server</title>
+            <respStmt>
+              <resp>author</resp>
+              <name>Nicolas Barts</name>
+            </respStmt>
+          </titleStmt>
+          <publicationStmt>
+            <date>2010-03-17T11:59:00</date>
+          </publicationStmt>
+        </biblFull>
+      </sourceDesc>
+    </fileDesc>
+    <encodingDesc>
+      <projectDesc>
+        <p>Revues.org -centre for open electronic publishing- is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
+      </projectDesc>
+      <appInfo>
+        <application version="2.32" ident="OTX">
+          <label>Opentext - CLEO / Revues.org</label>
+          <desc>
+            <ref target="http://www.tei-c.org/">We use TEI</ref>
+          </desc>
+        </application>
+      </appInfo>
+    </encodingDesc>
+    <profileDesc>
+      <langUsage>
+        <language ident="fr"/>
+      </langUsage>
+      <textClass/>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <front/>
+    <body/>
+    <back/>
+  </text>
+</TEI>
+EOD;
+
+        $this->report = "Hello world! I'm OTX alpha-version_1.0";
+ 
+        $this->odt = null;
+
+        $this->lodelxml = <<<EOD
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI SYSTEM "http://www.tei-c.org/release/xml/tei/custom/schema/dtd/tei_all.dtd">
+  <teiHeader xml:lang="en">
+    <fileDesc>
+      <titleStmt>
+        <title type="main" xml:lang="en">Open Text XML conversion server</title>
+        <author>
+          <name xml:lang="fr">Pierre-Alain Mignot</name>
+          <affiliation>Cléo / Revues.org - CNRS,EHESS,UP,UAPV</affiliation>
+        </author>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>Revues.org</publisher>
+        <availability status="GPL">
+          <p>GNU General Public License</p>
+        </availability>
+        <date>2010-03-17T12:00:00</date>
+      </publicationStmt>
+      <sourceDesc>
+        <biblFull>
+          <titleStmt>
+            <title>Lodel</title>
+            <respStmt>
+              <resp>author</resp>
+              <name>Pierre-Alain Mignot</name>
+            </respStmt>
+          </titleStmt>
+          <publicationStmt>
+            <date>2010-03-17T11:59:00</date>
+          </publicationStmt>
+        </biblFull>
+      </sourceDesc>
+    </fileDesc>
+    <encodingDesc>
+      <projectDesc>
+        <p>Revues.org -centre for open electronic publishing- is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
+      </projectDesc>
+      <appInfo>
+        <application version="1.0" ident="Lodel">
+          <label><ref target="http://www.lodel.org/">Lodel - CLEO / Revues.org</ref></label>
+          <desc>
+            <ref target="http://www.tei-c.org/">We use TEI</ref>
+          </desc>
+        </application>
+      </appInfo>
+    </encodingDesc>
+    <profileDesc>
+      <langUsage>
+        <language ident="fr"/>
+      </langUsage>
+      <textClass/>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <front/>
+    <body/>
+    <back/>
+  </text>
+</TEI>
+EOD;
+
+        return $this->webservooResponse();
+*/
+	return true;
+    }
+
 
 // end of Servel class.
 }
