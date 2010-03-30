@@ -10,7 +10,7 @@ function _makeSortKey($text)
     //remplacement des caractères accentues en UTF8
     $replacement = array(
                             chr(194).chr(165) => 'Y', chr(194).chr(181) => 'u',
-                            
+
                             chr(195).chr(128) => 'A',
                             chr(195).chr(129) => 'A', chr(195).chr(130) => 'A',
                             chr(195).chr(131) => 'A', chr(195).chr(132) => 'A',

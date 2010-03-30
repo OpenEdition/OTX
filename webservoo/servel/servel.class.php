@@ -27,6 +27,7 @@ class Servel
     protected $meta = array();
     protected $EModel = array();
     private $EMotx = array();
+    private $EMandatory = array();
 
     private $dom = array();
     private $automatic = array();
@@ -35,6 +36,8 @@ class Servel
     private $Pnum = 0;
     private $Tnum = 0;
     private $tagsDecl = array();
+
+    private $log = array();
 
     private $_param = array();
     private $_data = array();
@@ -98,6 +101,7 @@ class Servel
     public function __destruct() {
     error_log("\n<h3>__destruct</h3></ul>",3,self::_DEBUGFILE_);
         //@unlink($this->_param['sourcepath']);
+        $this->oo2report('otx');
 
         unlink(self::_WEBSERVOO_LOCKFILE_);
     }
@@ -183,13 +187,13 @@ error_log("<li>=> contentpath = {$this->output['contentpath']}</li>\n",3,self::_
             case 'lodel':
             error_log("<li>case lodel</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice2odt();
-                $this->oo2report($this->_param['odtpath']);
+                $this->oo2report('soffice', $this->_param['odtpath']);
                 $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = _windobclean($this->_param['lodelTEI']);
-                $this->oo2report($this->_param['lodelodtpath']);
+                $this->oo2report('lodel', $this->_param['lodelodtpath']);
                 $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
 error_log("<li>lodelodtpath = {$this->_param['lodelodtpath']}</li>\n",3,self::_DEBUGFILE_);
@@ -270,7 +274,7 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                                         $bstyle = true; 
                                         $row[$attr->value] = $tag->nodeValue;
                                         $nbEmStyle++;
-                                        if ($value == '') {
+                                        if ($value=='') {
                                             if (! strstr($keys, ",")) {
                                                 $Model[$keys] = $keys;
                                             } else {
@@ -294,12 +298,17 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                                         break;
                                     case "g_type":
                                     case "g_name":
+                                        $gvalue = '' .trim($tag->nodeValue);
                                         //$row[$attr->value] = $tag->nodeValue;
                                         break;
                                     case 'surrounding':
-                                        $row[$attr->value] = $tag->nodeValue;
+                                        //$row[$attr->value] = $tag->nodeValue;
                                         break;
                                     case "otx":
+                                        $otxvalue = ''. trim($tag->nodeValue);
+                                        if ($gvalue!='' and $otxvalue!='') {
+                                            $this->EMandatory[$gvalue] = $otxvalue;
+                                        }
                                         $row[$attr->value] = $tag->nodeValue;
                                         $nbOtxStyle++;
                                         $otxkey = $otxvalue = '';
@@ -349,7 +358,7 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                     $this->EModel[$key] = $otxvalue;
             }
             else {
-                if ($newkey!= '' and $lang!='')
+                if ($newkey!='' and $lang!='')
                     $this->EModel[$newkey] = $value."-$lang";
                 else 
                     $this->EModel[$key] = $value;
@@ -538,7 +547,7 @@ error_log("<li>odtfile: $odtfile</li>\n",3,self::_DEBUGFILE_);
         $domcontent->preserveWhiteSpace = true;
         $domcontent->formatOutput = true;
         if (! $domcontent->loadXML($OOcontent)) {
-            $this->_status="error load conntent.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
             throw new Exception($this->_status);
         }
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-content.xml";@$domcontent->save($debugfile);
@@ -1004,10 +1013,13 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
-            error_log("\n<li>? [Warning] Lodel TEI-Lite is not valid !</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "? [Warning] Lodel TEI-Lite is not valid !";
+            error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         } else {
-            error_log("\n<li>Lodel TEI-Lite is valid.</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "Lodel TEI-Lite is valid.";
+            error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         }
+        $this->log['status']['lodeltei'] = $this->_status;
 
         $this->_param['lodelTEI'] = "". $dom->saveXML();
         return true;
@@ -1061,6 +1073,9 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         }
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
+
+$debug="<li>MANDATORY</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+
 
         # /tei/teiHeader
         $entries = $xpath->query("//tei:teiHeader"); $header = $entries->item(0);
@@ -1593,6 +1608,7 @@ error_log("<li># abstract</li>\n",3,self::_DEBUGFILE_);
 error_log("<li># acknowledgment</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:p[@rend='acknowledgment']");
         foreach ($entries as $item) {
+            $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
                 $lang = null;
             $div = $dom->createElement("div");
@@ -1904,10 +1920,13 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
         //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
-            error_log("<li>\n? [Warning] TEI-P5 is not valid !</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "? [Warning] OTX TEI-P5 is not valid !";
+            error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         } else {
-            error_log("<li>\nTEI-P5 is valid.</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "OTX TEI-P5 is valid.";
+            error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         }
+        $this->log['status']['otxtei'] = $this->_status;
 
         $this->_param['TEI'] = "". $dom->saveXML();
         return true;
@@ -2786,35 +2805,40 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
     /**
     * report for checkbalisage
     **/
-    protected function oo2report($filepath) {
+    protected function oo2report($step, $filepath="") {
     error_log("<h3>oo2report($filepath)</h3>\n",3,self::_DEBUGFILE_);
 
+        switch ($step) {
+            case 'soffice':
+            case 'lodel':
+                $za = new ZipArchive();
+                if (! $za->open($filepath)) {
+                    $this->_status="error open ziparchive ($filepath)";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status);
+                }
+                if (! $meta=$za->getFromName('meta.xml')) {
+                    $this->_status="error get meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status);
+                }
+                $dommeta = new DOMDocument;
+                $dommeta->encoding = "UTF-8";
+                $dommeta->resolveExternals = false;
+                $dommeta->preserveWhiteSpace = false;
+                $dommeta->formatOutput = true;
+                if (! $dommeta->loadXML($meta)) {
+                    $this->_status="error load meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status);
+                }
+                $xmlmeta = str_replace('<?xml version="1.0" encoding="UTF-8"?>', "", $dommeta->saveXML());
+                $za->close();
+                $this->log['report'][$step] = $xmlmeta;
+                break;
+        }
+
         $mode = $this->_param['mode'];
-        $xmlreport = ''. $this->_param['xmlreport'];
+        $xmlreport = ''; //.$this->_param['xmlreport'];
 
-        $za = new ZipArchive();
-        if (! $za->open($filepath)) {
-            $this->_status="error open ziparchive ($filepath)";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
-            throw new Exception($this->_status);
-        }
-        if (! $meta=$za->getFromName('meta.xml')) {
-            $this->_status="error get meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
-            throw new Exception($this->_status);
-        }
-        $dommeta = new DOMDocument;
-        $dommeta->encoding = "UTF-8";
-        $dommeta->resolveExternals = false;
-        $dommeta->preserveWhiteSpace = false;
-        $dommeta->formatOutput = true;
-        if (! $dommeta->loadXML($meta)) {
-            $this->_status="error load meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
-            throw new Exception($this->_status);
-        }
-        $xmlmeta = str_replace('<?xml version="1.0" encoding="UTF-8"?>', "", $dommeta->saveXML());
-        $za->close();
-
-        if ($xmlreport === '') {
-            $xmlreport = <<<EOD
+        $xmlreport = <<<EOD
 <?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
@@ -2827,27 +2851,59 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
     xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" 
     xmlns:ooo="http://openoffice.org/2004/office"   
 >
-    <item rdf:about="http://otx.revues.org/?soffice=document.doc">
+EOD;
+
+        if ( isset($this->log['report']['soffice'])) {
+            $xmlreport .= <<<EOD
+    <item rdf:about="#soffice">
         <title>openoffice document-meta</title>
-        <link></link>
+        <link>http://otx.lodel.org/?soffice</link>
         <description>
         OpenOffice original document properties
         </description>
-        $xmlmeta
-    </item>
-EOD;
-        } 
-        else { 
-            $xmlreport = str_replace('</rdf:RDF>', "", $this->_param['xmlreport']);
-            $xmlreport .= <<<EOD
-    <item rdf:about="http://otx.revues.org/?lodel=document.odt">
-        <title>openoffice lodel-meta</title>
-        <link></link>
-        <description>Lodel ODT document properties</description>
-        $xmlmeta
+        {$this->log['report']['soffice']}
     </item>
 EOD;
         }
+ 
+        if ( isset($this->log['report']['lodel'])) {
+            $xmlreport .= <<<EOD
+    <item rdf:about="#lodel">
+        <title>openoffice lodel-meta</title>
+        <link>http://otx.lodel.org/?lodel</link>
+        <description>Lodel ODT document properties</description>
+        {$this->log['report']['lodel']}
+    </item>
+EOD;
+        }
+
+        if ( isset($this->log['status'])) {
+            $xmlreport .= <<<EOD
+    <item rdf:about="#status">
+        <title>OTX status</title>
+        <link>http://otx.lodel.org/?status</link>
+        <description>is TEI valid</description>
+        <dc:description rdf:parseType="Literal">
+            <ul class="tei">
+                <li class="lodel">{$this->log['status']['lodeltei']}</li>
+                <li class="otx">{$this->log['status']['otxtei']}</li>
+            </ul>
+        </dc:description>
+    </item>
+
+    <item rdf:about="#warning">
+        <title>OTX warning</title>
+        <link>http://otx.lodel.org/?warning</link>
+        <description>Warnings</description>
+        <dc:description rdf:parseType="Literal">
+            <ul class="warning">
+                <li class="jeff">Be careful: Jeff vicious document :-)</li>
+            </ul>
+        </dc:description>
+    </item>
+EOD;
+        }
+
         $xmlreport .= <<<EOD
 </rdf:RDF>
 EOD;

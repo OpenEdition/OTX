@@ -756,12 +756,18 @@ These seem to have no obvious translation
     <xsl:template match="text:s"/>
 
     <!-- TODO : warnings ?! -->
-    <xsl:template match="draw:rect"/>
-    <!-- anchor : mode revision -->
-    <xsl:template match='anchor'/>
+    <xsl:template match="draw:rect">
+        <xsl:comment>Warning: match="draw:rect" ??</xsl:comment>
+    </xsl:template>
+    <!-- anchor ? -->
+    <xsl:template match="anchor">
+        <xsl:comment>Warning: match="anchor" ??</xsl:comment>
+    </xsl:template>
     <!-- unkwnon tag -->
     <xsl:template match="text:*"> 
-        [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]
+        <xsl:comment>Warning: 
+            [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]
+        </xsl:comment>
     </xsl:template>
 
     <!-- sections of the OO format we don't need at present -->
@@ -776,11 +782,11 @@ These seem to have no obvious translation
     <xsl:template match="dc:*">
         <xsl:apply-templates/>
     </xsl:template>
-
+<!--
     <xsl:template match="meta:creation-date">
         <xsl:apply-templates/>
     </xsl:template>
-
+-->
     <xsl:template match="meta:editing-cycles"/>
     <xsl:template match="meta:editing-duration"/>
     <xsl:template match="meta:generator"/>

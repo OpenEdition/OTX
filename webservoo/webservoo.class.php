@@ -57,7 +57,7 @@ class WebServoo
     public final function webservooToken()
     {
         error_log(date("Y-m-d H:i:s")." Token()\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Token()\n",3,__ERRORLOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Token()\n",3,__DEBUG__);
 	$this->_sessionToken = md5(uniqid(mt_rand(),true));
 
 	return array('sessionToken' => $this->_sessionToken);
@@ -74,7 +74,7 @@ class WebServoo
     public final function webservooAuth($input) 
     {
         error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__ERRORLOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__DEBUG__);
 # TODO !!!
 /*
 	if ($this->_isLogged) {
@@ -123,7 +123,7 @@ class WebServoo
     **/
     public final function webservooAuthResponse($result) 
     {
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." AuthResponse()\n",3,__ERRORLOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." AuthResponse()\n",3,__DEBUG__);
 
 	if (!$result) {
             error_log(date("Y-m-d H:i:s")." authentication FALSE\n", 3, self::__LOGFILE__);
@@ -146,7 +146,7 @@ class WebServoo
     **/
     public final function webservooRequest($input)
     {
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__ERRORLOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__DEBUG__);
         // $Servel = null;
 
 	if (!$this->_isLogged) {
@@ -252,7 +252,7 @@ class WebServoo
     public final function webservooResponse()
     {
         error_log(date("Y-m-d H:i:s")." status: {$this->status}\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Response()\n",3,__ERRORLOGFILE__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Response()\n",3,__DEBUG__);
 
         if ( defined('__DUMP__')) { // debug/dump
             ob_start();

@@ -14,10 +14,10 @@ ini_set("memory_limit", "256M");
 set_time_limit(3600);
 
 include_once('otxconfig.inc.php');
-if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');else// DEVEL(debug) MODE
+    if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');else// DEVEL(debug) MODE
 include_once('webservoo/servoo2.inc.php');
-if (! class_exists('WebServoo', FALSE)) 
-    require_once('webservoo/webservoo.class.php');
+require_once('otx.php');
+require_once('webservoo/webservoo.class.php');
 
 /*
 $realm = 'Restricted area';
@@ -98,9 +98,20 @@ header("content-type: application/xml; charset=UTF-8", true);
         $WebServOO->setClass('WebServoo');
 
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+            if (!isset($_SERVER['PHP_AUTH_USER'])) {
+                header('WWW-Authenticate: Basic realm="My Realm"');
+                header('HTTP/1.0 401 Unauthorized');
+                //echo 'Texte utilisé si le visiteur utilise le bouton d\'annulation';
+                exit();
+            } else {
+                //echo "<p>Bonjour, {$_SERVER['PHP_AUTH_USER']}.</p>";
+                //echo "<p>Votre mot de passe est {$_SERVER['PHP_AUTH_PW']}.</p>";
+            }
+
             $WebServOO->setPersistence(SOAP_PERSISTENCE_SESSION);
             $WebServOO->handle();
-	}
+        }
         else {
             echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
             echo "\n<servoo type=\"welcome\">\n";
@@ -136,48 +147,8 @@ header("content-type: application/xml; charset=UTF-8", true);
             die(FALSE);
     }
 
-return TRUE;
+    return TRUE;
 }
 
-
-# ---
-function _soffice(&$status) {
-    $ps = array();
-    $_output = array(); $_returnvar = -1;
-    $result = "" .exec("ps aux | grep soffice.bin | grep -v grep | grep -v su 2>&1", $_ouput, $_returnvar);
-    if ($result=="" OR $_returnvar==1) {
-        $status = "down";
-    }
-    else {
-        $status = "running";
-    }
-
-    $ps['cpu'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $3'}");
-    $ps['mem'] = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $4'}");
-    $ps['pid'] = $pid = exec("ps aux | grep soffice.bin | grep -v grep | grep -v su | awk {'print $2'}");
-    if ($ps['mem'] > 75) {
-        $status = "to be restarted";
-    }
-
-    return $ps;
-}
-
-// fonction pour analyser l'en-tête http auth
-function http_digest_parse($txt)
-{
-    // protection contre les données manquantes
-    $needed_parts = array('nonce'=>1, 'nc'=>1, 'cnonce'=>1, 'qop'=>1, 'username'=>1, 'uri'=>1, 'response'=>1);
-    $data = array();
-    $keys = implode('|', array_keys($needed_parts));
- 
-    preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $txt, $matches, PREG_SET_ORDER);
-
-    foreach ($matches as $m) {
-        $data[$m[1]] = $m[3] ? $m[3] : $m[4];
-        unset($needed_parts[$m[1]]);
-    }
-
-    return $needed_parts ? false : $data;
-}
 
 ?>

@@ -622,7 +622,9 @@
     </xsl:template>
 
     <!-- drawing -->
+
     <xsl:template match="draw:plugin">
+<!-- TODO Warning -->
         <ptr target="{@xlink:href}"/>
     </xsl:template>
 
