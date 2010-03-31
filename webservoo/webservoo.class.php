@@ -224,7 +224,6 @@ class WebServoo
         $this->xml = $return['xml'];
         $this->report = $return['report'];
 
-
         if (preg_match("/^soffice/", $this->mode) or preg_match("/^lodel/", $this->mode)) {
             error_log(date("Y-m-d H:i:s")." contentpath = {$return['contentpath']}\n", 3, self::__LOGFILE__);
             if (! $this->odt = file_get_contents($return['contentpath'])) {

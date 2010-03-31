@@ -92,6 +92,8 @@ class Servel
         $this->_param['SERVERURI'] =  self::_SERVEL_SERVER_;
         $this->_param['SERVERPORT'] = self::_SERVEL_PORT_;
         $this->_param['DEBUGPATH'] = self::_DEBUGFILE_;
+
+        $this->log['warning'] = array();
     }
     /** Prevent users to clone the instance (singleton because) **/
     public function __clone() {
@@ -1007,7 +1009,11 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $search = array("<nop>", "</nop>");
         $lodeltei = "". str_replace($search, "", $dom->saveXML()); // ... and delete <nop>
 //$debugfile=$this->_param['TMPPATH']."nonop.debug.xml";@file_put_contents($debugfile, $lodeltei);
-        $lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);    // TODO Warning
+
+
+/** TODO Warning **/
+        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);    
+
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
@@ -1022,8 +1028,9 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
-            $this->_status = "? [Warning] Lodel TEI-Lite is not valid !";
-            error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "Warning: Lodel TEI-Lite is not valid !";
+            array_push($this->log['warning'], $this->_status);
+            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
         } else {
             $this->_status = "Lodel TEI-Lite is valid.";
             error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
@@ -1823,6 +1830,8 @@ error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFI
                 $parent->removeChild($lodelmeta);
             } else {
                 error_log("<li>? [Warning] /text/front/div[@rend='LodelMeta'] not empty !</li>\n",3,self::_DEBUGFILE_);
+                $this->_status = "Warning : metadata misspelling";
+                array_push($this->log['warning'], $this->_status);
             }
         }
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
@@ -1833,6 +1842,8 @@ error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFI
                 $parent->removeChild($lodelbiblgr);
             } else {
                 error_log("<li>? [Warning] /back/div[@rend=LodelBibliography] not empty !</li>\n",3,self::_DEBUGFILE_);
+                $this->_status = "? Warning : bibliograpy misspelling";
+                array_push($this->log['warning'], $this->_status);
             }
         }
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
@@ -1843,6 +1854,8 @@ error_log("<li>tag : {$tag->nodeName}={$tag->nodeValue}</li>\n",3,self::_DEBUGFI
                 $parent->removeChild($lodelappdx);
             } else {
                 error_log("<li>? [Warning] /back/div[@rend='LodelAppendix'] not empty !</li>\n",3,self::_DEBUGFILE_);
+                $this->_status = "? Warning : appendix misspelling";
+                array_push($this->log['warning'], $this->_status);
             }
         }
 
@@ -1929,8 +1942,9 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
         //$dom->resolveExternals = true;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
-            $this->_status = "? [Warning] OTX TEI-P5 is not valid !";
-            error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status = "Warning: OTX TEI-P5 is not valid !";
+            array_push($this->log['warning'], $this->_status);
+            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
         } else {
             $this->_status = "OTX TEI-P5 is valid.";
             error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
@@ -1994,15 +2008,8 @@ $debug="<li>SOFFICE ($returnvar)</li><ul><pre>".print_r($result,true)."</pre></u
                 $this->_status = "error soffice";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 throw new Exception($this->_status);
             }
-/*
-            // TODO
-            if ($returnvar!=0) {
-                @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
-                $this->_status = "error soffice : $returnvar";error_log("<li>! error: {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status);
-            }
-*/
         }
+
         $this->_param['outputpath'] = $targetpath;
         return true;
     }
@@ -2045,7 +2052,9 @@ $debug="<li>SOFFICE ($returnvar)</li><ul><pre>".print_r($result,true)."</pre></u
                         # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
                         $temp = explode(".", $sourcepath);
                         $ext = trim( array_pop($temp));
-                        error_log("<li>Warning : mime detection based on document extension ($ext)</li>\n",3,self::_DEBUGFILE_);
+                        $this->_status = "Warning : mime detection based on document extension (.$ext)";
+                        array_push($this->log['warning'], $this->_status);
+                        error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
                         switch ($ext) {
                             case "rtf":
                                 error_log("<li>warning: .rtf</li>\n",3,self::_DEBUGFILE_);
@@ -2848,6 +2857,9 @@ error_log("<h4>date : $date</h4>\n",3,self::_DEBUGFILE_);
                 $za->close();
                 $this->log['report'][$step] = $xmlmeta;
                 break;
+            default:
+$debug="<h3>LOG</h3><ul><pre>".print_r($this->log,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+                break;
         }
 
         $mode = $this->_param['mode'];
@@ -2905,14 +2917,23 @@ EOD;
             </ul>
         </dc:description>
     </item>
+EOD;
+        }
 
+$debug="<h3>WARNING</h3><ul><pre>".print_r($this->log['warning'],true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+        if ( count($this->log['warning'])) {
+            $xmlreport .= <<<EOD
     <item rdf:about="#warning">
         <title>OTX warning</title>
         <link>http://otx.lodel.org/?warning</link>
         <description>Warnings</description>
         <dc:description rdf:parseType="Literal">
             <ul class="warning">
-                <li class="jeff">Be careful: Jeff vicious document :-)</li>
+EOD;
+            foreach ($this->log['warning'] as $warning) {
+                $xmlreport .= "<li>$warning</li>\n";
+            }
+            $xmlreport .= <<<EOD
             </ul>
         </dc:description>
     </item>
@@ -3060,7 +3081,7 @@ EOD;
         $domrequest = new DOMDocument;
 	if (! $domrequest->loadXML($request)) {
             $this->_status="error: can't load xml request";$this->_iserror=true;
-            error_log("<li>! error: {$this->_status}</li>\n", 3, self::_DEBUGFILE_);
+            error_log("<li>! {$this->_status}</li>\n", 3, self::_DEBUGFILE_);
             throw new Exception($this->_status);
 	}
 

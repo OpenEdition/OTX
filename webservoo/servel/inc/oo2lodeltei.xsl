@@ -757,17 +757,16 @@ These seem to have no obvious translation
 
     <!-- TODO : warnings ?! -->
     <xsl:template match="draw:rect">
-        <xsl:comment>Warning: match="draw:rect" ??</xsl:comment>
+        <xsl:comment>Warning: match="draw:rect"</xsl:comment>
+        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
     <!-- anchor ? -->
     <xsl:template match="anchor">
-        <xsl:comment>Warning: match="anchor" ??</xsl:comment>
+        <xsl:comment>Warning: match="anchor"</xsl:comment>
     </xsl:template>
     <!-- unkwnon tag -->
     <xsl:template match="text:*"> 
-        <xsl:comment>Warning: 
-            [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]
-        </xsl:comment>
+        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
     <!-- sections of the OO format we don't need at present -->
@@ -821,10 +820,13 @@ These seem to have no obvious translation
     </xsl:template>
 
     <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
-        <xsl:apply-templates/>
+        <xsl:comment>Warning: Tracking Changes detected</xsl:comment>
+        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
-    <xsl:template match="text:table-of-content"/>
+    <xsl:template match="text:table-of-content">
+        <xsl:comment>Warning: Table Of Content detected</xsl:comment>
+    </xsl:template>
     <xsl:template match="text:index-entry-chapter"/>
     <xsl:template match="text:index-entry-page-number"/>
     <xsl:template match="text:index-entry-tab-stop"/>
