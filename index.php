@@ -12,7 +12,7 @@ ini_set("post_max_size", "32M");
 ini_set("upload_max_filesize", "32M");
 ini_set("memory_limit", "256M");
 set_time_limit(3600);
-ini_set("session.auto_start", 0); 
+ini_set("session.auto_start", 0);
 
 include_once('otxconfig.inc.php');
     if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');else// DEVEL(debug) MODE

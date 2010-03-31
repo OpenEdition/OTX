@@ -193,7 +193,6 @@ class WebServoo
             }
         }
 
-
         // singleton pattern
         try {
             $Servel = Servel::singleton($input->request, $input->mode, self::__SCHEMAPATH__, self::__ATTACHMENTPATH__);
@@ -225,7 +224,8 @@ class WebServoo
         $this->xml = $return['xml'];
         $this->report = $return['report'];
 
-        if ($this->mode === "soffice" or $this->mode === "lodel") {
+
+        if (preg_match("/^soffice/", $this->mode) or preg_match("/^lodel/", $this->mode)) {
             error_log(date("Y-m-d H:i:s")." contentpath = {$return['contentpath']}\n", 3, self::__LOGFILE__);
             if (! $this->odt = file_get_contents($return['contentpath'])) {
                 throw new SoapFault("WebServOO file_get_contents()Error",
@@ -237,7 +237,7 @@ class WebServoo
             }
         }
 
-        if ($this->mode === "lodel") {
+        if (preg_match("/^lodel/", $this->mode)) {
             $this->lodelxml = $return['lodelxml'];
         }
 

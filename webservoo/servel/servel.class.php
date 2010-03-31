@@ -162,8 +162,17 @@ class Servel
     public function run() {
     error_log("<h2>run()</h2>\n",3,self::_DEBUGFILE_);
 
+        $suffix = "odt";
         if (false!== strpos($this->_param['mode'], ":")) {
-            list($action, $suffix) = explode(":", $this->_param['mode']);
+            list($action, $tmp) = explode(":", $this->_param['mode']);
+            switch($action) {
+                case 'soffice':
+                    $suffix = $tmp;
+                    break;
+                case 'lodel':
+                    $this->_param['type'] = $tmp;
+                    break;
+            }
         }
         else {
             $action = $this->_param['mode'];
@@ -1970,16 +1979,21 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
             /*  //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
                 //$command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter3.jar -f odt ". $sourcepath;  */
             error_log("<li>command : $command</li>\n",3,self::_DEBUGFILE_);
+            /*
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
-/*
-ob_start();
-passthru("<i>command</i>");
-$var = ob_get_contents();
-ob_end_clean(); //Use this instead of ob_flush()
-*/
-            sleep(1);
-
+            */
+            $returnvar=0;$result='';
+            ob_start();
+            passthru($command, $returnvar); sleep(1);
+            $result = ob_get_contents();
+            ob_end_clean();
+$debug="<li>SOFFICE ($returnvar)</li><ul><pre>".print_r($result,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+            if ($returnvar or $result!='') {
+                @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
+                $this->_status = "error soffice";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                throw new Exception($this->_status);
+            }
 /*
             // TODO
             if ($returnvar!=0) {
@@ -2373,6 +2387,7 @@ error_log("<li>[styles2csswhitelist] no-border</li>\n",3,self::_DEBUGFILE_);
                     //error_log("<li><i>TODO: $prop ?! [strict mode]</i></li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
+                $type = $this->_param['type'];
                 if ($type==="large") {
                     if ( preg_match("/^font-size:/", $prop)) {
                         array_push($csswhitelist, $prop);
