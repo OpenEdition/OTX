@@ -10,7 +10,17 @@ register_shutdown_function('otx_shutdown');
 
 
 
-/** otx register_shutdown_function callback **/
+/** OTX Authentication **/
+function otx_check($login, $password) {
+
+    if ($login!=="otx" or $password!=="5e41921ba44c61090abef994fff2cc0d") {
+        return false;
+    }
+
+    return true;
+}
+
+/** OTX register_shutdown_function callback **/
 function otx_shutdown() {
     // logout 
     $_SESSION['auth'] = null;
@@ -18,6 +28,8 @@ function otx_shutdown() {
     unset($_COOKIE[session_name()]);
     @session_destroy();
 }
+
+
 
 
 

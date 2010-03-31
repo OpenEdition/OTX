@@ -12,12 +12,14 @@ ini_set("post_max_size", "32M");
 ini_set("upload_max_filesize", "32M");
 ini_set("memory_limit", "256M");
 set_time_limit(3600);
+ini_set("session.auto_start", 0); 
 
 include_once('otxconfig.inc.php');
     if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');else// DEVEL(debug) MODE
 include_once('webservoo/servoo2.inc.php');
 require_once('otx.php');
 require_once('webservoo/webservoo.class.php');
+
 
 /*
 $realm = 'Restricted area';
@@ -82,7 +84,6 @@ if (!empty($_GET)) {
 }
 else {
 
-header("content-type: application/xml; charset=UTF-8", true);
 # create the server instantiation
     try {
         $options = array();
@@ -93,6 +94,10 @@ header("content-type: application/xml; charset=UTF-8", true);
         $options['encoding'] = SOAP_LITERAL;
         $wsdl = __WEBSERVOO_WSDL__;
 
+        //for persistent session
+        session_start();
+
+        //service
         $WebServOO = new SoapServer($wsdl, $options);
         # Définit la classe qui gère les requêtes SOAP
         $WebServOO->setClass('WebServoo');
@@ -100,19 +105,26 @@ header("content-type: application/xml; charset=UTF-8", true);
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if (!isset($_SERVER['PHP_AUTH_USER'])) {
-                header('WWW-Authenticate: Basic realm="My Realm"');
+                header('WWW-Authenticate: Basic realm="OTX Realm"');
                 header('HTTP/1.0 401 Unauthorized');
-                //echo 'Texte utilisé si le visiteur utilise le bouton d\'annulation';
-                exit();
-            } else {
-                //echo "<p>Bonjour, {$_SERVER['PHP_AUTH_USER']}.</p>";
-                //echo "<p>Votre mot de passe est {$_SERVER['PHP_AUTH_PW']}.</p>";
+            exit();
+            }
+
+            //otx_check
+            $login = $_SERVER['PHP_AUTH_USER'];
+            $password = $_SERVER['PHP_AUTH_PW'];
+
+            if (! otx_check($login, $password)) {
+                header('WWW-Authenticate: Basic realm="OTX Realm"');
+                header('HTTP/1.0 401 Unauthorized');
+            exit();
             }
 
             $WebServOO->setPersistence(SOAP_PERSISTENCE_SESSION);
             $WebServOO->handle();
         }
         else {
+            header("content-type: application/xml; charset=UTF-8");
             echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
             echo "\n<servoo type=\"welcome\">\n";
             echo "\n<handle>";
