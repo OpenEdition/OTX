@@ -756,9 +756,9 @@ These seem to have no obvious translation
     <xsl:template match="text:s"/>
 
     <!-- TODO : warnings ?! -->
-    <xsl:template match="draw:rect">
-        <xsl:comment>Warning: match="draw:rect"</xsl:comment>
-        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    <xsl:template match="draw:*">
+        <xsl:comment>Warning: object block type, skipped</xsl:comment>
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
     <!-- anchor ? -->
     <xsl:template match="anchor">
@@ -766,7 +766,7 @@ These seem to have no obvious translation
     </xsl:template>
     <!-- unkwnon tag -->
     <xsl:template match="text:*"> 
-        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
     <!-- sections of the OO format we don't need at present -->
@@ -821,7 +821,7 @@ These seem to have no obvious translation
 
     <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
         <xsl:comment>Warning: Tracking Changes detected</xsl:comment>
-        <xsl:comment>Warning: [[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
     <xsl:template match="text:table-of-content">

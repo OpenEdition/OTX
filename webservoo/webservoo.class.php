@@ -75,6 +75,7 @@ class WebServoo
     {
         error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__DEBUG__);
+if(defined('__DEBUG__'))$debug="<li>webservooAuth</li><ul><pre>".print_r($input,true)."</pre></ul>\n";error_log($debug,3,self::__LOGFILE__);
 # TODO !!!
 /*
 	if ($this->_isLogged) {
@@ -106,7 +107,7 @@ class WebServoo
 	if (($this->_passwd = md5($passwd.$this->_sessionToken)) !== $input->password) 
             return $this->webservooAuthResponse(false);
 */	
-        $this->_user['login'] = $input->login;
+        $this->_user['login'] = $input->login;  // TODO id:login:rights ?!
 	$this->_user['id'] = $id;
 	$this->_user['lodel_user'] = $input->lodel_user;
 	$this->_user['lodel_site'] = $input->lodel_site;
@@ -147,6 +148,8 @@ class WebServoo
     public final function webservooRequest($input)
     {
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__DEBUG__);
+if(defined('__DEBUG__'))$debug="<li>webservooRequest</li><ul><pre>".print_r($input,true)."</pre></ul>\n";error_log($debug,3,self::__LOGFILE__);
+
         // $Servel = null;
 
 	if (!$this->_isLogged) {

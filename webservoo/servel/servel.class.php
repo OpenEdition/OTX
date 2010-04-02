@@ -27,6 +27,7 @@ class Servel
     protected $meta = array();
     protected $EModel = array();
     private $EMotx = array();
+    private $EMTEI = array();
     private $EMandatory = array();
 
     private $dom = array();
@@ -72,6 +73,7 @@ class Servel
         $this->input['mode'] = $mode;
         $this->input['modelpath'] = $modelpath;
         $this->input['entitypath'] = $entitypath;
+$debug="<li>INPUT</li><ul><pre>".print_r($this->input,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
 
         $this->_param['request'] = $request;
         $this->_param['mode'] = $mode;
@@ -201,6 +203,7 @@ error_log("<li>=> contentpath = {$this->output['contentpath']}</li>\n",3,self::_
                 $this->oo2report('soffice', $this->_param['odtpath']);
                 $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
+                $this->EM2TEI();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = _windobclean($this->_param['lodelTEI']);
@@ -227,7 +230,7 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                 throw new Exception($this->_status);
         }
 
-        $this->_status = "done: $action";
+        $this->_status = __OTX_NAME__;
         $this->output['status'] = $this->_status;
 
         return $this->output;
@@ -1010,9 +1013,9 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $lodeltei = "". str_replace($search, "", $dom->saveXML()); // ... and delete <nop>
 //$debugfile=$this->_param['TMPPATH']."nonop.debug.xml";@file_put_contents($debugfile, $lodeltei);
 
-
 /** TODO Warning **/
-        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);    
+error_log("<h1>/** TODO Warning **/</h1>\n",3,self::_DEBUGFILE_);
+        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
 
 
         $dom->encoding = "UTF-8";
@@ -1025,7 +1028,26 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-        //$dom->resolveExternals = true;
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
+
+        # Warnings : recommended
+$debug="<li>MANDATORY Lodel</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+        foreach ($this->EMandatory as $key=>$value) {
+            if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
+                list($section, $element) = explode(":", $value);
+                $query = "//tei:p[starts-with(@rend,'$element')]";
+                $entries = $xpath->query($query);
+error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
+                if (! $entries->length) {
+                    $this->_status = "Warning: dc:{$match[1]} not found";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                }
+            }
+        }
+
+        $dom->resolveExternals = false;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: Lodel TEI-Lite is not valid !";
@@ -1089,9 +1111,6 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         }
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
-
-$debug="<li>MANDATORY</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
-
 
         # /tei/teiHeader
         $entries = $xpath->query("//tei:teiHeader"); $header = $entries->item(0);
@@ -1934,6 +1953,23 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
         $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
         $dom->loadXML($otxml);
 
+/*
+        # Warnings : recommended
+$debug="<li>MANDATORY OTX</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+        foreach ($this->EMandatory as $key=>$value) {
+            if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
+                $query = $this->EMTEI[$value];
+                $entries = $xpath->query($query);
+error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
+                if (! $entries->length) {
+                    $this->_status = "Warning: dc:{$match[1]} not found";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                }
+            }
+        }
+*/
+
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
@@ -2165,7 +2201,14 @@ error_log("<li>{$this->_param['sourcepath']}</li>\n",3,self::_DEBUGFILE_);
                     $attribute->nodeValue = $newname;
                 }
                 else {
-                    error_log("<li>? [Warning] {$attribute->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                    /*
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE); // mimetype extension
+                    $mime =  finfo_file( $za->getStream($attribute->nodeValue));
+                    finfo_close($finfo);
+                    */
+                    $this->_status = "{$attribute->nodeValue} skipped";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                     // TODO Warning !
                 }
             }
@@ -2397,7 +2440,8 @@ error_log("<li>[styles2csswhitelist] no-border</li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
                 $type = $this->_param['type'];
-                if ($type==="large") {
+                if ($type==="extended") {
+error_log("<li><strong>=> type = $type</strong></li>\n",3,self::_DEBUGFILE_);
                     if ( preg_match("/^font-size:/", $prop)) {
                         array_push($csswhitelist, $prop);
                         continue;
@@ -3401,6 +3445,78 @@ EOD;
 	return true;
     }
 
+
+    private function EM2TEI() {
+
+        $this->EMTEI = array(
+//            'front:correction'              => "/TEI/text/front/div[@type=correction]",
+//            'header:altertitle'             => "/TEI/teiHeader/fileDesc/titleStmt/title[@type=alt]@xml:lang",
+//            'back:appendix'                 => "/TEI/text/back/div[@type=appendix]",
+//            'back:bibliography'             => "/TEI/text/back/div[@type=biliogr]",
+            'header:date'                   => "//tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:date",
+//            'header:review-date'            => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/publicationStmt/date@when",
+//            'header:creationdate'           => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/publicationStmt/date@when",
+//            'front:dedication'              => "/TEI/text/front/div[@type=dedication]",
+            'header:language'               => "//tei:teiHeader/tei:profileDesc/tei:langUsage/tei:language",
+//            'header:authornote'             => "/TEI/text/front/note[@resp=author]",
+//            'front:editornote'              => "/TEI/text/front/note[@resp=editor]",
+//            'text:endnote'                  => "/TEI/text/body/*/[note@place=end]",
+//            'text:footnote'                 => "/TEI/text/body/*/[note@place=foot]",
+//            'header:bibl'                   => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/notesStmt/note[@type=bibl]",
+//            'header:review-bibliography'    => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/notesStmt/note[@type=bibl]",
+//            'header:documentnumber'         => "/TEI/teiHeader/fileDesc/publicationStmt/idno[@type=documentnumber]",
+//            'header:pagenumber'             => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/publicationStmt/idno[@type=pp]",
+            'front:abstract'                => '//tei:text/tei:front/tei:div[@type="abstract"]',
+//            'header:subtitle'               => "/TEI/teiHeader/fileDesc/titleStmt/title[@type=sub]",
+//            'header:uptitle'                => "/TEI/teiHeader/fileDesc/titleStmt/title[@type=sup]",
+//            'text:standard'                 => "/TEI/text/body/*",
+            'header:title'                  => '//tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:title[@type="main"]',
+//            'header:review-title'           => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/titleStmt/title",
+            'header:author'                 => "//tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:author",
+//            'header:review-author'          => "/TEI/teiHeader/fileDesc/sourceDesc/biblFull/titleStmt/author",
+//            'header:scientificeditor'       => "/TEI/teiHeader/fileDesc/titleStmt/editor",
+            'header:translator'             => '//tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:editor[@role="translator"]',
+//            'header:author-affiliation'     => "/TEI/teiHeader/fileDesc/titleStmt/author/affiliation/orgName",
+//            'header:author-email'           => "/TEI/teiHeader/fileDesc/titleStmt/author/affiliation/email",
+//            'header:author-description'     => "/TEI/teiHeader/fileDesc/titleStmt/author/affiliation",
+//            'header:author-function'        => "/TEI/teiHeader/fileDesc/titleStmt/author/roleName",
+//            'header:author-prefix'          => "/TEI/teiHeader/fileDesc/titleStmt/author/roleName[@type=honorific]",
+//            'header:author-role'            => "/TEI/teiHeader/fileDesc/titleStmt/author/roleName",
+            'header:license'                => "//tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:availability",
+//            'header:chronological'          => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=chronological]",
+//            'header:geographical'           => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=chronological]",
+//            'header:keywords-de'            => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=keyword][@xml:lang=de]",
+//            'header:keywords-en'            => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=keyword][@xml:lang=en]",
+//            'header:keywords-es'            => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=keyword][@xml:lang=es]",
+            'header:keywords-fr'            => '//tei:teiHeader/tei:profileDesc/tei:textClass/tei:keywords[@scheme="keyword"]'
+//            'header:subject'                => "/TEI/teiHeader/profileDesc/textClass/keywords[@scheme=subject]",
+//            'text:quotation'                => "/TEI/text/*/p[@rend=quotation]",
+//            'text:reference'                => "/TEI/text/*/p[@rend=reference]",
+//            'text:quotation2'               => "/TEI/text/*/p[@rend=quotation2]",
+//            'text:quotation3'               => "/TEI/text/*/p[@rend=quotation3]",
+//            'text:figure-title'             => "/TEI/text/*/figure/head",
+//            'text:figure-legend'            => "text:figure-title",
+//            'text:item'                     => "/TEI/text/*/item",
+//            'text:code'                     => "/TEI/text/*/hi[rend=code]",
+//            'text:question'                 => "/TEI/text/*/p[@rend=question]",
+//            'text:answer'                   => "/TEI/text/*/p[@rend=answer]",
+//            'text:break'                    => "/TEI/text/*/p[@rend=break]",
+//            'text:heading1'                 => "/TEI/text/*/ab[@type=head][@level=1]",
+//            'text:heading3'                 => "/TEI/text/*/ab[@type=head][@level=3]",
+//            'text:heading4'                 => "/TEI/text/*/ab[@type=head][@level=4]",
+//            'text:heading5'                 => "/TEI/text/*/ab[@type=head][@level=5]",
+//            'text:heading6'                 => "/TEI/text/*/ab[@type=head][@level=6]",
+//            'text:noindent'                 => "/TEI/text/*/p[@rend=noindent]",
+//            'body:epigraph'                 => "/TEI/text/*/p[@rend=epigraph]",
+//            'text:heading2'                 => "/TEI/text/*/ab[@type=head][@level=2]",
+//            'body:epigraph'                 => "/TEI/text/*/p[@rend=epigraph]",
+//            'text:break'                    => "/TEI/text/*/p[@rend=break]",
+//            'text:quotation'                => "/TEI/text/*/p[@rend=quotation]",
+//            'text:figure-license'           => "/TEI/text/*/figure/note[@type=license]",
+//            'front:acknowledgment'          => "/TEI/text/*/p[@rend=ack]"
+        );
+
+    }
 
 // end of Servel class.
 }
