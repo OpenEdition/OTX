@@ -16,8 +16,8 @@ define('__OTX_NAME__',    "cleo.cnrs.fr");
 # system
 
 /** OTX URI Location **/
-define('__OTX_URI__',    "http://ccsdrv10.in2p3.fr/otx/");
+define('__OTX_URI__',    "http://up0.in.revues.org/otx-on/");
 /** OTX ROOT PATH Location **/
-define('__OTX_PWD__',    "/data/www/otx/");
+define('__OTX_PWD__',    "/data/www/otx-on/");
 
 ?>
