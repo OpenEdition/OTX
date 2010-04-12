@@ -21,7 +21,7 @@ class WebServoo
     public $report = "";    // return report
     public $odt = null;     // return odt document
     public $lodelxml = "";  // return lodel xml
-
+    public $orphannotes = array(); // return orphannotes
 
 //    protected $singleton;
     protected $mode;
@@ -75,7 +75,6 @@ class WebServoo
     {
         error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__DEBUG__);
-if(defined('__DEBUG__'))$debug="<li>webservooAuth</li><ul><pre>".print_r($input,true)."</pre></ul>\n";error_log($debug,3,self::__LOGFILE__);
 # TODO !!!
 /*
 	if ($this->_isLogged) {
@@ -107,7 +106,7 @@ if(defined('__DEBUG__'))$debug="<li>webservooAuth</li><ul><pre>".print_r($input,
 	if (($this->_passwd = md5($passwd.$this->_sessionToken)) !== $input->password) 
             return $this->webservooAuthResponse(false);
 */	
-        $this->_user['login'] = $input->login;  // TODO id:login:rights ?!
+        $this->_user['login'] = $input->login;
 	$this->_user['id'] = $id;
 	$this->_user['lodel_user'] = $input->lodel_user;
 	$this->_user['lodel_site'] = $input->lodel_site;
@@ -148,8 +147,6 @@ if(defined('__DEBUG__'))$debug="<li>webservooAuth</li><ul><pre>".print_r($input,
     public final function webservooRequest($input)
     {
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__DEBUG__);
-if(defined('__DEBUG__'))$debug="<li>webservooRequest</li><ul><pre>".print_r($input,true)."</pre></ul>\n";error_log($debug,3,self::__LOGFILE__);
-
         // $Servel = null;
 
 	if (!$this->_isLogged) {
@@ -243,6 +240,9 @@ if(defined('__DEBUG__'))$debug="<li>webservooRequest</li><ul><pre>".print_r($inp
             $this->lodelxml = $return['lodelxml'];
         }
 
+        if(0 === strpos($this->mode, 'orphannotes'))
+            $this->orphannotes = base64_encode(serialize($return['orphannotes']));
+
         return $this->webservooResponse();
     }
 
@@ -267,7 +267,8 @@ if(defined('__DEBUG__'))$debug="<li>webservooRequest</li><ul><pre>".print_r($inp
                        'xml'        => $this->xml,
                        'report'     => $this->report,
                        'odt'        => $this->odt,
-                       'lodelxml'   => $this->lodelxml 
+                       'lodelxml'   => $this->lodelxml,
+                       'orphannotes'=> $this->orphannotes
                     );
     }
 

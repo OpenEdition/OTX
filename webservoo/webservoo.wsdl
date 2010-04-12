@@ -13,21 +13,20 @@
              xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
              xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
              targetNamespace="urn:webservoo">
-             
     <types>
         <xsd:schema elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:webservoo">
             <xsd:complexType name="webservooAuthHeader">
                 <xsd:all>
                     <xsd:element name="login" type="xsd:string" minOccurs="1" maxOccurs="1"/>
                     <xsd:element name="password" type="xsd:string" minOccurs="1" maxOccurs="1"/>
-        		    <xsd:element name="lodel_user" type="xsd:string" minOccurs="1" maxOccurs="1"/>
-		            <xsd:element name="lodel_site" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                    <xsd:element name="lodel_user" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                    <xsd:element name="lodel_site" type="xsd:string" minOccurs="1" maxOccurs="1"/>
                 </xsd:all>
             </xsd:complexType>
 	        <xsd:complexType name="webservooAuthHeaderResponse">
-		        <xsd:all>
-		            <xsd:element name="AuthStatus" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
-		        </xsd:all>
+                    <xsd:all>
+                        <xsd:element name="AuthStatus" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
+                    </xsd:all>
             </xsd:complexType>
             <xsd:complexType name="webservooRequestType">
                 <xsd:all>
@@ -38,17 +37,18 @@
                 </xsd:all>
             </xsd:complexType>
 	        <xsd:complexType name="webservooTokenType">
-		        <xsd:all>
-		            <xsd:element name="sessionToken" type="xsd:string" minOccurs="1" maxOccurs="1"/>
-		        </xsd:all>
+                    <xsd:all>
+                        <xsd:element name="sessionToken" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                    </xsd:all>
     	    </xsd:complexType>
             <xsd:complexType name="webservooResponseType">
                 <xsd:all>
-                    <xsd:element name="xml" type="xsd:string" minOccurs="1" maxOccurs="1"/>
-                    <xsd:element name="status" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                    <xsd:element name="xml" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="status" type="xsd:string" minOccurs="0" maxOccurs="1"/>
                     <xsd:element name="report" type="xsd:hexBinary" minOccurs="0" maxOccurs="1"/>
                     <xsd:element name="odt" type="xsd:hexBinary" minOccurs="0" maxOccurs="1"/>
                     <xsd:element name="lodelxml" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+                    <xsd:element name="orphannotes" type="xsd:string" minOccurs="0" maxOccurs="1"/>
                 </xsd:all>
             </xsd:complexType>
         </xsd:schema>
@@ -61,13 +61,13 @@
         <part name="webservooAuthResponse" type="tns:webservooAuthHeaderResponse"/>
     </message>
     <message name="webservooRequest">
-	    <part name="webservooRequest" type="tns:webservooRequestType"/>
+        <part name="webservooRequest" type="tns:webservooRequestType"/>
     </message>
     <message name="webservooResponse">
-	    <part name="webservooResponse" type="tns:webservooResponseType"/>
+        <part name="webservooResponse" type="tns:webservooResponseType"/>
     </message>
     <message name="webservooToken">
-	    <part name="webservooToken" type="tns:webservooTokenType"/>
+        <part name="webservooToken" type="tns:webservooTokenType"/>
     </message>
 
     <portType name="webservooPortType">
@@ -77,9 +77,9 @@
             <output message="tns:webservooResponse"/>
         </operation>
 	    <operation name="webservooToken">
-		    <documentation>Session token</documentation>
-		    <input message="tns:webservooToken"/>
-		    <output message="tns:webservooToken"/>
+                <documentation>Session token</documentation>
+                <input message="tns:webservooToken"/>
+                <output message="tns:webservooToken"/>
         </operation>
     </portType>
 
@@ -88,28 +88,28 @@
     	<operation name="webservooRequest">
             <soap:operation soapAction="http://otx.lodel.org/webservooRequest"/>
             <input>
-		        <soap:body use="literal" message="tns:webservooRequest" part="webservooRequest" namespace="urn:webservoo"/>
-		        <soap:header use="literal" message="tns:webservooAuth" part="webservooAuth" namespace="urn:webservoo"/>
+                <soap:body use="literal" message="tns:webservooRequest" part="webservooRequest" namespace="urn:webservoo"/>
+                <soap:header use="literal" message="tns:webservooAuth" part="webservooAuth" namespace="urn:webservoo"/>
             </input>
             <output>
-		        <soap:body use="literal" message="tns:webservooResponse" part="webservooResponse" namespace="urn:webservoo"/>
-		        <soap:header use="literal" message="tns:webservooAuthResponse" part="webservooAuthResponse" namespace="urn:webservoo"/>
+                <soap:body use="literal" message="tns:webservooResponse" part="webservooResponse" namespace="urn:webservoo"/>
+                <soap:header use="literal" message="tns:webservooAuthResponse" part="webservooAuthResponse" namespace="urn:webservoo"/>
             </output>
         </operation>
 	    <operation name="webservooToken">
-		    <soap:operation soapAction="http://otx.lodel.org/webservooToken"/>
-		    <input>
-			    <soap:body use="literal"/>
-		    </input>
-		    <output>
-			    <soap:body use="literal"/>
-		    </output>
+                <soap:operation soapAction="http://otx.lodel.org/webservooToken"/>
+                <input>
+                    <soap:body use="literal"/>
+                </input>
+                <output>
+                    <soap:body use="literal"/>
+                </output>
         </operation>
     </binding>
 
     <service name="webservooService">
         <port name="webservooPort" binding="tns:webservooBinding">
-	        <soap:address location="http://otx.lodel.org/"/>
+            <soap:address location="http://otx.lodel.org/"/>
         </port>
     </service>
 
