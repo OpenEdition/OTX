@@ -10,14 +10,14 @@
 # properties
 
 /** OTX NAME **/
-define('__OTX_NAME__',    "cleo.cnrs.fr");
+define('__OTX_NAME__',    "your name here");
 
 
 # system
 
 /** OTX URI Location **/
-define('__OTX_URI__',    "http://up0.in.revues.org/otx-on/");
+define('__OTX_URI__',    "http://domain.tld/otx/");
 /** OTX ROOT PATH Location **/
-define('__OTX_PWD__',    "/data/www/otx-on/");
+define('__OTX_PWD__',    "/path/to/otx/");
 
 ?>
