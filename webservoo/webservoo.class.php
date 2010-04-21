@@ -23,7 +23,6 @@ class WebServoo
     public $lodelxml = "";  // return lodel xml
     public $orphannotes = array(); // return orphannotes
 
-//    protected $singleton;
     protected $mode;
     // authed user informations
     private $_user;
@@ -31,6 +30,8 @@ class WebServoo
     private $_isLogged;
     // session token
     private $_sessionToken;
+
+    private $Servel = null;
 
     const __ATTACHMENTPATH__    = __WEBSERVOO_ATTACHMENT__;
     const __SCHEMAPATH__        = __WEBSERVOO_SCHEMA__;
@@ -71,7 +72,7 @@ class WebServoo
       * @param string $input->lodel_site site of the lodel user
       * @return webservooAuthResponse()
     **/
-    public final function webservooAuth($input) 
+    public final function webservooAuth($input)
     {
         error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__DEBUG__);
@@ -146,7 +147,7 @@ class WebServoo
     **/
     public final function webservooRequest($input)
     {
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Request()\n",3,__DEBUG__);
+        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." webservooRequest()\n",3,__DEBUG__);
         // $Servel = null;
 
 	if (!$this->_isLogged) {
@@ -195,7 +196,7 @@ class WebServoo
 
         // singleton pattern
         try {
-            $Servel = Servel::singleton($input->request, $input->mode, self::__SCHEMAPATH__, self::__ATTACHMENTPATH__);
+            $this->Servel = Servel::singleton($input->request, $input->mode, self::__SCHEMAPATH__, self::__ATTACHMENTPATH__);
         } 
         catch(Exception $e) {
             throw new SoapFault("singleton()Error",
@@ -209,7 +210,7 @@ class WebServoo
 
         // do it !
         try {
-            $return = $Servel->run();
+            $return = $this->Servel->run();
         }
         catch(Exception $e) {
             throw new SoapFault("WebServOO run()Error",
@@ -258,7 +259,7 @@ class WebServoo
 
         if ( defined('__DUMP__')) { // debug/dump
             ob_start();
-            var_dump($Servel);
+            var_dump($this->Servel);
             file_put_contents(__DUMP__, ob_get_contents());
             ob_end_clean();
         }

@@ -9,6 +9,7 @@
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
 include_once('inc/utils.inc.php');
+include_once('inc/EM.odd.php');
 
 
 /**
@@ -27,6 +28,7 @@ class Servel
     protected $meta = array();
     protected $EModel = array();
     private $EMotx = array();
+    private $EMTEI = array();
     private $EMandatory = array();
 
     private $dom = array();
@@ -48,7 +50,6 @@ class Servel
     private $oostyle = array();
     private $_dbg = 1;
     private $_db; // adodb instance
-    private $_doc = array(); // orphan notes document
 
     const _WEBSERVOO_MODELPATH_     = __WEBSERVOO_SCHEMA__;
     const _WEBSERVOO_ENTITYPATH_    = __WEBSERVOO_ATTACHMENT__;
@@ -76,6 +77,7 @@ class Servel
         $this->input['mode'] = $mode;
         $this->input['modelpath'] = $modelpath;
         $this->input['entitypath'] = $entitypath;
+$debug="<li>INPUT</li><ul><pre>".print_r($this->input,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
 
         $this->_param['request'] = $request;
         $this->_param['mode'] = $mode;
@@ -173,7 +175,7 @@ class Servel
     error_log("<h2>run()</h2>\n",3,self::_DEBUGFILE_);
 
         $suffix = "odt";
-        if (false!== strpos($this->_param['mode'], ":")) {
+        if (false !== strpos($this->_param['mode'], ":")) {
             list($action, $tmp) = explode(":", $this->_param['mode']);
             switch($action) {
                 case 'soffice':
@@ -210,6 +212,7 @@ error_log("<li>=> contentpath = {$this->output['contentpath']}</li>\n",3,self::_
                 $this->oo2report('soffice', $this->_param['odtpath']);
                 $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
+                $this->EMTEI = EM2TEI();    //$this->EM2TEI();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = _windobclean($this->_param['lodelTEI']);
@@ -239,219 +242,12 @@ error_log("<li>contentpath = {$this->output['contentpath']}</li>\n",3,self::_DEB
                 throw new Exception($this->_status);
         }
 
-        $this->_status = "done: $action";
+        $this->_status = __OTX_NAME__;
         $this->output['status'] = $this->_status;
 
         return $this->output;
     }
 
-    /**
-     * Orphan Notes
-     * Trois types :
-     * - proposal : détection des notes
-     * - proposal-extended : détection approfondie des notes
-     * - recompose : recomposer le document à partir des choix de l'utilisateur
-     */
-    protected function orphanNotes()
-    {
-        error_log("<li>orphanNotes:{$this->_param['type']}</li>\n\n", 3, self::_DEBUGFILE_);
-
-        if('proposal-extended' === $this->_param['type'] || 'recompose' === $this->_param['type'])
-        {
-            $doc = unserialize(base64_decode(file_get_contents(self::_WEBSERVOO_ENTITYPATH_)));
-            if(empty($doc['iddocument']))
-            {
-                $this->_status="missing idDocument";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status);
-            }
-
-            $this->_doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $doc['iddocument']);
-
-            if(empty($this->_doc))
-            {
-                $this->_status="error get idDocument ".(int) $this->_param['rowid'];error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status);
-            }
-
-            $this->_doc['iddocument'] = $this->_doc['idDocument'];
-
-            if('recompose' === $this->_param['type'])
-            {
-                unset($doc['iddocument']);
-                $this->_doc = array_merge($this->_doc, $doc);
-            }
-        }
-        else
-        {
-            $realname = basename($this->_param['sourcepath']);
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            if('odt' !== $ext)
-            {
-                $this->soffice2odt();
-                $filename = $this->_param['outputpath'];
-            }
-
-            $this->_doc = array(
-                'realname' => $realname,
-                'pathDocument' => $filename
-            );
-
-            error_log("<li>DB:insert</li>\n\n", 3, self::_DEBUGFILE_);
-
-            $this->_db->execute('INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '.$this->_db->quote($this->_doc['realname']).', '.$this->_db->quote($this->_doc['pathDocument']).')');
-
-            if(! ($this->_doc['iddocument'] = $this->_db->insert_id()))
-            {
-                $this->_status="error get rowid";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status);
-            }
-        }
-
-        $za = new ZipArchive();
-        if(!$za->open($this->_doc['pathDocument']))
-        {
-            $this->_status="error open ziparchive; (".$this->_doc['pathDocument'].')';error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-            throw new Exception($this->_status);
-        }
-
-        error_log("<li>office:content</li>\n\n", 3, self::_DEBUGFILE_);
-
-        if(! ($this->_doc['xml'] = $za->getFromName('content.xml')))
-        {
-            $this->_status="error get content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-            throw new Exception($this->_status);
-        }
-
-        switch($this->_param['type'])
-        {
-            case 'proposal':
-
-                return $this->_orphanNotes(false, $za);
-
-                break;
-
-            case 'proposal-extended':
-
-                return $this->_orphanNotes(true, $za);
-
-                break;
-
-            case 'recompose':
-
-                return $this->_orphanNotesRecomposeDocument($za);
-
-                break;
-
-            default:
-                $this->_status = 'Unknown mode type';
-                error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status);
-                break;
-        }
-    }
-
-    protected function _orphanNotesRecomposeDocument(ZipArchive $za)
-    {
-        error_log("<li>_orphanNotes:RecomposeDocument</li>\n\n", 3, self::_DEBUGFILE_);
-
-        $nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->_doc['iddocument']);
-
-        $this->_doc['xml'] = $za->getFromName('final.xml');
-        $za->deleteName('final.xml');
-        $za->deleteName('content.xml');
-
-        $modeleNote = '<text:note text:id="ftn%d" text:note-class="footnote"><text:note-citation>%d</text:note-citation><text:note-body><text:p text:style-name="Footnote">%s</text:p></text:note-body></text:note>';
-
-        //Stylage des appels et notes
-        for( $curnote = 1 ; $curnote <= $nbNotesTrouvees ; $curnote ++ )
-        {
-            $motNote = substr($this->_doc["notenum".$curnote],strpos($this->_doc["notenum".$curnote],"@")+1);
-
-            $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->_doc['iddocument']." AND numNote=".$curnote);
-
-            //Au cas ou la note soit entre parenthese on enleve ces parenthèses
-            if(eregi("^(.)*\([0-9]+\)[.]{0,3}$",trim($motNote)))
-            {
-                $motNote = str_replace("(".$curnote.")", sprintf($modeleNote, $curnote, $curnote, $texteNote), $motNote);
-            }
-            else
-            {
-                //Gestion du cas ou on a un mot du style 18707 (utilisation de substr_replace
-                preg_match_all("/".$curnote."/",$motNote,$matches,PREG_OFFSET_CAPTURE);
-                $tab = array_reverse($matches[0]);
-
-                $motNote = substr_replace($motNote, sprintf($modeleNote, $curnote, $curnote, $texteNote), $tab[0][1], strlen($curnote));
-            }
-
-            if(trim($this->_doc["notenum".$curnote])!="")
-                $this->_doc['xml'] = str_replace("@NOTE@".$this->_doc["notenum".$curnote], $motNote, $this->_doc['xml'] );
-        }
-
-        //On enleve tous les @NOTE@<chiffre> qui ne sont pas des notes
-        $this->_doc['xml'] = ereg_replace("@NOTE@[0-9]*@","",$this->_doc['xml']);
-
-        $za->addFromString('content.xml', $this->_doc['xml']);
-        $za->close();
-        $ext = strtolower(pathinfo($this->_doc['realname'], PATHINFO_EXTENSION));
-        if('docx' === $ext)
-        {
-            $this->_doc['realname'] = substr_replace($this->_doc['realname'], 'doc', -4);
-            $ext = 'doc';
-        }
-
-        if($ext !== strtolower(pathinfo($this->_doc['pathDocument'], PATHINFO_EXTENSION)))
-        {
-            $this->_param['sourcepath'] = $this->_doc['pathDocument'];
-            $this->soffice2odt($ext);
-            $this->_doc['pathDocument'] = $this->_param['outputpath'];
-        }
-
-        $this->output['orphannotes'] = array('document' => file_get_contents($this->_doc['pathDocument']), 'name' => $this->_doc['realname']);
-    }
-
-    protected function _orphanNotes($extended = false, ZipArchive $za)
-    {
-        $this->_db->debug = true;
-        error_log("<li>_orphanNotes:".(string)$extended."</li>\n",3,self::_DEBUGFILE_);
-
-        class_exists('OrphanNotes', false) || require self::_SERVEL_LIB_.'OrphanNotes/OrphanNotes.php';
-
-        $orphan = new OrphanNotes($this->_db, $this->_doc['iddocument']);
-        $orphan->XMLLaunchParseOne($this->_doc['xml']);
-
-        if($extended)
-        {
-            $profondeur = 10;
-            $precision_date = 2;
-        }
-        else
-        {
-            $profondeur = 1; // 1 pour une détection rapide, 5 ou 10 pour une détection plus approfondie
-            $precision_date = 4; //4 ou moins, 4 si on ne veut considérer que les dates a quatre chiffre suivies d'une note
-        }
-
-        $orphan ->XMLLaunchParseTwo($this->_doc['xml'], $profondeur, $precision_date)
-                ->phaseFinale();
-
-        $za->addFromString('final.xml', $orphan->XMLText);
-        $za->close();
-
-        $this->output['orphannotes'] = array(
-            'nbnotestrouvees'   => $orphan->nbNotesTrouvees,
-            'nbpropositions'    => $orphan->nbPropositions,
-            'props'             => $orphan->props,
-            'nberreurs'         => $orphan->nbErreurs,
-            'erreurs'           => $orphan->erreurs,
-            'nbasterisques'     => $orphan->nbAsterisques,
-            'nbromains'         => $orphan->nbRomains,
-            'texteaffichage'    => $orphan->getTexte(),
-            'boutondetection'   => $extended,
-            'errorsappels'      => $orphan->getErrorsAppels(),
-            'realficname'       => $this->_doc['realname'],
-            'iddocument'        => $this->_doc['iddocument']
-        );
-        $this->output['orphannotes']['nberrorsappels'] = count($this->output['orphannotes']['errorsappels']);
-    }
 
 /**
  * dynamic mapping of Lodel EM
@@ -1230,7 +1026,8 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
 
 
 /** TODO Warning **/
-        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);    
+error_log("<h1>/** TODO Warning **/</h1>\n",3,self::_DEBUGFILE_);
+        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
 
 
         $dom->encoding = "UTF-8";
@@ -1243,7 +1040,26 @@ error_log("<li>backsection = $backsection-{$current['rend']}</li>\n",3,self::_DE
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
-        //$dom->resolveExternals = true;
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
+
+        # Warnings : recommended
+$debug="<li>MANDATORY Lodel</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+        foreach ($this->EMandatory as $key=>$value) {
+            if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
+                list($section, $element) = explode(":", $value);
+                $query = "//tei:p[starts-with(@rend,'$element')]";
+                $entries = $xpath->query($query);
+error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
+                if (! $entries->length) {
+                    $this->_status = "Warning: dc:{$match[1]} not found";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                }
+            }
+        }
+
+        $dom->resolveExternals = false;
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: Lodel TEI-Lite is not valid !";
@@ -2152,6 +1968,23 @@ error_log("\n<li>headings</li>\n",3,self::_DEBUGFILE_);
         $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
         $dom->loadXML($otxml);
 
+/*
+        # Warnings : recommended
+$debug="<li>MANDATORY OTX</li><ul><pre>".print_r($this->EMandatory,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
+        foreach ($this->EMandatory as $key=>$value) {
+            if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
+                $query = $this->EMTEI[$value];
+                $entries = $xpath->query($query);
+error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
+                if (! $entries->length) {
+                    $this->_status = "Warning: dc:{$match[1]} not found";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                }
+            }
+        }
+*/
+
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
@@ -2384,7 +2217,14 @@ error_log("<li>{$this->_param['sourcepath']}</li>\n",3,self::_DEBUGFILE_);
                     $attribute->nodeValue = $newname;
                 }
                 else {
-                    error_log("<li>? [Warning] {$attribute->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                    /*
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE); // mimetype extension
+                    $mime =  finfo_file( $za->getStream($attribute->nodeValue));
+                    finfo_close($finfo);
+                    */
+                    $this->_status = "{$attribute->nodeValue} skipped";
+                    array_push($this->log['warning'], $this->_status);
+                    error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                     // TODO Warning !
                 }
             }
@@ -2616,7 +2456,8 @@ error_log("<li>[styles2csswhitelist] no-border</li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
                 $type = $this->_param['type'];
-                if ($type==="large") {
+                if ($type==="extended") {
+error_log("<li><strong>=> type = $type</strong></li>\n",3,self::_DEBUGFILE_);
                     if ( preg_match("/^font-size:/", $prop)) {
                         array_push($csswhitelist, $prop);
                         continue;
@@ -3619,6 +3460,7 @@ EOD;
 */
 	return true;
     }
+
 
 
 // end of Servel class.

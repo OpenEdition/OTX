@@ -6,7 +6,9 @@
  * @copyright 2008-2009, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
+// Report all PHP errors
 error_reporting(-1);
+
 
 # --- soap cache--------------------------------------------------------------
 // cf http://fr.php.net/manual/fr/soap.configuration.php
@@ -50,9 +52,9 @@ define("__SOFFICE_PYTHONPATH__",    "/opt/openoffice.org3/program/python");
 # debug
 define('__DEBUG__', __OTX_PWD__."CACHE/tmp/otx.debug.xml");
 # dump
-define('__DUMP__', __OTX_PWD__."CACHE/tmp/otx.dump.txt");
+define('__DUMP__',  __OTX_PWD__."CACHE/tmp/otx.dump.txt");
 
 # ADODB
-define('__DB_DRIVER__',  'sqlite');
-define('__DB_PATH__', __OTX_PWD__."webservoo/servel/db/servel.db");
+define('__DB_DRIVER__', 'sqlite');
+define('__DB_PATH__',   __OTX_PWD__."webservoo/servel/db/servel.db");
 ?>
