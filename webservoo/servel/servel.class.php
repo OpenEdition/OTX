@@ -2028,6 +2028,7 @@ error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
             case 'txt':
             //case 'html': //TODO ?
             case "xhtml":
+            case "teixml":
             case "tei":
                 break;
             default:
@@ -2055,7 +2056,7 @@ error_log("<li>query = $query ({$entries->length})</li>\n",3,self::_DEBUGFILE_);
             $result = ob_get_contents();
             ob_end_clean();
 $debug="<li>SOFFICE ($returnvar)</li><ul><pre>".print_r($result,true)."</pre></ul>\n";error_log($debug,3,self::_DEBUGFILE_);
-            if ($returnvar or $result!='') {
+            if ($returnvar /*or $result!=''*/) {
                 @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
                 $this->_status = "error soffice";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 throw new Exception($this->_status);

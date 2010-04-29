@@ -41,7 +41,7 @@ function otx_query() {
                 return true;
             case 'report':
                 header("content-type: application/xml; charset=UTF-8",true);
-                readfile(__OTX_PWD__."CACHE/tmp/report.xml");
+                readfile(__OTX_PWD__."CACHE/report.up0.xml");
                 return true;
             case 'debug':
                 header("Content-Type: text/html; charset=UTF-8",true);
