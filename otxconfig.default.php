@@ -8,16 +8,13 @@
 **/
 
 # properties
-
 /** OTX NAME **/
 define('__OTX_NAME__',    "your name here");
 
-
 # system
-
 /** OTX URI Location **/
 define('__OTX_URI__',    "http://domain.tld/otx/");
 /** OTX ROOT PATH Location **/
 define('__OTX_PWD__',    "/path/to/otx/");
 
-?>
+#EOF

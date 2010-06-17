@@ -3,7 +3,7 @@
  * index.php
  * PHP >= 5.2
  * @author Nicolas Barts
- * @copyright 2008-2009, CLEO/Revues.org
+ * @copyright 2010, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
 ini_set("max_execution_time", "180");
@@ -15,11 +15,9 @@ set_time_limit(3600);
 ini_set("session.auto_start", 0);
 
 include_once('otxconfig.inc.php');
-include_once('webservoo/servoo2.inc.php');
-if(file_exists("Devel/otix/devel.inc.php"))include_once('Devel/otix/devel.inc.php');
-
-require_once('otx.php');
-require_once('webservoo/webservoo.class.php');
+include_once('soap/otx.soapserver.inc.php');
+require_once('otx.class.php');
+require_once('soap/otx.soapserver.class.php');
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -42,25 +40,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $options['exceptions'] = TRUE;
         $options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
         $options['encoding'] = SOAP_LITERAL;
-        $wsdl = __WEBSERVOO_WSDL__;
+        $wsdl = __SOAP_WSDL__;
         // service
-        $WebServOO = new SoapServer($wsdl, $options);
-        $WebServOO->setClass('WebServoo');
+        $SoapServer = new SoapServer($wsdl, $options);
+        $SoapServer->setClass('OTXSoapServer');
         // 
-        $WebServOO->setPersistence(SOAP_PERSISTENCE_SESSION);
-        $WebServOO->handle();
+        $SoapServer->setPersistence(SOAP_PERSISTENCE_SESSION);
+        $SoapServer->handle();
     } 
     catch (SoapFault $fault) {
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-        echo "\n<servoo type=\"SoapFault\">";
+        echo "\n<otx type=\"SoapFault\">";
         echo "\n<faultcode><![CDATA[".$fault->faultcode."]]></faultcode>";
         echo "\n<faultstring><![CDATA[".$fault->faultstring."]]></faultstring>";
         echo "\n<error>" .$Return['status'] ."</error>";
-        echo "\n</servoo>";
+        echo "\n</otx>";
     exit(1);
     }
 
-    return TRUE;
+    return true;
 }
 
 
@@ -71,21 +69,30 @@ if (! empty($_GET)) {
     exit(1);
     }
 
-    return TRUE;
+    return true;
 }
 
 
-$_status = ""; $ooo = _soffice($_status);
+$_status = ""; $oo = _soffice($_status);
+$load = $oo['load'];
+/*
 header("content-type: application/xml; charset=UTF-8");
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
-echo "\n<servoo type=\"welcome\">\n";
+echo "\n<otx type=\"welcome\">\n";
 echo "\n<soffice>";
 echo "\n<status>" .$_status ."</status>";
-echo "\n<pid>" .$ooo['pid'] ."</pid>";
-echo "\n<cpu>" .$ooo['cpu'] ."</cpu>";
-echo "\n<mem>" .$ooo['mem'] ."</mem>";
+echo "\n<loadaverage>";
+//Returns three samples representing the average system load (the number of processes in the system run queue) over the last 1, 5 and 15 minutes, respectively. 
+echo "\n<last minutes='1'>" .$load[0] ."</last>";
+echo "\n<last minutes='5'>" .$load[1] ."</last>";
+echo "\n<last minutes='15'>" .$load[2]. "</last>";
+echo "\n</loadaverage>";
+echo "\n<pid>" .$oo['pid']. "</pid>";
+echo "\n<mem>" .$oo['mem']. "</mem>";
 echo "\n</soffice>";
-echo "\n</servoo>";
+echo "\n</otx>";
+*/
+include('soap/tpl/otx.html');
+return true;
 
-return TRUE;
-?>
+#EOF
