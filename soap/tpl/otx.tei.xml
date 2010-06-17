@@ -1,0 +1,43 @@
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title>OTX: OpenText XML conversion server</title>
+            </titleStmt>
+            <publicationStmt>
+                <authority>Cléo / Revues.org</authority>
+            </publicationStmt>
+            <sourceDesc>
+                <p>No source</p>
+            </sourceDesc>
+        </fileDesc>
+        <encodingDesc>
+            <projectDesc>
+                <p>Centre for open electronic publishing</p>
+            </projectDesc>
+            <appInfo>
+                <application version="alpha" ident="OTX">
+                    <label>OTX</label>
+                    <desc>
+                        <list type="gloss">
+                            <head>status</head>
+                            <label>pid</label><item>3852</item>
+                            <label>cpu</label><item>0.9</item>
+                            <label>mem</label><item>19.5</item>
+                        </list>
+                    </desc>
+                </application>
+            </appInfo>
+        </encodingDesc>
+        <profileDesc>
+        </profileDesc>
+        <revisionDesc>
+            <change when="2010-05-07" who="OTX">reboot</change>
+        </revisionDesc>
+    </teiHeader>
+    <text>
+        <body>
+            <p>OTX status</p>
+        </body>
+    </text>
+</TEI>

@@ -1,0 +1,555 @@
+/*
+    otx.css
+    @copyleft 2010, CLEO / Revues.org
+*/
+
+/* general styles */
+
+body {
+    font: 75%/1.5 Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    text-align: center;
+    background: #E6E6E6;
+}
+
+#otx {
+    color: #000;
+    background: #CCCCCC; 
+    text-align: left;
+    font: 16px/23px serif;
+    margin: 0;
+    padding: 22px 8px;
+    border-bottom: 3px solid #000 ;
+    /* position: fixed; */
+}
+#otx a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #333333;
+}
+#otx a:hover {
+    color: #000000;
+}
+
+#outer-foot {
+    width: 900px; 
+    margin: 1.5em auto 1em auto;
+    text-align: right;
+}
+
+#cleobadge {
+    float: left;
+    margin: 2em;
+}
+
+
+/* layout styles */
+
+#container {
+    width: 900px; 
+    margin: auto;
+    text-align: left;
+    color: #000000;
+    background: #FFFFFF;
+    margin: 3em auto 0em auto;
+    padding: 0 !important;
+    border: 3px solid #AAAAAA;
+    -moz-border-radius-bottomleft:15px;
+    -moz-border-radius-bottomright:15px;
+    -moz-border-radius-topleft:15px;
+    -moz-border-radius-topright:15px;
+}
+
+#banner {
+    height: 48px;
+    color: #000;
+    background: #E0E0E0;
+    margin: 0;
+    padding: 1em;
+}
+
+#breadcrumb {
+    margin: 0 0 1em 1em;
+}
+
+#main {
+    margin: 0;
+    padding: 1em;
+}
+
+#content {
+    float: left;
+    width: 600px;
+    margin: 0;
+    padding: 1em;
+    color: #333;
+    background: #FFFFFF;
+}
+
+#sidebar {
+    color: #000000;
+    background-color: #FFFFFF;
+    float: left;
+    width: 180px;
+    margin: 1em;
+    padding: 1em;
+}
+
+#separator {
+}
+
+/* footer */
+#footer {
+    clear: both;
+    text-align: left;
+    margin: 0;
+    padding: 1em 3em 0em 3em;
+}
+#footer p {
+    background: #FFFFFF;
+}
+
+#badge {
+    margin: 0em;
+}
+
+/* Generic style rules */
+
+img { border: none; }
+
+
+.mono { font-family: courier, monospace; }
+.code { font-family: courier, monospace; }
+
+pre {
+    white-space: pre-wrap;       /* css-3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    /*
+    overflow-x: auto;
+    overflow:hidden;
+    */
+    display: block;
+    color: #000000;
+    background-color: #FFFFFF;
+    font-family: Courier, monospace;
+    line-height: normal;
+}
+
+/* headings */
+.maintitle {
+    font-style: italic
+}
+
+h1 {
+    font-size: 14pt;
+    margin: 0;
+    page-break-after: avoid;
+}
+
+h1.small
+{
+    font-size: 10pt;
+    margin-bottom: 0;
+    page-break-after: avoid;
+}
+
+h2 {
+    font-size: 11pt;
+    page-break-after: avoid;
+}
+
+.head {
+    font-size: 9pt;
+    page-break-after: avoid;
+}
+
+h3 {
+    font-size: 10pt;
+    font-style: italic;
+    page-break-after: avoid;
+}
+
+h4 {
+    font-size: 9pt;
+    page-break-after: avoid;
+}
+
+div.genericHeading {
+    font-size: 9pt;
+    font-weight: bold;
+    page-break-after: avoid;
+}
+
+h5 {
+    font-size: 9pt;
+    page-break-after: avoid;
+}
+
+h6 {
+    font-size: 9pt;
+    page-break-after: avoid;
+}
+
+
+p.bibl, span.bibl
+{
+	display: block;
+	margin-left: 2em;
+	text-indent: -2em;
+	padding: 0;
+}
+
+.hang
+{
+	margin-left: 2em;
+	text-indent: -2em;
+	padding: 0;
+}
+
+.hangPadTop
+{
+	margin-left: 2em;
+	text-indent: -2em;
+	padding-top: 1em;
+}
+
+div {
+	margin-top: 1em;
+	margin-bottom: 1em;
+	widows: 2;
+	orphans: 2;
+}
+
+div.p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    widows: 2;
+    orphans: 2;
+    line-height: 1.5;
+}
+
+
+span[title="fw"] { text-align: center; }
+.center { text-align: center; }
+
+
+.super {
+    vertical-align: super;
+    font-size: 85%;
+}
+
+.sub {
+    vertical-align: sub;
+    font-size: 85%;
+}
+
+/* lists */
+
+.listStyleNone { list-style-type: none; }
+
+ul {
+    widows: 2;
+    orphans: 2;
+    margin-top: .25em;	
+}
+
+p > ul {
+    margin-top: 1em;
+}
+
+
+li {
+    margin-bottom: .25em;
+    widows: 2;
+    orphans: 2;
+}
+
+.listhead {
+    font-weight: bold;
+}  
+
+span.inlineNote { }
+
+/* italic class is deprecated in favor of i class */
+.italic { font-style: italic; }
+.i { font-style: italic; }
+
+/* bold class is deprecated in favor of b class */
+.bold { font-weight: bold; }
+.b { font-weight: bold; }
+
+/* underline class is deprecated in favor of u class */
+.underline { text-decoration: underline; }
+.u { text-decoration: underline; }
+.x-small { font-size: x-small; }
+.xx-small { font-size: xx-small; }
+.large { font-size: large; }
+.x-large { font-size: x-large; }
+.xx-large { font-size: xx-large; }
+
+/* normal class is deprecated in favor of n class */
+.normal { font-style: normal; }
+.n { font-style: normal; }
+
+.glossTerm {
+    display: block;
+    width: 100%;
+    font-weight: bold;
+    color: #870429;
+    background-color: #FFFFFF;
+    padding: 0;
+    margin: 0;
+}
+
+.gloss {
+    display: block;
+    margin-left: 1em;
+    margin-top: 0;
+}
+
+.border {
+    border-style: solid;
+    border-color: #4b6fda;
+    border-width: 2px 2px 2px 2px;
+}
+
+div.caption
+{
+	font-size: x-small;
+	text-align: left;
+	margin: 1em 1em 3em 0em;
+	padding: 1em 0 1em 1em;
+	border-top: 3px double black;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+
+div.comment
+{
+	font-family: courier, monospace;
+	color: gray;
+	background-color: #FFFFFF;
+}
+
+.sc { font-variant: small-caps; }
+
+ul.inline { display: inline; }
+
+/* div.inline used for div parents of inline lists */
+div.inline { display: inline; }
+
+ul.inlineColumn
+{
+	display: inline;
+	margin-left: 0;
+	padding-left: 0;
+	/* text-indent: 0; */
+}
+
+ul.inline li { /* display: inline; */ }
+
+ul.inlineColumn li
+{
+    /* This should be an inline *vertical* or columnular list.  Need to come up with proper CSS */
+    display: inline;
+    padding-right: .5em;
+    padding-left: .5em;
+    border-right: 1px dotted #333333;
+}
+
+/*
+ul.inlineColumn li:after {
+	
+}
+*/
+
+ul.inlineColumn li.first { padding-left: 0; }
+
+ul.inlineColumn li.last
+{
+	padding-right: 0;
+	border-right: none;
+}
+
+img.specialChar { vertical-align: top; }
+
+dt
+{
+	font-weight: bold;
+	font-size: 9pt;
+	margin-bottom: .2em;
+}
+
+dd { margin-bottom: .5em; }
+
+dl a { display: inline; }
+
+
+tt {
+color: #000000;
+background-color: #FFFFFF;
+font-family: Courier, monospace;
+line-height: normal;
+}
+
+div.cdata
+{
+white-space: pre;
+}
+
+div.pre_eg, pre.eg, div.eg
+{
+background-color: #f2f7f9;
+padding: 10px;
+margin-top: 2.5em;
+margin-bottom: 2.5em;
+font-family: monospace;
+font-size: 9pt;
+border: 1px solid #e1e1e4;
+color: #222288;
+
+}
+
+
+
+/* notes */
+
+.notes
+{
+border-top: 3px double black;
+}
+
+.noteHeading 
+{
+	font-size: 11pt;
+	color: #00487D;
+	font-weight: bold;
+	background-color: #FFFFFF;
+	page-break-after: avoid;
+}
+
+.noteLabel
+{
+	font-size: 9pt;
+	color: #00487D;
+	background-color: #FFFFFF;
+	font-weight: bold;
+	margin-right: 4pt;
+}
+
+.noteBody
+{
+	font-size: 9pt;
+	color: #000000;
+	background-color: #FFFFFF;
+	display: inline;
+}
+/* title page */
+
+div.titlePage
+{
+border-top-width: 2pt;
+border-top-style: solid;
+border-top-color: #000000;
+border-bottom-width: 2pt;
+border-bottom-style: solid;
+border-bottom-color: #000000;
+padding-top: 6pt;
+padding-bottom: 6pt;
+text-align: center;
+}
+
+div.docTitle
+{
+    font-weight: bold;
+}
+div.docAuthor
+{
+font-style: italic;
+}
+div.docImprint
+{
+font-style: italic;
+}
+div.docDate
+{
+font-style: italic;
+}
+
+
+
+.toc {
+
+line-height: 1.2em;
+}
+
+.toc a {
+
+text-decoration: none;
+
+font-weight: bold;
+
+color: #00487d;
+
+
+}
+
+.toc a:hover {
+
+text-decoration: underline;
+
+font-weight: bold;
+
+color: #2277bb;
+
+
+}
+
+.toc a.selected {
+
+color: #2277bb;
+}
+
+.gi {
+
+font-family: monospace;
+font-size: 9pt;
+}
+
+.add {
+	color: green;
+	text-decoration: underline;
+	font-weight: bold;
+}
+.del {
+	text-decoration: line-through;
+	color: red;
+	font-weight: bold;
+}
+
+
+input.onlineform {
+width: 100%;
+}
+
+textarea {
+width: 100%;
+}
+
+.separator {
+margin-top: 3ex;
+margin-bottom: 3ex;
+}
+
+.news {font-size: 85%; margin-top: -1em; padding-bottom: 1em;}  
+.newslist {list-style-type: disc}
+.newslist li {margin-bottom: 2ex; }
+
+
+div.dateline {font-style: italic}
