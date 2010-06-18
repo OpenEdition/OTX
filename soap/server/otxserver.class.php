@@ -677,32 +677,30 @@ EOD;
         $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
 
 
-
-# xml:id
-    $xslfilter = $this->_param['INCPATH']."otxid.xsl";
-    $xsl = new DOMDocument;
-    if (! $xsl->load($xslfilter)) {
-        $this->_status="error load xsl ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        throw new Exception($this->_status,E_ERROR);
-    }
-    $proc = new XSLTProcessor;
-    $proc->importStyleSheet($xsl);
-    if (! $idfodt=$proc->transformToXML($domfodt)) {
-        $this->_status="error transform xslt ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        throw new Exception($this->_status,E_ERROR);
-    }
-    $domidfodt = new DOMDocument;
-    $domidfodt->encoding = "UTF-8";
-    $domidfodt->resolveExternals = false;
-    $domidfodt->preserveWhiteSpace = false;
-    $domidfodt->formatOutput = true;
-    if (! $domidfodt->loadXML($idfodt)) {
-        $this->_status="error load idfodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        throw new Exception($this->_status,E_ERROR);
-    }
-    $domidfodt->normalizeDocument();
-    $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
-//return true;
+        # add xml:id (otxid.xsl)
+        $xslfilter = $this->_param['INCPATH']."otxid.xsl";
+        $xsl = new DOMDocument;
+        if (! $xsl->load($xslfilter)) {
+            $this->_status="error load xsl ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            throw new Exception($this->_status,E_ERROR);
+        }
+        $proc = new XSLTProcessor;
+        $proc->importStyleSheet($xsl);
+        if (! $idfodt=$proc->transformToXML($domfodt)) {
+            $this->_status="error transform xslt ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            throw new Exception($this->_status,E_ERROR);
+        }
+        $domidfodt = new DOMDocument;
+        $domidfodt->encoding = "UTF-8";
+        $domidfodt->resolveExternals = false;
+        $domidfodt->preserveWhiteSpace = false;
+        $domidfodt->formatOutput = true;
+        if (! $domidfodt->loadXML($idfodt)) {
+            $this->_status="error load idfodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            throw new Exception($this->_status,E_ERROR);
+        }
+        $domidfodt->normalizeDocument();
+        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
 
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
@@ -1919,9 +1917,9 @@ EOD;
             $parent->replaceChild($floatingText, $entry);
         }
 
-        // clean++
-        $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
-        $dom->loadXML($otxml);
+$this->heading2div($dom, $xpath, 3);
+//$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
+
 
         /*
         # Warnings : recommended
@@ -1937,6 +1935,11 @@ EOD;
             }
         }
         */
+
+        // clean++
+        $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
+        $search = array('xmlns="http://www.tei-c.org/ns/1.0"', 'xmlns:default="http://www.tei-c.org/ns/1.0"');
+        $dom->loadXML( str_replace($search, '', $otxml));
 
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
@@ -1955,9 +1958,54 @@ EOD;
         }
         $this->log['status']['otxtei'] = $this->_status;
 
-        $this->_param['TEI'] = "". $dom->saveXML();
+        $this->_param['TEI'] = $dom->saveXML();
         return true;
     }
+
+        private function heading2div(&$dom, &$xpath, $level) {
+        error_log("<h4>heading2div(level=$level)</h4>\n",3,self::_DEBUGFILE_);
+           if ($level == 0) return;
+            $entries = $xpath->query("//tei:ab[@subtype='level$level']", $dom); 
+            foreach ($entries as $item) {
+error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
+                $parent = $item->parentNode;
+                $div = $dom->createElement("div");
+                $div->setAttribute("type", "div$level");
+                $head = $dom->createElement("head");
+                $head->setAttribute("subtype", "level$level");
+                if ($id=$item->getAttribute('xml:id')) {
+                    $head->setAttribute('xml:id', $id);
+                }
+                if ($item->hasChildNodes()) {
+                    foreach ($item->childNodes as $child) {
+                        $clone = $child->cloneNode(true);
+                        $head->appendChild($clone);
+                    }
+                }
+                else {
+                    $head->nodeValue = $item->nodeValue;
+                }
+                $div->appendChild($head);
+
+                $nodetoremove = array();
+                $next = $item;
+                while ($next = $next->nextSibling) {
+                    if ($next->nodeName == "ab") break;
+//error_log("<li>{$next->nodeName} : {$next->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                    $clone = $next->cloneNode(true);
+                    $div->appendChild($clone);
+                    array_push($nodetoremove, $next);
+                }
+                foreach ($nodetoremove as $node) {
+                    $parent->removeChild($node);
+                }
+                if (! $parent->replaceChild($div, $item)) {
+                    $this->_status="error replaceChild";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status,E_ERROR);
+                }
+            }
+            $this->heading2div($dom, $xpath, --$level);
+        }
 
 
     /**
@@ -1982,6 +2030,7 @@ EOD;
             //case 'html': //TODO ?
             case "xhtml":
             case "teixml":
+            case "tei.xml":
             case "tei":
                 break;
             default:
@@ -2331,7 +2380,7 @@ EOD;
 
         /** styles to css white list ! **/
         private function styles2csswhitelist(&$properties, $type="strict") {
-        error_log("<h4>styles2csswhitelist() [type=$type]</h4>\n",3,self::_DEBUGFILE_);
+        //error_log("<h4>styles2csswhitelist() [type=$type]</h4>\n",3,self::_DEBUGFILE_);
             $lang = ""; $rendition = "";
             $csswhitelist = array();
             // default : strict mode
@@ -2459,7 +2508,7 @@ EOD;
                 return array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
             }
             else {
-                error_log("<li>? [greedy] no rend atrribute ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
+                //error_log("<li>? [greedy] no rend atrribute ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
                 return null;
             }
         }
