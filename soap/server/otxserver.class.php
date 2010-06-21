@@ -1306,6 +1306,9 @@ EOD;
             $parent = $entry->parentNode;
             $newnode = $dom->createElement('date', $entry->nodeValue);
             $newnode->setAttribute('when', "");
+            if ( $id=$entry->getAttribute('xml:id')) {
+                $newnode->setAttribute('xml:id', $id);
+            }
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1323,8 +1326,13 @@ EOD;
             }
             $entry = $entries->item(0);
             $parent = $entry->parentNode;
-            $newnode = $dom->createElement('availability', $entry->nodeValue);
+            $newnode = $dom->createElement('availability');
             $newnode->setAttribute('status', "free");
+            $newp = $dom->createElement('p', $entry->nodeValue);
+            if ( $id=$entry->getAttribute('xml:id')) {
+                $newp->setAttribute('xml:id', $id);
+            }
+            $newnode->appendChild($newp);
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1339,6 +1347,9 @@ EOD;
             $parent = $entry->parentNode;
             $newnode = $dom->createElement('idno', $entry->nodeValue);
             $newnode->setAttribute('type', "documentnumber");
+            if ( $id=$entry->getAttribute('xml:id')) {
+                $newnode->setAttribute('xml:id', $id);
+            }
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1422,6 +1433,9 @@ EOD;
             $parent = $entry->parentNode;
             $new = $dom->createElement('date', $entry->nodeValue);
             $new->setAttribute('when', "");
+            if ( $id=$entry->getAttribute('xml:id')) {
+                $new->setAttribute('xml:id', $id);
+            }
             $pubstmt->appendChild($new);
             $parent->removeChild($entry);
         }
@@ -1436,6 +1450,7 @@ EOD;
             $parent = $entry->parentNode;
             $new = $dom->createElement('idno', $entry->nodeValue);
             $new->setAttribute('type', "pp");
+            if ($id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
             $pubstmt->appendChild($new);
             $parent->removeChild($entry);
         }
@@ -1452,6 +1467,8 @@ EOD;
             $biblfull->appendChild($notesstmt);
             $newnode = $dom->createElement('note', $entry->nodeValue);
             $newnode->setAttribute('type', "bibl");
+            if ($lang=$entry->getAttribute('xml:lang')) { $newnode->setAttribute('xml:lang', $lang); }
+            if ($id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $notesstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1468,6 +1485,9 @@ EOD;
             }
             $newnode = $dom->createElement('language', $entry->nodeValue);
             $newnode->setAttribute('ident', $entry->nodeValue);
+            if ( $id=$entry->getAttribute('xml:id')) {
+                $newnode->setAttribute('xml:id', $id);
+            }
             $langUsage->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1493,6 +1513,7 @@ EOD;
             if ( isset($lang)) {
                 $newnode->setAttribute('xml:lang', $lang);
             }
+            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $textclass->appendChild($newnode);
             $newlist = $dom->createElement("list");
             $newnode->appendChild($newlist);
@@ -1515,12 +1536,10 @@ EOD;
         foreach ($entries as $item) {
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
-                $lang = null;
             $newnode = $dom->createElement("keywords");
-            if ( isset($lang)) {
-                $newnode->setAttribute('xml:lang', $lang);
-            }
             $newnode->setAttribute('scheme', "subject");
+            //if ($lang=$item->getAttribute('xml:lang')) { $newnode->setAttribute('xml:lang', $lang); }
+            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $textclass->appendChild($newnode);
             $newlist = $dom->createElement("list");
             $newnode->appendChild($newlist);
@@ -1543,12 +1562,9 @@ EOD;
         foreach ($entries as $item) {
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
-                $lang = null;
             $newnode = $dom->createElement("keywords");
-            if ( isset($lang)) {
-                $newnode->setAttribute('xml:lang', $lang);
-            }
             $newnode->setAttribute('scheme', "chronological");
+            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $textclass->appendChild($newnode);
             $newlist = $dom->createElement("list");
             $newnode->appendChild($newlist);
@@ -1571,12 +1587,10 @@ EOD;
         foreach ($entries as $item) {
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
-                $lang = null;
             $newnode = $dom->createElement("keywords");
-            if ( isset($lang)) {
-                $newnode->setAttribute('xml:lang', $lang);
-            }
             $newnode->setAttribute('scheme', "geographical");
+            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
+            $textclass->appendChild($newnode);
             $newlist = $dom->createElement("list");
             $newnode->appendChild($newlist);
             if (! preg_match("/,/", $item->nodeValue)) {
@@ -1917,7 +1931,7 @@ EOD;
             $parent->replaceChild($floatingText, $entry);
         }
 
-$this->heading2div($dom, $xpath, 3);
+$this->heading2div($dom, $xpath, 9);
 //$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
 
 
@@ -1937,7 +1951,7 @@ $this->heading2div($dom, $xpath, 3);
         */
 
         // clean++
-        $otxml = preg_replace("/<pb\/>/s", "<!-- <pb/> -->", $dom->saveXML());
+        $otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
         $search = array('xmlns="http://www.tei-c.org/ns/1.0"', 'xmlns:default="http://www.tei-c.org/ns/1.0"');
         $dom->loadXML( str_replace($search, '', $otxml));
 
@@ -1965,7 +1979,7 @@ $this->heading2div($dom, $xpath, 3);
         private function heading2div(&$dom, &$xpath, $level) {
         error_log("<h4>heading2div(level=$level)</h4>\n",3,self::_DEBUGFILE_);
            if ($level == 0) return;
-            $entries = $xpath->query("//tei:ab[@subtype='level$level']", $dom); 
+            $entries = $xpath->query("//tei:text/tei:body/tei:ab[@subtype='level$level']", $dom); 
             foreach ($entries as $item) {
 error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
                 $parent = $item->parentNode;
