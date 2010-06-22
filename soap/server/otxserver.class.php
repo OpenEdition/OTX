@@ -23,6 +23,8 @@ class OTXserver
     // Outputs
     protected $output = array('status'=>"", 'xml'=>"", 'report'=>"", 'contentpath'=>"", 'lodelxml'=>"");
 
+    private $report = array();
+
     protected $meta = array();
     protected $EModel = array();
     private $EMotx = array();
@@ -210,12 +212,15 @@ class OTXserver
                 //$this->EMTEI = EM2TEI();    //$this->EM2TEI();
                 $this->lodelodt();
                 $this->oo2lodelxml();
-                $this->output['lodelxml'] = _windobclean($this->_param['lodelTEI']);
+                $this->output['lodelxml'] = null; //_windobclean($this->_param['lodelTEI']);
                 $this->oo2report('lodel', $this->_param['lodelodtpath']);
                 $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
+$dbg="<li><pre>".print_r($this->report,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+                    $jsonreport = json_encode($this->report);
+$debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
                 break;
             case 'partners':
             case 'cairn':
@@ -1020,18 +1025,21 @@ EOD;
         $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
 
         # Warnings : recommended
+        $mandatory = array();
         foreach ($this->EMandatory as $key=>$value) {
             if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
                 list($section, $element) = explode(":", $value);
                 $query = "//tei:p[starts-with(@rend,'$element')]";
                 $entries = $xpath->query($query);
                 if (! $entries->length) {
-                    $this->_status = "Warning: dc:{$match[1]} not found";
+                    $this->_status = "dc:{$match[1]} not found";
+                        array_push($mandatory, $this->_status);
                     array_push($this->log['warning'], $this->_status);
                     error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 }
             }
         }
+$this->report['warning'] = $mandatory;
 
         $dom->resolveExternals = false;
         $dom->validateOnParse = true;
@@ -1931,7 +1939,8 @@ EOD;
             $parent->replaceChild($floatingText, $entry);
         }
 
-$this->heading2div($dom, $xpath, 9);
+$headlevel = $this->summary($dom, $xpath);
+$this->heading2div($dom, $xpath, $headlevel);
 //$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
 
 
@@ -1976,12 +1985,33 @@ $this->heading2div($dom, $xpath, 9);
         return true;
     }
 
+
+        private function summary(&$dom, &$xpath) {
+        error_log("<h4>summary()</h4>\n",3,self::_DEBUGFILE_);
+            $max = 0;
+            $summary = array();
+            $entries = $xpath->query("//tei:text/tei:body/tei:ab", $dom);
+            foreach ($entries as $entry) {
+                if ($level=$entry->getAttribute("subtype")) {
+                    if ( preg_match("/^level(\d+)$/", $level, $match)) {
+                        $n = $match[1]; 
+                        if ($n > $max) $max = $n;
+                        $head = array("heading$n" => $entry->nodeValue);
+                        array_push($summary, $head);
+                    }
+                }
+            }
+            $this->report['summary'] = $summary;
+//$dbg="<li>maxlevel = $max</li><li><pre>".print_r($summary,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+            return $max;
+        }
+
         private function heading2div(&$dom, &$xpath, $level) {
         error_log("<h4>heading2div(level=$level)</h4>\n",3,self::_DEBUGFILE_);
            if ($level == 0) return;
             $entries = $xpath->query("//tei:text/tei:body/tei:ab[@subtype='level$level']", $dom); 
             foreach ($entries as $item) {
-error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
+//error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
                 $parent = $item->parentNode;
                 $div = $dom->createElement("div");
                 $div->setAttribute("type", "div$level");
@@ -2018,7 +2048,8 @@ error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE
                     throw new Exception($this->_status,E_ERROR);
                 }
             }
-            $this->heading2div($dom, $xpath, --$level);
+            if (--$level == 0) return;
+            $this->heading2div($dom, $xpath, $level);
         }
 
 
@@ -2753,6 +2784,28 @@ error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE
                 $xmlmeta = str_replace('<?xml version="1.0" encoding="UTF-8"?>', "", $dommeta->saveXML());
                 $za->close();
                 $this->log['report'][$step] = $xmlmeta;
+
+# json
+error_log("<h4>JSON</h4>\n",3,self::_DEBUGFILE_);
+                $prop = array();
+                $xpath = new DOMXPath($dommeta);
+                $entries = $xpath->query("//office:meta/*");
+                foreach ($entries as $entry) {
+                    //error_log("<li>{$entry->nodeName} : {$entry->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                    if ($entry->nodeName == "meta:document-statistic") {
+                        foreach ($entry->attributes as $attr) {
+                            //error_log("<li>{$attr->name} : {$attr->value}</li>\n",3,self::_DEBUGFILE_);
+                            $prop[$attr->name] = $attr->value;
+                        }
+                    } 
+                    else {
+                        $key = $entry->nodeName;
+                        $value = $entry->nodeValue;
+                        $prop[$key] = $value;
+                    }
+                }
+                $this->report["meta-$step"] = $prop;
+//$dbg="<li><pre>".print_r($prop,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
                 break;
             default:
                 break;
