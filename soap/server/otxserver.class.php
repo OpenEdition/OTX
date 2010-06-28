@@ -207,20 +207,21 @@ class OTXserver
             error_log("<li>case lodel</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice();
                 $this->oo2report('soffice', $this->_param['odtpath']);
-                $this->output['report'] = _windobclean($this->_param['xmlreport']);
+//                $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
                 //$this->EMTEI = EM2TEI();    //$this->EM2TEI();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = null; //_windobclean($this->_param['lodelTEI']);
                 $this->oo2report('lodel', $this->_param['lodelodtpath']);
-                $this->output['report'] = _windobclean($this->_param['xmlreport']);
+//                $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
 $dbg="<li><pre>".print_r($this->report,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
                     $jsonreport = json_encode($this->report);
 $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
+                $this->output['report'] = $jsonreport;
                 break;
             case 'partners':
             case 'cairn':
@@ -612,7 +613,7 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
         }
         $za->close();
 
-        # lodel fodt (flat ODT)
+        # lodel fodt (Flat ODT)
         $xmlfodt = <<<EOD
 <?xml version="1.0" encoding="UTF-8"?>
 <office:document 
@@ -681,7 +682,6 @@ EOD;
         $domfodt->normalizeDocument();
         $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
 
-
         # add xml:id (otxid.xsl)
         $xslfilter = $this->_param['INCPATH']."otxid.xsl";
         $xsl = new DOMDocument;
@@ -706,7 +706,6 @@ EOD;
         }
         $domidfodt->normalizeDocument();
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
-
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
         $xslfilter = $this->_param['INCPATH']."oo2lodeltei.xsl";
@@ -906,6 +905,15 @@ EOD;
 
         # surrounding internalstyles
         error_log("<li># surrounding internalstyles</li>\n",3,self::_DEBUGFILE_);
+
+
+
+//        $entries = $xpath->query("//tei:ab["); 
+
+
+
+
+
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
@@ -1009,7 +1017,7 @@ EOD;
         $lodeltei = "". str_replace($search, "", $dom->saveXML()); // ... and delete <nop>
 
         /** TODO Warning **/
-        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
+        $lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
@@ -1797,6 +1805,8 @@ $this->report['warning'] = $mandatory;
                     }
                 }
                 $bibl = $dom->createElement("bibl");
+                if ($lang=$item->getAttribute('xml:lang')) { $bibl->setAttribute('xml:lang', $lang); }
+                if ($id=$item->getAttribute('xml:id')) { $bibl->setAttribute('xml:id', $id); }
                 foreach ($item->childNodes as $child) {
                     $clone = $child->cloneNode(true);
                     $bibl->appendChild($clone);
@@ -1960,9 +1970,9 @@ $this->heading2div($dom, $xpath, $headlevel);
         */
 
         // clean++
-        $otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
+        //$otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
         $search = array('xmlns="http://www.tei-c.org/ns/1.0"', 'xmlns:default="http://www.tei-c.org/ns/1.0"');
-        $dom->loadXML( str_replace($search, '', $otxml));
+        $dom->loadXML( str_replace($search, '', $dom->saveXML()));
 
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
@@ -1970,7 +1980,7 @@ $this->heading2div($dom, $xpath, $headlevel);
         $dom->save($this->_param['xmloutputpath']);
 
         $dom->resolveExternals = false;
-        $dom->validateOnParse = true;
+        //$dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: OTX TEI-P5 is not valid !";
             array_push($this->log['warning'], $this->_status);
@@ -1992,8 +2002,8 @@ $this->heading2div($dom, $xpath, $headlevel);
             $summary = array();
             $entries = $xpath->query("//tei:text/tei:body/tei:ab", $dom);
             foreach ($entries as $entry) {
-                if ($level=$entry->getAttribute("subtype")) {
-                    if ( preg_match("/^level(\d+)$/", $level, $match)) {
+                if ($heading=$entry->getAttribute("rend")) {
+                    if ( preg_match("/^heading(\d+)$/", $heading, $match)) {
                         $n = $match[1]; 
                         if ($n > $max) $max = $n;
                         $head = array("heading$n" => $entry->nodeValue);
@@ -2009,7 +2019,7 @@ $this->heading2div($dom, $xpath, $headlevel);
         private function heading2div(&$dom, &$xpath, $level) {
         error_log("<h4>heading2div(level=$level)</h4>\n",3,self::_DEBUGFILE_);
            if ($level == 0) return;
-            $entries = $xpath->query("//tei:text/tei:body/tei:ab[@subtype='level$level']", $dom); 
+            $entries = $xpath->query("//tei:text/tei:body/tei:ab[@rend='heading$level']", $dom);
             foreach ($entries as $item) {
 //error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
                 $parent = $item->parentNode;
@@ -2528,6 +2538,14 @@ $this->heading2div($dom, $xpath, $headlevel);
         private function greedy(&$node) {
         //error_log("<h4>greedy()</h4>\n",3,self::_DEBUGFILE_);
             $section = $surround = $key = $rend = null;
+/*
+<p rend="appendix-heading1" xml:lang="fr">Ouvrages en langues occidentales</p>
+<p rend="bibliography-heading1" xml:lang="fr">Ouvrages en chinois</p>
+*/
+/*
+<ab type="head" subtype="level1" xml:id="otx_61" rend="appendix-">Ouvrages en langues occidentales</ab>
+<ab type="head" subtype="level1" xml:id="otx_83" rend="bibliography-">Ouvrages en chinois</ab>
+*/
             if ($rend=$node->getAttribute("rend")) {
                 if ( isset($this->EMotx[$rend]['surround'])) {
                     $surround = $this->EMotx[$rend]['surround'];

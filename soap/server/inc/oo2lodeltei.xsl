@@ -95,7 +95,7 @@
     <xsl:template match="/office:document">
     <TEI xmlns="http://www.tei-c.org/ns/1.0">
         <xsl:call-template name="teiHeader"/>
-<xsl:call-template name="copyxmlid"/>
+        <xsl:call-template name="copyxmlid"/>
     </TEI>
     </xsl:template>
 
@@ -164,7 +164,7 @@
     <xsl:template match="/office:document/office:body">
         <text>
             <front></front>
-<xsl:call-template name="copyxmlid"/>
+            <xsl:call-template name="copyxmlid"/>
             <back></back>
         </text>
     </xsl:template>
@@ -172,7 +172,7 @@
 <!-- office:text -->
     <xsl:template match="office:text">
         <body>
-<xsl:call-template name="copyxmlid"/>
+        <xsl:call-template name="copyxmlid"/>
         </body>
     </xsl:template>
 
@@ -205,17 +205,17 @@
             </xsl:when>
             <xsl:when test="$Style='standard'">
                 <p rendition="#standard">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
             <xsl:when test="starts-with($Style,'P')">
                 <p rendition="#{$Style}">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
             <xsl:otherwise>
                 <p rend="{$Style}">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:otherwise>
         </xsl:choose>
@@ -223,7 +223,7 @@
 
     <xsl:template match="office:annotation/text:p">
         <note>
-<xsl:call-template name="copyxmlid"/>
+        <xsl:call-template name="copyxmlid"/>
         </note>
     </xsl:template>
 
@@ -233,22 +233,22 @@
     <!-- headings -->
     <xsl:template match="text:list[@text:style-name='outline']">
         <xsl:if test="descendant::text:h[@text:outline-level]">
-<xsl:call-template name="copyxmlid"/>
+            <xsl:call-template name="copyxmlid"/>
         </xsl:if>
     </xsl:template>
 
     <xsl:template match="text:list[@text:continue-numbering]">
         <xsl:if test="descendant::text:h[@text:outline-level]">
-<xsl:call-template name="copyxmlid"/>
+            <xsl:call-template name="copyxmlid"/>
         </xsl:if>
     </xsl:template>
 
     <xsl:template match="text:h[@text:outline-level]">
-        <xsl:variable name="subtype">
-            <xsl:value-of select="concat('level',@text:outline-level)"/>
+        <xsl:variable name="heading">
+            <xsl:value-of select="concat('heading',@text:outline-level)"/>
         </xsl:variable>
-        <ab type="head" subtype="{$subtype}">
-<xsl:call-template name="copyxmlid"/>
+        <ab type="head" rend="{$heading}">
+        <xsl:call-template name="copyxmlid"/>
         </ab>
     </xsl:template>
 
@@ -256,7 +256,7 @@
     <xsl:template match="text:list">
         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
-<xsl:call-template name="copyxmlid"/>
+            <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <!--
             <xsl:when test="text:list-item/text:p">
@@ -267,17 +267,17 @@
             -->
             <xsl:when test="@text:style-name='Var List'">
                 <list>
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:when>
             <xsl:when test="starts-with(@text:style-name,'ordered')">
                 <list type="ordered">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:when>
             <xsl:otherwise>
                 <list type="unordered">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:otherwise>
         </xsl:choose>
@@ -285,20 +285,20 @@
 
     <xsl:template match="text:list-header">
         <head>
-<xsl:call-template name="copyxmlid"/>
+        <xsl:call-template name="copyxmlid"/>
         </head>
     </xsl:template>
 
     <xsl:template match="text:list-item">
         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <xsl:when test="ancestor::text:list[@text:style-name='outline']">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <xsl:when test="ancestor::text:list[@text:continue-numbering='true']">
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <xsl:when test="parent::text:list/@text:style-name='Var List'">
                 <item>
@@ -309,7 +309,7 @@
             </xsl:when>
             <xsl:otherwise>
                 <item>
-<xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
                 </item>
             </xsl:otherwise>
         </xsl:choose>
@@ -614,7 +614,7 @@
     <!-- break -->
     <xsl:template match="text:soft-page-break">
         <xsl:if test="not(parent::text:span[@text:style-name='l'])">
-        <pb/>
+            <pb/>
         </xsl:if>
     </xsl:template>
 
@@ -801,12 +801,12 @@ These seem to have no obvious translation
     </xsl:template>
 
     <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
-        <xsl:comment>Warning: Tracking Changes detected</xsl:comment>
+        <xsl:comment>Warning: Tracking changes detected</xsl:comment>
         <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
     <xsl:template match="text:table-of-content">
-        <xsl:comment>Warning: Table Of Content detected</xsl:comment>
+        <xsl:comment>Warning: Table of content detected</xsl:comment>
     </xsl:template>
     <xsl:template match="text:index-entry-chapter"/>
     <xsl:template match="text:index-entry-page-number"/>
