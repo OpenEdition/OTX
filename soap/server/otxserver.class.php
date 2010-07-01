@@ -250,7 +250,12 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
     protected function Schema2OO() {
     error_log("<h2>Schema2OO()</h2>\n",3,self::_DEBUGFILE_);
 
-        $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
+        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
+/**
+ *   TODO DEBUG TODO
+**/
+$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
+
         error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
         $domxml = new DOMDocument;
