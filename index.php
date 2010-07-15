@@ -6,12 +6,15 @@
  * @copyright 2010, CLEO/Revues.org
  * @licence http://www.gnu.org/copyleft/gpl.html
 **/
+
+/*
 ini_set("max_execution_time", "180");
 ini_set("max_input_time", "180");
-ini_set("post_max_size", "32M");
-ini_set("upload_max_filesize", "32M");
+ini_set("post_max_size", "64M");
+ini_set("upload_max_filesize", "64M");
 ini_set("memory_limit", "256M");
 set_time_limit(3600);
+*/
 ini_set("session.auto_start", 0);
 
 include_once('otxconfig.inc.php');

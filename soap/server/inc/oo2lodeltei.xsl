@@ -4,7 +4,7 @@
  # the GNU Lesser General Public License Version 2.1
 
  # Nicolas Barts
- # copyright 2009, 2010, Cléo/Revue.org
+ # copyright 2010, Cléo/Revue.org
 
  # OpenOffice v3.x
 -->
@@ -614,7 +614,8 @@
     <!-- break -->
     <xsl:template match="text:soft-page-break">
         <xsl:if test="not(parent::text:span[@text:style-name='l'])">
-            <pb/>
+            <!-- <pb/> -->
+            <xsl:comment> &lt;pb/&gt; </xsl:comment>
         </xsl:if>
     </xsl:template>
 
@@ -738,15 +739,16 @@ These seem to have no obvious translation
 
     <!-- TODO : warnings ?! -->
     <xsl:template match="draw:*">
-        <xsl:comment>Warning: object block type, skipped</xsl:comment>
+        <xsl:comment> Warning: object block type, skipped </xsl:comment>
         <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
     <!-- anchor ? -->
     <xsl:template match="anchor">
-        <xsl:comment>Warning: match="anchor"</xsl:comment>
+        <xsl:comment> Warning: match="anchor" </xsl:comment>
     </xsl:template>
     <!-- unkwnon tag -->
     <xsl:template match="text:*"> 
+        <xsl:comment> Warning: unkwnon tag ? </xsl:comment>
         <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
@@ -801,19 +803,34 @@ These seem to have no obvious translation
     </xsl:template>
 
     <xsl:template match="text:change|text:changed-region|text:change-end|text:change-start">
-        <xsl:comment>Warning: Tracking changes detected</xsl:comment>
+        <xsl:comment> Warning: Tracking changes detected </xsl:comment>
         <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
 
     <xsl:template match="text:table-of-content">
-        <xsl:comment>Warning: Table of content detected</xsl:comment>
+        <xsl:comment> Warning: Table of content detected </xsl:comment>
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
-    <xsl:template match="text:index-entry-chapter"/>
-    <xsl:template match="text:index-entry-page-number"/>
-    <xsl:template match="text:index-entry-tab-stop"/>
-    <xsl:template match="text:index-entry-text"/>
-    <xsl:template match="text:index-title-template"/>
-    <xsl:template match="text:table-of-content-entry-template"/>
-    <xsl:template match="text:table-of-content-source"/>
+    <xsl:template match="text:index-entry-chapter">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:index-entry-page-number">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:index-entry-tab-stop">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:index-entry-text">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:index-title-template">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:table-of-content-entry-template">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
+    <xsl:template match="text:table-of-content-source">
+        <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
+    </xsl:template>
 
 </xsl:stylesheet>

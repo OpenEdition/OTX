@@ -209,7 +209,6 @@ class OTXserver
                 $this->oo2report('soffice', $this->_param['odtpath']);
 //                $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
-                //$this->EMTEI = EM2TEI();    //$this->EM2TEI();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = null; //_windobclean($this->_param['lodelTEI']);
@@ -250,13 +249,18 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
     protected function Schema2OO() {
     error_log("<h2>Schema2OO()</h2>\n",3,self::_DEBUGFILE_);
 
-        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
+        $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
 /**
- *   TODO DEBUG TODO
+ *   TODO DEBUG TODO    => $EMOTX[$EMLodel[$odfstyle]]
 **/
-$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
+//$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."teipub/"."model.xml";
+//$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
 
         error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
+
+$this->EMTEI = _em2tei();
+$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+
 
         $domxml = new DOMDocument;
         $domxml->encoding = "UTF-8";
@@ -283,85 +287,125 @@ $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml"
         foreach ($domxml->getElementsByTagName('row') as $node) {
             $value = $keys = $g_otx = '';
             if ($node->hasChildNodes()) {
-                $row = array(); $bstyle = false;
+                $row=array(); $otxvalue=null; $bstyle=false;
                 foreach ($node->childNodes as $tag) {
                     if ($tag->hasAttributes()) {
                         foreach ($tag->attributes as $attr) {
                             if ($attr->name === "name") {
+//                            error_log("\n<li>{$attr->value} : {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                 switch ($attr->value) {
+
                                     case "name":
                                     case "type":
-                                        $value = ''.trim($tag->nodeValue);
-                                        break;
+//                                    error_log("\n<li>name = {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                                        //$value = trim($tag->nodeValue);
+                                        if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
+                                      break;
+
                                     case "style":
-                                        $keys = ''.trim($tag->nodeValue);
-                                        if ($keys == '') continue; // empty : no style defined !
-                                        $bstyle = true; 
-                                        $row[$attr->value] = $tag->nodeValue;
-                                        $nbEmStyle++;
-                                        if ($value=='') {
-                                            if (! strstr($keys, ",")) {
-                                                $Model[$keys] = $keys;
-                                            } else {
-                                                foreach ( explode(",", $keys) as $key) {
-                                                    $key = trim($key);
-                                                    /* if (array_key_exists($key, $EModel)) { } */
-                                                    $Model[$key] = $key;
-                                                }
-                                            }
-                                        } else {
-                                            if (! strstr($keys, ",")) {
-                                                $Model[$keys] = $value;
-                                            } else {
-                                                foreach ( explode(",", $keys) as $key) {
-                                                    $key = trim($key);
-                                                    /* if (array_key_exists($key, $EModel)) { } */
-                                                    $Model[$key] = $value;
-                                                }
-                                            }
+                                        $row[$attr->value] = trim($tag->nodeValue);
+                                        $style = trim($tag->nodeValue);
+                                        if ($style == '') { // empty : no style defined !
+//                                        error_log("<li>empty : no style defined !</li>\n",3,self::_DEBUGFILE_);
+                                            continue 4;
                                         }
+                                        $bstyle = true; 
                                         break;
+
                                     case "g_type":
                                     case "g_name":
-                                        $gvalue = '' .trim($tag->nodeValue);
-                                        //$row[$attr->value] = $tag->nodeValue;
+                                        $gvalue = trim($tag->nodeValue);
+                                        $row['gname'] = trim($tag->nodeValue);
                                         break;
+
                                     case 'surrounding':
                                         //$row[$attr->value] = $tag->nodeValue;
+                                        $row[$attr->value] = trim($tag->nodeValue);
                                         break;
+
+                                    case "lang":
+//                                    error_log("<li>=> lang = $lang</li>\n",3,self::_DEBUGFILE_);
+                                        $lang = trim($tag->nodeValue);
+                                        $row[$attr->value] = trim($tag->nodeValue);
+                                        break;
+
                                     case "otx":
-                                        $otxvalue = ''. trim($tag->nodeValue);
-                                        if ($gvalue!='' and $otxvalue!='') {
-                                            $this->EMandatory[$gvalue] = $otxvalue;
+                                        $nodevalue = trim($tag->nodeValue);
+                                        if ($nodevalue == '') {
+//                                        error_log("<li>case otx empty : skip</li>\n",3,self::_DEBUGFILE_);
+                                            continue 4;
                                         }
-                                        $row[$attr->value] = $tag->nodeValue;
-                                        $nbOtxStyle++;
-                                        $otxkey = $otxvalue = '';
-                                        if ( strstr( trim($tag->nodeValue), ":")) {
-                                            list($otxkey, $otxvalue) = explode(":", $tag->nodeValue);
-                                            $this->EMotx[$otxvalue]['key'] = $otxkey;
-                                        } else {
-                                            $otxvalue = $tag->nodeValue;
-                                        }
-                                        if ($otxvalue!= '' and $keys!='') {
-                                            if (! strstr($keys, ",")) {
-                                                $OOTX[$keys] = $otxvalue;
-                                            } else {
-                                                foreach ( explode(",", $keys) as $key) {
-                                                    $key = trim($key);
-                                                    $OOTX[$key] = $otxvalue;
-                                                }
-                                            }
-                                        }
+                                        $row[$attr->value] = trim($tag->nodeValue);
+                                        break;
+
+                                    default:
+//                                    error_log("<li>ME [{$attr->value} = {$tag->nodeValue}] : skip</li>\n",3,self::_DEBUGFILE_);
                                         break;
                                 }
                             }
                         }
                     }
                 }
+
+                // EM otx style definition
+                if ( isset($row['otx'])) {
+error_log("\n<ul>\n",3,self::_DEBUGFILE_);$dbg="<li><pre>\n".print_r($row,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);error_log("\n</ul>\n",3,self::_DEBUGFILE_);
+                    if (! isset($row['style'])) {
+                    error_log("\n<h1>OUPS..!? (EMstyle)</h1>\n",3,self::_DEBUGFILE_);
+                    continue;
+                    }
+
+                    $emotx = $row['otx'];
+                    if (! isset($this->EMTEI[$emotx])) {
+                    error_log("<li>?? OTX: $emotx ??</li>\n",3,self::_DEBUGFILE_);
+                        // TODO ?
+                        continue;
+                    } 
+                    else {
+                        $nbOtxStyle++;
+                        $otxkey = $otxvalue = '';
+                        $emotx = $this->EMTEI[$emotx];
+                        if ( isset($row['lang']) and $emotx==="header:keywords") {  // TODO !?!
+                            $emotx .= "-".$row['lang'];
+                        }
+                        if ( strstr($emotx, ":")) {
+                            list($otxkey, $otxvalue) = explode(":", $emotx);
+                            $this->EMotx[$otxvalue]['key'] = $otxkey;
+                        } else {
+                            $otxvalue = $emotx;
+error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
+                            continue;
+                        }
+                    error_log("<li>=> otx: $otxvalue</li>\n",3,self::_DEBUGFILE_);
+                    }
+
+                    $style = $row['style']; $nbEmStyle++;
+                    if (! strstr($style, ",")) {
+                        $OOTX[$style] = $otxvalue;
+                        isset($row['name']) ? $Model[$style]=$row['name'] : $Model[$style]=$style;
+                    } else {
+                        foreach ( explode(",", $style) as $stl) {
+                            $stl = trim($stl);
+                            $OOTX[$stl] = $otxvalue;
+                            isset($row['name']) ? $Model[$stl]=$row['name'] : $Model[$stl]=$style;
+                        }
+                    }
+
+                    if ( isset($row['gname']) and $emotx!='') {
+                        $gvalue = $row['gname'];
+                        $this->EMandatory[$gvalue] = $otxvalue;
+                    }
+                }
+
             }
         }
         error_log("<li>parse EM ok</li>\n",3,self::_DEBUGFILE_);
+
+
+$dbg="\n<h4>--- EMotx ---</h4>\n<li><pre>".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
+$dbg="\n<h4>--- OOTX ---</h4>\n<li><pre>".print_r($OOTX,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
+$dbg="\n<h4>--- Model ---</h4>\n<li><pre>".print_r($Model,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
+
 
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
@@ -391,10 +435,14 @@ $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml"
         }
 
         // more++
-        $this->EModel['FootnoteSymbol'] = "footnotesymbol";
-        $this->EModel['Standard'] = "standard";
+//        $this->EModel['FootnoteSymbol'] = "footnotesymbol";
+//        $this->EModel['Standard'] = "standard";
         unset($Model);
         unset($OOTX);
+
+
+$dbg="\n\n<h4>--- EModel ---</h4>\n<li><pre>\n".print_r($this->EModel,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
+
 
         # surrounding
         error_log("<li>surrounding</li>\n",3,self::_DEBUGFILE_);
@@ -418,6 +466,11 @@ $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml"
                                 break;
                             case "otx":
                                 if ($value == '') continue;
+                                if (! isset($this->EMTEI[$value])) {
+                                error_log("<li>EMTEI: $value ???</li>\n",3,self::_DEBUGFILE_);
+                                    continue;
+                                }
+                                $value = $this->EMTEI[$value];
                                 list($otxkey,$otxvalue) = explode(":", $value);
                                 break;
                         }
@@ -432,6 +485,10 @@ $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml"
         // default
         $this->EMotx['standard']['key'] = "text";
         //$this->EMotx['standard']['surround'] = "*-";
+
+
+$dbg="\n\n<h4>--- EMotx ---</h4>\n<li><pre>\n".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
+
 
         error_log("<li>DONE.</li>\n",3,self::_DEBUGFILE_);
         unset($domxml);
@@ -911,14 +968,6 @@ EOD;
         # surrounding internalstyles
         error_log("<li># surrounding internalstyles</li>\n",3,self::_DEBUGFILE_);
 
-
-
-//        $entries = $xpath->query("//tei:ab["); 
-
-
-
-
-
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
@@ -1022,7 +1071,7 @@ EOD;
         $lodeltei = "". str_replace($search, "", $dom->saveXML()); // ... and delete <nop>
 
         /** TODO Warning **/
-        $lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
+        //$lodeltei = preg_replace("/([[[UNTRANSLATED.*]]])/s", "<!-- \1 -->", $lodeltei);
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
@@ -1789,8 +1838,13 @@ $this->report['warning'] = $mandatory;
         }
 
         # /tei/text/back
+error_log("\n<li>tei:back</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
-        $entries = $xpath->query("//tei:p[@rend='bibliography']");
+
+        # Bibliography
+/*
+error_log("\n<li>tei:div[@rend='bibliography']</li>\n",3,self::_DEBUGFILE_);
+        $entries = $xpath->query("//tei:*[@rend='bibliography']");
         if ($entries->length) {
             # /tei/text/back/div@type=bibliogr
             $div = $dom->createElement("div");
@@ -1800,7 +1854,7 @@ $this->report['warning'] = $mandatory;
             $div->appendChild($listbibl);
             foreach ($entries as $item) {
                 $parent = $item->parentNode;
-                if ( preg_match("/^appendix-(.+)$/", $item->getAttribute("rend"), $matches)) {
+                if ( preg_match("/^bibliography-(.+)$/", $item->getAttribute("rend"), $matches)) {
                     if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
                         $bibl = $dom->createElement("head", $item->nodeValue);
                         $bibl->setAttribute('subtype', "level".$match[1]);
@@ -1820,7 +1874,44 @@ $this->report['warning'] = $mandatory;
                 $parent->removeChild($item);
             }
         }
+*/
+        $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
+        if ($entries->length) {
+            $lodel = $entries->item(0);
+            $parent = $lodel->parentNode;
+            $bibliography = $dom->createElement("div");
+            $bibliography->setAttribute('type', "bibliography");
+            $back->appendChild($bibliography);
+            $listbibl = $dom->createElement("listBibl");
+            $bibliography->appendChild($listbibl);
+            $tags = $lodel->childNodes;
+            foreach ($tags as $tag) {
+                if ( preg_match("/^bibliography-(.+)$/", $tag->getAttribute("rend"), $matches)) {
+                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                        $bibl = $dom->createElement("bibl", $tag->nodeValue);
+                        $bibl->setAttribute('type', "head");
+                        $bibl->setAttribute('subtype', "level".$match[1]);
+                        $listbibl->appendChild($bibl);
+                        continue;
+                    }
+                }
+                $bibl = $dom->createElement("bibl");
+                if ($tag->hasChildNodes()) {
+                    foreach ($tag->childNodes as $child) {
+                        $clone = $child->cloneNode(true);
+                        $bibl->appendChild($clone);
+                    }
+                } 
+                else {
+                    $bibl->nodeValue = $tag->nodeValue;
+                }
+                $listbibl->appendChild($bibl);
+            }
+            $parent->removeChild($lodel);
+        }
+
         # Appendix
+error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
         if ($entries->length) {
             $lodel = $entries->item(0);
@@ -1834,8 +1925,11 @@ $this->report['warning'] = $mandatory;
             foreach ($tags as $tag) {
                 if ( preg_match("/^appendix-(.+)$/", $tag->getAttribute("rend"), $matches)) {
                     if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                        $item = $dom->createElement("head", $tag->nodeValue);
-                        $item->setAttribute('subtype', "level".$match[1]);
+                        $item = $dom->createElement("item");
+                        $ab = $dom->createElement("ab", $tag->nodeValue);
+                        $ab->setAttribute('type', "head");
+                        $ab->setAttribute('subtype', "level".$match[1]);
+                        $item->appendChild($ab);
                         $list->appendChild($item);
                         continue;
                     }
@@ -1849,6 +1943,8 @@ $this->report['warning'] = $mandatory;
         }
 
         // clean Lodel sections
+error_log("\n<li>clean Lodel sections</li>\n",3,self::_DEBUGFILE_);
+
         $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
         if ($entries->length) {
             $lodelmeta = $entries->item(0);
@@ -1887,6 +1983,7 @@ $this->report['warning'] = $mandatory;
         }
 
         # 
+error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//@rendition");
         foreach ($entries as $attr) {
             $element = $attr->ownerElement;
@@ -1929,19 +2026,7 @@ $this->report['warning'] = $mandatory;
                 $parent->removeChild($encodingDesc);
             }
         }
-/*
-        // headings
-        $entries = $xpath->query("//tei:body/tei:p[contains(@rend,'heading')]");
-        foreach ($entries as $entry) {
-            $parent = $entry->parentNode;
-            preg_match("/^heading(\d+)$/", $entry->getAttribute("rend"), $match);
-            #<ab type="head" subtype="level1">Introduction</ab>
-            $head = $dom->createElement("ab", $entry->nodeValue);
-            $head->setAttribute("type", "head");
-            $head->setAttribute("subtype", "level".$match[1]);
-            $parent->replaceChild($head, $entry);
-        }
-*/
+
         // <floatingText type="box">
         $entries = $xpath->query("//tei:body/tei:p[@rend='box']");
         foreach ($entries as $entry) {
@@ -1985,7 +2070,7 @@ $this->heading2div($dom, $xpath, $headlevel);
         $dom->save($this->_param['xmloutputpath']);
 
         $dom->resolveExternals = false;
-        //$dom->validateOnParse = true;
+        $dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: OTX TEI-P5 is not valid !";
             array_push($this->log['warning'], $this->_status);
@@ -2011,6 +2096,7 @@ $this->heading2div($dom, $xpath, $headlevel);
                     if ( preg_match("/^heading(\d+)$/", $heading, $match)) {
                         $n = $match[1]; 
                         if ($n > $max) $max = $n;
+                        //$clone = $entry->cloneNode(false);
                         $head = array("heading$n" => $entry->nodeValue);
                         array_push($summary, $head);
                     }
@@ -2551,10 +2637,16 @@ $this->heading2div($dom, $xpath, $headlevel);
 <ab type="head" subtype="level1" xml:id="otx_61" rend="appendix-">Ouvrages en langues occidentales</ab>
 <ab type="head" subtype="level1" xml:id="otx_83" rend="bibliography-">Ouvrages en chinois</ab>
 */
+$dbgvalue='';
             if ($rend=$node->getAttribute("rend")) {
                 if ( isset($this->EMotx[$rend]['surround'])) {
                     $surround = $this->EMotx[$rend]['surround'];
                 }
+                elseif ($node->nodeName=="ab") { 
+                    $surround = "*-"; // heading > 6 !
+                $dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no surround ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
+                }
+
                 if ( isset($this->EMotx[$rend]['key'])) {
                     $key = $this->EMotx[$rend]['key'];
                     switch ($key) {
@@ -2569,14 +2661,21 @@ $this->heading2div($dom, $xpath, $headlevel);
                             $section = "body";
                             break;
                         default:
+error_log("<li>? [greedy] default section = body ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_);
                             $section = "body";
                             break;
                     }
                 }
+                elseif ($node->nodeName=="ab") {
+                    $section = "body"; // heading > 6 !
+                $dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no key/section ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
+                }
+
                 return array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
             }
             else {
-                //error_log("<li>? [greedy] no rend atrribute ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
+            if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
+            error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
                 return null;
             }
         }

@@ -140,7 +140,6 @@ class OTXSoapServer
 	return new SoapVar( array('AuthStatus'=>$result), SOAP_ENC_OBJECT);
     }
 
-
     /**
       * @access public
       * @param string $input->request
@@ -238,7 +237,6 @@ class OTXSoapServer
         return $this->otxResponse();
     }
 
-
     /**
      * @access public
      * @return SoapVar array [ $xml (tei contents) and $status (cached or not) and $report (checkbalisage) ]
@@ -262,7 +260,6 @@ class OTXSoapServer
                        'lodelxml'   => $this->lodelxml,
                     );
     }
-
 
 // End of OTX SoapServer Class
 }
