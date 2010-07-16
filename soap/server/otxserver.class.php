@@ -1768,6 +1768,19 @@ $this->report['warning'] = $mandatory;
             $front->appendChild($div);
             $parent->removeChild($item);
         }
+        # /tei/text/front/review
+        $entries = $xpath->query("//tei:p[starts-with(@rend,'review-')]");
+        if ($entries->length) {
+            $div = $dom->createElement("div");
+            $div->setAttribute('type', "review");
+            foreach ($entries as $item) {
+                $parent = $item->parentNode;
+                $clone = $item->cloneNode(true);
+                $div->appendChild($clone);
+                $parent->removeChild($item);
+            }
+            $front->appendChild($div);
+        }
         # /tei/text/front/note@resp=editor
         $entries = $xpath->query("//tei:p[@rend='editornote']");
         foreach ($entries as $item) {
@@ -1818,15 +1831,21 @@ $this->report['warning'] = $mandatory;
                     // TODO warnings ?
                     foreach ($entry->childNodes as $child) {
                         $div = $dom->createElement("div");
+                        if ($id=$child->getAttribute('xml:id')) { 
+                            $div->setAttribute('xml:id', $id); 
+                            $child->removeAttribute('xml:id');
+                        }
                         if ( $lang=$child->getAttribute('xml:lang')) {
                             $div->setAttribute('xml:lang', $lang);
                             $child->removeAttribute('xml:lang');
                         }
+                        /*
                         if ($child->hasAttributes()) {
                             foreach ($child->attributes as $attr) {
                                 $div->setAttribute($attr->name, $attr->value);
                             }
                         }
+                        */
                         $clone = $child->cloneNode(true);
                         $div->appendChild($clone);
                         $front->appendChild($div);
@@ -1919,6 +1938,12 @@ error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
             $appendix = $dom->createElement("div");
             $appendix->setAttribute('type', "appendix");
             $back->appendChild($appendix);
+            $tags = $lodel->childNodes;
+            foreach ($tags as $tag) {
+                $clone = $tag->cloneNode(true);
+                $appendix->appendChild($clone);
+            }
+/*
             $list = $dom->createElement("list");
             $appendix->appendChild($list);
             $tags = $lodel->childNodes;
@@ -1939,6 +1964,7 @@ error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
                 $clone = $tag->cloneNode(true);
                 $item->appendChild($clone);
             }
+*/
             $parent->removeChild($lodel);
         }
 
@@ -2043,21 +2069,6 @@ $headlevel = $this->summary($dom, $xpath);
 $this->heading2div($dom, $xpath, $headlevel);
 //$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
 
-
-        /*
-        # Warnings : recommended
-        foreach ($this->EMandatory as $key=>$value) {
-            if ( preg_match("/^dc\.(.+)$/", $key, $match)) {
-                $query = $this->EMTEI[$value];
-                $entries = $xpath->query($query);
-                if (! $entries->length) {
-                    $this->_status = "Warning: dc:{$match[1]} not found";
-                    array_push($this->log['warning'], $this->_status);
-                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                }
-            }
-        }
-        */
 
         // clean++
         //$otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
@@ -2639,6 +2650,10 @@ $this->heading2div($dom, $xpath, $headlevel);
 */
 $dbgvalue='';
             if ($rend=$node->getAttribute("rend")) {
+
+if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) { list($prefix,$rend)=explode("-",$rend); 
+error_log("<li>? [greedy] bak section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); } 
+
                 if ( isset($this->EMotx[$rend]['surround'])) {
                     $surround = $this->EMotx[$rend]['surround'];
                 }

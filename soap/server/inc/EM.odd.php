@@ -217,12 +217,26 @@ function _em2tei($schema="revorg") {
 "//tei:head[@subtype='level3']" =>  'text:heading3',
 "//tei:head[@subtype='level4']" =>  'text:heading4',
 "//tei:head[@subtype='level5']" =>  'text:heading5',
-"//tei:head[@subtype='level6']" =>  'text:heading6'
+"//tei:head[@subtype='level6']" =>  'text:heading6',
 
 //            'header:scientificeditor'       => "/TEI/teiHeader/fileDesc/titleStmt/editor",
 //            'text:item'                     => "/TEI/text/*/item",
 
-    );
+// accroche
+"//*[@rend='pitch']"  => 'text:pitch',   // <floatingText type="box">
+// encadre
+"//*[@rend='box']"  => 'text:box'   // <floatingText type="box">
+
+/*
+<floatingText>
+<body>
+<p rend="encadre" xml:id="otx_85">
+Fusce ac felis sit amet ligula pharetra condimentum. Maecenas egestas arcu quis ligula mattis placerat. Duis lobortis massa imperdiet quam. Suspendisse potenti. Pellentesque commodo eros a enim. Vestibulum turpis sem, aliquet eget, lobortis pellentesque, rutrum eu, nisl. Sed libero. Aliquam erat volutpat. Etiam vitae tortor. Morbi vestibulum volutpat enim. Aliquam eu nunc. Nunc sed turpis. Sed mollis, eros et ultrices tempus, mauris ipsum aliquam libero, non adipiscing dolor urna a orci. Nulla porta dolor. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Pellentesque dapibus hendrerit tortor. Praesent egestas tristique nibh. Sed a libero. Cras varius.
+</p>
+</body>
+</floatingText>
+*/
+);
 
 }
 
