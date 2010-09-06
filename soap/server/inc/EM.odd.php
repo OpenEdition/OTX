@@ -38,20 +38,20 @@ function _em2tei($schema="revorg") {
     => 'header:scientificeditor',
 
 // descriptionauteur
-"tei:affiliation"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation"
+"//tei:affiliation"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation"
     => 'header:author-description',
-// affiliation, .affiliation
-"tei:affiliation/tei:orgName"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:orgName"
-    => 'header:author-affiliation',
 // prefixe, .prefixe
-"tei:roleName[@type='honorific']"   // "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName[@type='honorific']"
+"//tei:roleName[@type='honorific']"   // "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName[@type='honorific']"
     => 'header:author-prefix',
-// courriel, .courriel
-"tei:affiliation/tei:email"     //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:email"
-    => 'header:author-email',
-// role,.role
-"tei:roleName"      //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName"
+// affiliation, .affiliation
+"//tei:affiliation/tei:orgName"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:orgName"
+    => 'header:author-affiliation',
+// fonction, .fonction
+"//tei:affiliation/tei:roleName"      //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName"
     => 'header:author-function',
+// courriel, .courriel
+"//tei:affiliation/tei:email"     //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:email"
+    => 'header:author-email',
 
 // titretraduitfr:fr,titrefr:fr, titretraduiten:en,titleen:en,titreen:en, titretraduites:es,tituloes:es,titrees:es, titretraduitit:it,titoloit:it,titreit:it, titretraduitde:de,titelde:de,titrede:de, titretraduitpt:pt,titrept:pt, titretraduitru:ru,titreru:ru
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:title[@type='alt']"
@@ -118,9 +118,6 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:front/tei:div[@type='review']/tei:p[@rend='review-date']"
     => 'front:review-date',
 
-// texte, standard, normal, textbody
-"/tei:TEI/tei:text/tei:body/tei:descendant::*[@xml:id]"
-    => 'body:standard',
 //
 "/tei:TEI/tei:text/tei:body/tei:*/tei:note[@place='foot']"
     => 'text:footnote',
@@ -222,20 +219,14 @@ function _em2tei($schema="revorg") {
 //            'header:scientificeditor'       => "/TEI/teiHeader/fileDesc/titleStmt/editor",
 //            'text:item'                     => "/TEI/text/*/item",
 
+//Texte du document
+"/tei:TEI/tei:text/tei:body/child::*"   =>  'text:standard',    // texte, standard, normal, textbody
+
 // accroche
-"//*[@rend='pitch']"  => 'text:pitch',   // <floatingText type="box">
+"//*[@rend='pitch']"  => 'text:pitch',
 // encadre
 "//*[@rend='box']"  => 'text:box'   // <floatingText type="box">
 
-/*
-<floatingText>
-<body>
-<p rend="encadre" xml:id="otx_85">
-Fusce ac felis sit amet ligula pharetra condimentum. Maecenas egestas arcu quis ligula mattis placerat. Duis lobortis massa imperdiet quam. Suspendisse potenti. Pellentesque commodo eros a enim. Vestibulum turpis sem, aliquet eget, lobortis pellentesque, rutrum eu, nisl. Sed libero. Aliquam erat volutpat. Etiam vitae tortor. Morbi vestibulum volutpat enim. Aliquam eu nunc. Nunc sed turpis. Sed mollis, eros et ultrices tempus, mauris ipsum aliquam libero, non adipiscing dolor urna a orci. Nulla porta dolor. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Pellentesque dapibus hendrerit tortor. Praesent egestas tristique nibh. Sed a libero. Cras varius.
-</p>
-</body>
-</floatingText>
-*/
 );
 
 }

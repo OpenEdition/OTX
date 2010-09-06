@@ -78,7 +78,7 @@ class OTXSoapServer
 /*
 	if ($this->_isLogged) {
             // simple check
-            return ($input->password === $this->_user['passwd'] ? $this->otxAuthReponse(true) : $this->otxAuthResponse(false));
+            return ($input->password === $this->_user['passwd'] ? $this->otxAuthResponse(true) : $this->otxAuthResponse(false));
 	}
 
 	if (is_null($this->_db)) {

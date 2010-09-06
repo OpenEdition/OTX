@@ -217,7 +217,7 @@ class OTXserver
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
-$dbg="<li><pre>".print_r($this->report,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+//$dbg="<li><pre>".print_r($this->report,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
                     $jsonreport = json_encode($this->report);
 $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
                 $this->output['report'] = $jsonreport;
@@ -259,7 +259,7 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
         error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
 $this->EMTEI = _em2tei();
-$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+//$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
 
         $domxml = new DOMDocument;
@@ -349,7 +349,6 @@ $dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self:
 
                 // EM otx style definition
                 if ( isset($row['otx'])) {
-error_log("\n<ul>\n",3,self::_DEBUGFILE_);$dbg="<li><pre>\n".print_r($row,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);error_log("\n</ul>\n",3,self::_DEBUGFILE_);
                     if (! isset($row['style'])) {
                     error_log("\n<h1>OUPS..!? (EMstyle)</h1>\n",3,self::_DEBUGFILE_);
                     continue;
@@ -401,12 +400,6 @@ error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
         }
         error_log("<li>parse EM ok</li>\n",3,self::_DEBUGFILE_);
 
-
-$dbg="\n<h4>--- EMotx ---</h4>\n<li><pre>".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
-$dbg="\n<h4>--- OOTX ---</h4>\n<li><pre>".print_r($OOTX,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
-$dbg="\n<h4>--- Model ---</h4>\n<li><pre>".print_r($Model,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
-
-
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
 
@@ -439,10 +432,6 @@ $dbg="\n<h4>--- Model ---</h4>\n<li><pre>".print_r($Model,true)."</pre></li>";er
 //        $this->EModel['Standard'] = "standard";
         unset($Model);
         unset($OOTX);
-
-
-$dbg="\n\n<h4>--- EModel ---</h4>\n<li><pre>\n".print_r($this->EModel,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
-
 
         # surrounding
         error_log("<li>surrounding</li>\n",3,self::_DEBUGFILE_);
@@ -485,10 +474,6 @@ $dbg="\n\n<h4>--- EModel ---</h4>\n<li><pre>\n".print_r($this->EModel,true)."</p
         // default
         $this->EMotx['standard']['key'] = "text";
         //$this->EMotx['standard']['surround'] = "*-";
-
-
-$dbg="\n\n<h4>--- EMotx ---</h4>\n<li><pre>\n".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,"/data/www/nicOO/otx/CACHE/tmp/otx.debug.htm");
-
 
         error_log("<li>DONE.</li>\n",3,self::_DEBUGFILE_);
         unset($domxml);
@@ -622,7 +607,7 @@ $dbg="\n\n<h4>--- EMotx ---</h4>\n<li><pre>\n".print_r($this->EMotx,true)."</pre
         $domcontent = new DOMDocument;
         $domcontent->encoding = "UTF-8";
         $domcontent->resolveExternals = false;
-        $domcontent->preserveWhiteSpace = true;
+        $domcontent->preserveWhiteSpace = false;
         $domcontent->formatOutput = true;
         if (! $domcontent->loadXML($OOcontent)) {
             $this->_status="error load content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
@@ -635,7 +620,7 @@ $dbg="\n\n<h4>--- EMotx ---</h4>\n<li><pre>\n".print_r($this->EMotx,true)."</pre
         $domlodelcontent = new DOMDocument;
         $domlodelcontent->encoding = "UTF-8";
         $domlodelcontent->resolveExternals = false;
-        $domlodelcontent->preserveWhiteSpace = true;
+        $domlodelcontent->preserveWhiteSpace = false;
         $domlodelcontent->formatOutput = true;
         if (! $domlodelcontent->loadXML($lodelcontent)) {
             $this->_status="error load lodel-content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
@@ -977,12 +962,15 @@ EOD;
         $section = $newsection = "";
         $newbacksection = $backsection = "";
         foreach ($entries as $item) {
+
             // prev
             $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
             // current
             $current = $this->greedy($item);
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
+$dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+
 
             if ($current != null) {
                 if ( isset($current['surround'])) {
@@ -1101,10 +1089,10 @@ EOD;
                 }
             }
         }
-$this->report['warning'] = $mandatory;
-
+        $this->report['warning'] = $mandatory;
+/*
         $dom->resolveExternals = false;
-        $dom->validateOnParse = true;
+        //$dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: Lodel TEI-Lite is not valid !";
             array_push($this->log['warning'], $this->_status);
@@ -1114,7 +1102,7 @@ $this->report['warning'] = $mandatory;
             error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         }
         $this->log['status']['lodeltei'] = $this->_status;
-
+*/
         $this->_param['lodelTEI'] = "". $dom->saveXML();
         return true;
     }
@@ -1153,7 +1141,8 @@ $this->report['warning'] = $mandatory;
  * transformation d'un lodel-xml en xml (TEI P5)
 **/
     protected function loodxml2xml() {
-    error_log("<h3>loodxml2xml()</h3>\n",3,self::_DEBUGFILE_);
+    error_log("\n<h2>loodxml2xml()</h2>\n",3,self::_DEBUGFILE_);
+        $lodelmeta = array();
 
         # domloodxml to domxml
         $dom = new DOMDocument;
@@ -1171,24 +1160,19 @@ $this->report['warning'] = $mandatory;
         # /tei/teiHeader
         $entries = $xpath->query("//tei:teiHeader"); $header = $entries->item(0);
         # /tei/teiHeader/fileDesc/titleStmt
-        $entries = $xpath->query("//tei:titleStmt"); $titlestmt = $entries->item(0);
+        $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:titleStmt"); $titlestmt = $entries->item(0);
         # /tei/teiHeader/fileDesc/titleStmt/title
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:title");
-        foreach ($entries as $entry) {
-            $titlestmt->removeChild($entry);
-        }
+        foreach ($entries as $entry) { $titlestmt->removeChild($entry); }
+
         # lodel:uptitle
         $entries = $xpath->query("//tei:p[@rend='uptitle']");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;
             $new = $dom->createElement('title');
             $new->setAttribute('type', "sup");
-            if ( $lang=$entry->getAttribute('xml:lang')) {
-                $new->setAttribute('xml:lang', $lang);
-            }
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $new->setAttribute('xml:id', $id);
-            }
+            if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
+            if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
             if ($entry->hasChildNodes()) {
                 foreach ($entry->childNodes as $child) {
                     $clone = $child->cloneNode(true);
@@ -1209,12 +1193,8 @@ $this->report['warning'] = $mandatory;
                 $new = $dom->createElement('title');
                 $new->setAttribute('level', "a");       // TODO ! document type
                 $new->setAttribute('type', "main");
-                if ( $lang=$entry->getAttribute('xml:lang')) {
-                    $new->setAttribute('xml:lang', $lang);
-                }
-                if ( $id=$entry->getAttribute('xml:id')) {
-                    $new->setAttribute('xml:id', $id);
-                }
+                if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
+                if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
                 if ($entry->hasChildNodes()) {
                     foreach ($entry->childNodes as $child) {
                         $clone = $child->cloneNode(true);
@@ -1225,14 +1205,14 @@ $this->report['warning'] = $mandatory;
                     $new->nodeValue = $p->nodeValue;
                 }
                 $titlestmt->appendChild($new);
-                //$parent->removeChild($entry);
+                $lodelmeta['title'] = $new->nodeValue;
+                $parent->removeChild($entry);
             }
         }
         else {
         // TODO : warning no title defined
         error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
         }
-
         # lodel:subtitle
         $entries = $xpath->query("//tei:p[@rend='subtitle']");
         if ($entries->length) {
@@ -1240,12 +1220,8 @@ $this->report['warning'] = $mandatory;
                 $parent = $entry->parentNode;
                 $new = $dom->createElement('title');
                 $new->setAttribute('type', "sub");
-                if ( $lang=$entry->getAttribute('xml:lang')) {
-                    $new->setAttribute('xml:lang', $lang);
-                }
-                if ( $id=$entry->getAttribute('xml:id')) {
-                    $new->setAttribute('xml:id', $id);
-                }
+                if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
+                if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
                 if ($entry->hasChildNodes()) {
                     foreach ($entry->childNodes as $child) {
                         $clone = $child->cloneNode(true);
@@ -1268,9 +1244,7 @@ $this->report['warning'] = $mandatory;
             $rend = $entry->getAttribute("rend");
             list($alter, $lang) = explode("-", $rend);
             $new->setAttribute('xml:lang', $lang);
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $new->setAttribute('xml:id', $id);
-            }
+            if ($id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id);}
             if ($entry->hasChildNodes()) {
                 foreach ($entry->childNodes as $child) {
                     $clone = $child->cloneNode(true);
@@ -1307,61 +1281,72 @@ $this->report['warning'] = $mandatory;
             }
             $titlestmt->appendChild($author);
             $name = $dom->createElement('name', $entry->nodeValue);
-            if ($lang=$entry->getAttribute('xml:lang')) {
-                $name->setAttribute('xml:lang', $lang);
-            }
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $name->setAttribute('xml:id', $id);
-            }
+            if ($lang=$entry->getAttribute('xml:lang')) { $name->setAttribute('xml:lang', $lang); }
+            if ( $id=$entry->getAttribute('xml:id')) { $name->setAttribute('xml:id', $id); }
             $author->appendChild($name);
+if (! isset($lodelmeta[$rend])) { $lodelmeta[$rend] = array(); }
+array_push($lodelmeta[$rend], $name->nodeValue);
             // author-description ==> affiliation
-            if ($next=$entry->nextSibling) {
+error_log("<li>author-description</li>\n",3,self::_DEBUGFILE_);
+            while ($next=$entry->nextSibling) {
                 if ($rend=$next->getAttribute('rend')) {
                     if ($rend==="author-description") {
                         $desc = $dom->createElement('affiliation');
-                        if ($lang=$next->getAttribute('xml:lang')) {
-                            $desc->setAttribute('xml:lang', $lang);
-                        }
-                        if ($id=$next->getAttribute('xml:id')) {
-                            $desc->setAttribute('xml:id', $id);
-                        }
-                        // TODO : bug ?!?
-                        //error_log("<li># TODO : bug ?!?</li>\n",3,self::_DEBUGFILE_);
+                        $author->appendChild($desc);
+                        if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
+                        if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
                         if ($next->hasChildNodes()) {
                             foreach ($next->childNodes as $child) {
                                 if ($child->nodeName == "#text") {
+error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
                                     $desc->nodeValue = $child->nodeValue;
                                 }
                                 else if ($attr=$child->getAttribute('rend')) {
+error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
                                     if ( preg_match("/^author-(.+)$/", $attr, $match)) {
+error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
                                         switch ($match[1]) {
+                                            case 'prefix':
+error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
+                                                $element = $dom->createElement('roleName', $child->nodeValue);
+                                                $element ->setAttribute('type', "honorific");
+                                                $desc->appendChild($element);
+                                                break;
+                                            case 'function':
+error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
+                                                $element = $dom->createElement('roleName', $child->nodeValue);
+                                                $desc->appendChild($element);
+                                                break;
                                             case 'affiliation':
+error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
                                                 $element = $dom->createElement('orgName', $child->nodeValue);
                                                 $desc->appendChild($element);
                                                 break;
                                             case 'email':
+error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                 $element = $dom->createElement('email', $child->nodeValue);
                                                 $desc->appendChild($element);
                                                 break;
                                         }
                                     }
                                     else {
+error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
                                         $clone = $child->cloneNode(true);
                                         $desc->appendChild($clone);
                                     }
                                 }
                                 else {
                                     $clone = $child->cloneNode(true);
+error_log("<li>clone : {$clone->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                     $desc->appendChild($clone);
                                 }
                             }
                         }
-                        $author->appendChild($desc);
                         $parent->removeChild($next);
-                    }
-                }
+                    } else break;
+                } else break;
             }
-            //$parent->removeChild($entry);
+            $parent->removeChild($entry);
         }
         # /tei/teiHeader/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:publicationStmt"); $pubstmt = $entries->item(0);
@@ -1376,9 +1361,7 @@ $this->report['warning'] = $mandatory;
             $parent = $entry->parentNode;
             $newnode = $dom->createElement('date', $entry->nodeValue);
             $newnode->setAttribute('when', "");
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $newnode->setAttribute('xml:id', $id);
-            }
+            if ($id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1399,9 +1382,7 @@ $this->report['warning'] = $mandatory;
             $newnode = $dom->createElement('availability');
             $newnode->setAttribute('status', "free");
             $newp = $dom->createElement('p', $entry->nodeValue);
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $newp->setAttribute('xml:id', $id);
-            }
+            if ($id=$entry->getAttribute('xml:id')) { $newp->setAttribute('xml:id', $id); }
             $newnode->appendChild($newp);
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
@@ -1417,14 +1398,14 @@ $this->report['warning'] = $mandatory;
             $parent = $entry->parentNode;
             $newnode = $dom->createElement('idno', $entry->nodeValue);
             $newnode->setAttribute('type', "documentnumber");
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $newnode->setAttribute('xml:id', $id);
-            }
+            if ($id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $pubstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
         // TODO : idno@uri
         // TODO : idno@doi
+
+$dbg="\n<li><pre>".print_r($lodelmeta,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
         # /tei/teiHeader/sourceDesc
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc"); $srcdesc = $entries->item(0);
@@ -1433,37 +1414,42 @@ $this->report['warning'] = $mandatory;
         $entries=$xpath->query("//tei:p[@rend='title']");
         if ($entries->length) {
             $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:title");
-            if ($tmp->length) {
-                $titlestmt->removeChild($tmp->item(0));
-            }
+            if ($tmp->length) { $titlestmt->removeChild($tmp->item(0)); }
             $entry = $entries->item(0);
             $parent = $entry->parentNode;
-            $new = $dom->createElement('title');
-            if ($entry->hasChildNodes()) {
-                foreach ($entry->childNodes as $child) {
-                    if ($child->nodeName=="hi" and "footnotesymbol"!=$child->getAttribute('rend')) {
-                        $new->nodeValue = $child->nodeValue;
-                        $new->appendChild($clone);
-                    }
-                }
-            }
-            else {
-                $new->nodeValue = $entry->nodeValue;
-            }
+            $new = $dom->createElement('title', $lodelmeta['title']);
             $titlestmt->appendChild($new);
-            $parent->removeChild($entry);
-        }
-        else {
-            // TODO : warning no title defined
-            error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
         }
         // Lodel:auteurs as tei:respStmt
+        $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author");
+        if ($tmp->length) { $titlestmt->removeChild($tmp->item(0)); }
+        foreach ($lodelmeta["author"] as $author) {
+            $respstmt = $dom->createElement('respStmt');
+            $titlestmt->appendChild($respstmt);
+            $resp = $dom->createElement('resp', "author");
+            $respstmt->appendChild($resp);
+            $name = $dom->createElement('name', $author);
+            $respstmt->appendChild($name);
+        }
+        foreach ($lodelmeta["editor"] as $editor) {
+            $respstmt = $dom->createElement('respStmt');
+            $titlestmt->appendChild($respstmt);
+            $resp = $dom->createElement('resp', "editor");
+            $respstmt->appendChild($resp);
+            $name = $dom->createElement('name', $editor);
+            $respstmt->appendChild($name);
+        }
+        foreach ($lodelmeta["translator"] as $translator) {
+            $respstmt = $dom->createElement('respStmt');
+            $titlestmt->appendChild($respstmt);
+            $resp = $dom->createElement('resp', "translator");
+            $respstmt->appendChild($resp);
+            $name = $dom->createElement('name', $translator);
+            $respstmt->appendChild($name);
+        }
+/*
         $entries=$xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor']");
         if ($entries->length) {
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author");
-            if ($tmp->length) {
-                $titlestmt->removeChild($tmp->item(0));
-            }
             foreach ($entries as $entry) {
                 $parent = $entry->parentNode;
                 $respstmt = $dom->createElement('respStmt');
@@ -1486,10 +1472,7 @@ $this->report['warning'] = $mandatory;
                 $parent->removeChild($entry);
             }
         }
-        else {
-            // TODO : warning no author defined
-            error_log("<li>? [Warning] no author defined</li>\n",3,self::_DEBUGFILE_);
-        }
+*/
         # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
         # LodelEM:creationdate
@@ -1503,9 +1486,7 @@ $this->report['warning'] = $mandatory;
             $parent = $entry->parentNode;
             $new = $dom->createElement('date', $entry->nodeValue);
             $new->setAttribute('when', "");
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $new->setAttribute('xml:id', $id);
-            }
+            if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
             $pubstmt->appendChild($new);
             $parent->removeChild($entry);
         }
@@ -1542,6 +1523,7 @@ $this->report['warning'] = $mandatory;
             $notesstmt->appendChild($newnode);
             $parent->removeChild($entry);
         }
+
         # /tei/teiHeader/profileDesc
         $entries = $xpath->query("//tei:teiHeader/tei:profileDesc"); $profiledesc = $entries->item(0);
         $entries = $xpath->query("//tei:teiHeader/tei:profileDesc/tei:langUsage"); $langUsage = $entries->item(0);
@@ -1555,9 +1537,7 @@ $this->report['warning'] = $mandatory;
             }
             $newnode = $dom->createElement('language', $entry->nodeValue);
             $newnode->setAttribute('ident', $entry->nodeValue);
-            if ( $id=$entry->getAttribute('xml:id')) {
-                $newnode->setAttribute('xml:id', $id);
-            }
+            if ( $id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $langUsage->appendChild($newnode);
             $parent->removeChild($entry);
         }
@@ -1831,14 +1811,8 @@ $this->report['warning'] = $mandatory;
                     // TODO warnings ?
                     foreach ($entry->childNodes as $child) {
                         $div = $dom->createElement("div");
-                        if ($id=$child->getAttribute('xml:id')) { 
-                            $div->setAttribute('xml:id', $id); 
-                            $child->removeAttribute('xml:id');
-                        }
-                        if ( $lang=$child->getAttribute('xml:lang')) {
-                            $div->setAttribute('xml:lang', $lang);
-                            $child->removeAttribute('xml:lang');
-                        }
+                        if ($id=$child->getAttribute('xml:id')) { $div->setAttribute('xml:id', $id); $child->removeAttribute('xml:id'); }
+                        if ( $lang=$child->getAttribute('xml:lang')) { $div->setAttribute('xml:lang', $lang);  $child->removeAttribute('xml:lang'); }
                         /*
                         if ($child->hasAttributes()) {
                             foreach ($child->attributes as $attr) {
@@ -1941,6 +1915,13 @@ error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
             $tags = $lodel->childNodes;
             foreach ($tags as $tag) {
                 $clone = $tag->cloneNode(true);
+                if ( preg_match("/^appendix-(.+)$/", $clone->getAttribute("rend"), $matches)) {
+                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                        $clone->setAttribute('type', "head");
+                        $clone->setAttribute('subtype', "level".$match[1]);
+                        $clone->setAttribute('rend', "appendix");
+                    }
+                }
                 $appendix->appendChild($clone);
             }
 /*
@@ -2065,15 +2046,18 @@ error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
             $parent->replaceChild($floatingText, $entry);
         }
 
-$headlevel = $this->summary($dom, $xpath);
-$this->heading2div($dom, $xpath, $headlevel);
-//$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
+if ( $headlevel=$this->summary($dom, $xpath)) {
+    $this->heading2div($dom, $xpath, $headlevel);
+$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
+}
 
 
         // clean++
         //$otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
+        $otxml = $dom->saveXML();
         $search = array('xmlns="http://www.tei-c.org/ns/1.0"', 'xmlns:default="http://www.tei-c.org/ns/1.0"');
-        $dom->loadXML( str_replace($search, '', $dom->saveXML()));
+        $otxml = str_replace($search, '', $otxml);
+        $dom->loadXML($otxml);
 
         $dom->normalizeDocument();
         $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
@@ -2081,6 +2065,7 @@ $this->heading2div($dom, $xpath, $headlevel);
         $dom->save($this->_param['xmloutputpath']);
 
         $dom->resolveExternals = false;
+/*
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
             $this->_status = "Warning: OTX TEI-P5 is not valid !";
@@ -2091,8 +2076,16 @@ $this->heading2div($dom, $xpath, $headlevel);
             error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
         }
         $this->log['status']['otxtei'] = $this->_status;
+*/
+        $otxml = $dom->saveXML();
+        $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
 
-        $this->_param['TEI'] = $dom->saveXML();
+        $dom->loadXML($otxml);
+        $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
+        $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
+        $dom->save($this->_param['xmloutputpath']);
+
+        $this->_param['TEI'] = $otxml;
         return true;
     }
 
@@ -2763,8 +2756,6 @@ error_log("<li>? [greedy] default section = body ({$node->nodeName} : {$node->no
                 return $rend;
             }
         }
-
-
 
         /** get meta from lodel document **/
         private function oolodel2meta(&$dom) {

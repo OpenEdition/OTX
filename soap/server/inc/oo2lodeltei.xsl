@@ -89,6 +89,10 @@
     </xsl:template> 
 
 
+<!-- param = otxmode ? soffice : lodel -->
+<xsl:param name="otxmode" select="soffice"/>
+
+
 <!--
     office:document
 -->
@@ -104,10 +108,14 @@
             <fileDesc>
                 <titleStmt>
                     <title>
-                        <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                        <xsl:if test="$otxmode='soffice'">
+                            <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                        </xsl:if>
                     </title>
                     <author>
-                        <xsl:value-of select="/office:document/office:meta/dc:creator"/>
+                        <xsl:if test="$otxmode='soffice'">
+                            <xsl:value-of select="/office:document/office:meta/dc:creator"/>
+                        </xsl:if>
                     </author>
                 </titleStmt>
                 <publicationStmt>
@@ -116,22 +124,30 @@
                         <p>Open Access</p>
                     </availability>
                     <date>
-                        <xsl:value-of select="/office:document/office:meta/dc:date"/>
+                        <xsl:if test="$otxmode='soffice'">
+                            <xsl:value-of select="/office:document/office:meta/dc:date"/>
+                        </xsl:if>
                     </date>
                 </publicationStmt>
                 <sourceDesc>
                     <biblFull>
                         <titleStmt>
                             <title>
-                                <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                                <xsl:if test="$otxmode='soffice'">
+                                    <xsl:value-of select="/office:document/office:meta/dc:title"/>
+                                </xsl:if>
                             </title>
                             <author>
-                                <xsl:value-of select="/office:document/office:meta/meta:initial-creator"/>
+                                <xsl:if test="$otxmode='soffice'">
+                                    <xsl:value-of select="/office:document/office:meta/meta:initial-creator"/>
+                                </xsl:if>
                             </author>
                         </titleStmt>
                         <publicationStmt>
                             <date>
-                                <xsl:value-of select="/office:document/office:meta/meta:creation-date"/>
+                                <xsl:if test="$otxmode='soffice'">
+                                    <xsl:value-of select="/office:document/office:meta/meta:creation-date"/>
+                                </xsl:if>
                             </date>
                         </publicationStmt>
                     </biblFull>
@@ -316,8 +332,7 @@
     </xsl:template>
 
 
-  <!-- inline -->
-
+    <!-- inline -->
     <xsl:template match="text:span[@text:style-name]">
         <xsl:variable name="Style">
             <xsl:value-of select="@text:style-name"/>
