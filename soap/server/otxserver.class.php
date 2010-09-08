@@ -250,16 +250,16 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
     error_log("<h2>Schema2OO()</h2>\n",3,self::_DEBUGFILE_);
 
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-/**
- *   TODO DEBUG TODO    => $EMOTX[$EMLodel[$odfstyle]]
-**/
-//$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."teipub/"."model.xml";
-//$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
 
+        /**
+        *   TODO DEBUG TODO    => $EMOTX[$EMLodel[$odfstyle]]
+        **/
+        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."teipub/"."model.xml";
+        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
         error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
-$this->EMTEI = _em2tei();
-//$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+        $this->EMTEI = _em2tei();
+        //$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
 
         $domxml = new DOMDocument;
@@ -689,7 +689,7 @@ error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
     xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
     xmlns:field="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:field:1.0" 
-    office:version="1.1" office:mimetype="application/vnd.oasis.opendocument.text">
+    office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
 EOD;
         // fodt:meta
         $xmlmeta = explode("\n", $domlodelmeta->saveXML());
@@ -1266,85 +1266,117 @@ $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($d
         $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor']");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;
-            $rend = $entry->getAttribute('rend');
-            switch ($rend) {
-                case 'author':
-                    $author = $dom->createElement('author');
-                    break;
-                case 'scientificeditor':
-                case 'translator':
-                    $author = $dom->createElement('editor');
-                    break;
+            $items = array(); 
+            if ( preg_match("/,/", $entry->nodeValue)) {
+                $items = explode(",", $entry->nodeValue);
+                $uid = 1;
+            } else {
+                array_push($items, $entry->nodeValue);
+                $uid = 0;
             }
-            if ($rend == "translator") {
-                $author->setAttribute('role', "translator");
+$dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+
+/*
+            if (! preg_match("/,/", $item->nodeValue)) {
+                $newitem = $dom->createElement("item", $item->nodeValue);
+                $newlist->appendChild($newitem);
             }
-            $titlestmt->appendChild($author);
-            $name = $dom->createElement('name', $entry->nodeValue);
-            if ($lang=$entry->getAttribute('xml:lang')) { $name->setAttribute('xml:lang', $lang); }
-            if ( $id=$entry->getAttribute('xml:id')) { $name->setAttribute('xml:id', $id); }
-            $author->appendChild($name);
-if (! isset($lodelmeta[$rend])) { $lodelmeta[$rend] = array(); }
-array_push($lodelmeta[$rend], $name->nodeValue);
-            // author-description ==> affiliation
-error_log("<li>author-description</li>\n",3,self::_DEBUGFILE_);
-            while ($next=$entry->nextSibling) {
-                if ($rend=$next->getAttribute('rend')) {
-                    if ($rend==="author-description") {
-                        $desc = $dom->createElement('affiliation');
-                        $author->appendChild($desc);
-                        if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
-                        if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
-                        if ($next->hasChildNodes()) {
-                            foreach ($next->childNodes as $child) {
-                                if ($child->nodeName == "#text") {
-error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
-                                    $desc->nodeValue = $child->nodeValue;
-                                }
-                                else if ($attr=$child->getAttribute('rend')) {
-error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
-                                    if ( preg_match("/^author-(.+)$/", $attr, $match)) {
-error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
-                                        switch ($match[1]) {
-                                            case 'prefix':
-error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
-                                                $element = $dom->createElement('roleName', $child->nodeValue);
-                                                $element ->setAttribute('type', "honorific");
-                                                $desc->appendChild($element);
-                                                break;
-                                            case 'function':
-error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
-                                                $element = $dom->createElement('roleName', $child->nodeValue);
-                                                $desc->appendChild($element);
-                                                break;
-                                            case 'affiliation':
-error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
-                                                $element = $dom->createElement('orgName', $child->nodeValue);
-                                                $desc->appendChild($element);
-                                                break;
-                                            case 'email':
-error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
-                                                $element = $dom->createElement('email', $child->nodeValue);
-                                                $desc->appendChild($element);
-                                                break;
+            else {
+                $index = explode(",", $item->nodeValue);
+                foreach ($index as $ndx) {
+                    $ndx = trim($ndx);
+                    $newitem = $dom->createElement("item", $ndx);
+                    $newlist->appendChild($newitem);
+                }
+            }
+*/
+            foreach ($items as $item) {
+                $item = trim($item);
+
+                $rend = $entry->getAttribute('rend');
+                switch ($rend) {
+                    case 'author':
+                        $author = $dom->createElement('author');
+                        break;
+                    case 'scientificeditor':
+                    case 'translator':
+                        $author = $dom->createElement('editor');
+                        break;
+                }
+                if ($rend == "translator") {
+                    $author->setAttribute('role', "translator");
+                }
+                $titlestmt->appendChild($author);
+                $name = $dom->createElement('name', $item);
+                if ($lang=$entry->getAttribute('xml:lang')) { $name->setAttribute('xml:lang', $lang); }
+                if ($id=$entry->getAttribute('xml:id')) { 
+                    if ($uid) $id .= ".".$uid++;
+                    $name->setAttribute('xml:id', $id); 
+                }
+                $author->appendChild($name);
+                if (! isset($lodelmeta[$rend])) { $lodelmeta[$rend] = array(); }
+                array_push($lodelmeta[$rend], $name->nodeValue);
+                // author-description ==> affiliation
+                //error_log("<li>author-description</li>\n",3,self::_DEBUGFILE_);
+                while ($next=$entry->nextSibling) {
+                    if ($rend=$next->getAttribute('rend')) {
+                        if ($rend==="author-description") {
+                            $desc = $dom->createElement('affiliation');
+                            $author->appendChild($desc);
+                            if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
+                            if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
+                            if ($next->hasChildNodes()) {
+                                foreach ($next->childNodes as $child) {
+                                    if ($child->nodeName == "#text") {
+                                        //error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
+                                        $desc->nodeValue = $child->nodeValue;
+                                    }
+                                    else if ($attr=$child->getAttribute('rend')) {
+                                        //error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
+                                        if ( preg_match("/^author-(.+)$/", $attr, $match)) {
+                                            //error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
+                                            switch ($match[1]) {
+                                                case 'prefix':
+                                                    //error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
+                                                    $element = $dom->createElement('roleName', $child->nodeValue);
+                                                    $element ->setAttribute('type', "honorific");
+                                                    $desc->appendChild($element);
+                                                    break;
+                                                case 'function':
+                                                    //error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
+                                                    $element = $dom->createElement('roleName', $child->nodeValue);
+                                                    $desc->appendChild($element);
+                                                    break;
+                                                case 'affiliation':
+                                                    //error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
+                                                    $element = $dom->createElement('orgName', $child->nodeValue);
+                                                    $desc->appendChild($element);
+                                                    break;
+                                                case 'email':
+                                                    //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
+                                                    $element = $dom->createElement('email', $child->nodeValue);
+                                                    $desc->appendChild($element);
+                                                    break;
+                                            }
+                                        }
+                                        else {
+                                            //error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
+                                            $clone = $child->cloneNode(true);
+                                            $desc->appendChild($clone);
                                         }
                                     }
                                     else {
-error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
                                         $clone = $child->cloneNode(true);
+                                        //error_log("<li>clone : {$clone->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                         $desc->appendChild($clone);
                                     }
                                 }
-                                else {
-                                    $clone = $child->cloneNode(true);
-error_log("<li>clone : {$clone->nodeValue}</li>\n",3,self::_DEBUGFILE_);
-                                    $desc->appendChild($clone);
-                                }
                             }
-                        }
-                        $parent->removeChild($next);
+                            $parent->removeChild($next);
+                        } else break;
                     } else break;
-                } else break;
+                }
+
             }
             $parent->removeChild($entry);
         }
@@ -2171,7 +2203,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         $extension = $this->_param['extension'];
 
         switch($suffix) {
-            case 'docx': $suffix = 'doc'; break;
+            case 'docx': //$suffix = 'doc'; break;
             case 'odt':
             case 'pdf':
             case 'doc':
@@ -2188,10 +2220,10 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
                 throw new Exception($this->_status,E_USER_ERROR);
         }
         //$odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".$suffix";
-        $targetpath = $this->_param['sourcepath'].".$suffix";
-        $odtpath = $this->_param['odtpath'] = $targetpath;
+        $targetpath = $this->_param['sourcepath'];
+        if ($this->_param['mime'] !== "OpenDocument Text" OR $suffix !== 'odt') {
+            $targetpath .= ".$suffix";
 
-        if ($this->_param['mime'] !== "OpenDocument Text" || $suffix !== 'odt') {
             $in = escapeshellarg($sourcepath);
             $out = escapeshellarg($targetpath);
             $command = self::_SOFFICE_PYTHONPATH_." {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
@@ -2213,6 +2245,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
                 throw new Exception($this->_status,E_USER_ERROR);
             }
         }
+        $odtpath = $this->_param['odtpath'] = $targetpath;
 
         $this->_param['outputpath'] = $targetpath;
         return true;
@@ -2224,9 +2257,12 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
 
             error_log("<li>[getmime] sourcepath = $sourcepath</li>\n",3,self::_DEBUGFILE_);
             $mime = mime_content_type($sourcepath);
+error_log("<li>[getmime] => mime_content_type() = $mime</li>\n",3,self::_DEBUGFILE_);
+
             if ($mime === "application/x-zip" OR $mime === "application/zip") {
                 $file = escapeshellarg($sourcepath);
                 list($mime, $tmp) = explode(",", system("file -b $file"));
+error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             }
 
             $extension = ".odt";
@@ -2284,13 +2320,13 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
                         }
                     break;
                 }
-            }
 
-            if (! rename($sourcepath, $sourcepath.$extension)) {
-                $this->_status="error: rename [$sourcepath]";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
-                throw new Exception($this->_status,E_ERROR);
+                if (! rename($sourcepath, $sourcepath.$extension)) {
+                    $this->_status="error: rename [$sourcepath]";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status,E_ERROR);
+                }
+                $this->_param['sourcepath'] = $sourcepath.$extension;
             }
-            $this->_param['sourcepath'] = $sourcepath.$extension;
 
             $this->_param['extension'] = $extension;
             $this->_param['mime'] = $mime;
@@ -2362,7 +2398,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
                     $currentname = "Pictures/$imgname.$imgext";
                     $newname = "Pictures/img-$imgindex.$imgext";
                     if (! $za->renameName($currentname, $newname)) {
-                        $this->_status="error rename files in ziparchive";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                        $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
                         throw new Exception($this->_status,E_ERROR);
                     }
                     $attribute->nodeValue = $newname;

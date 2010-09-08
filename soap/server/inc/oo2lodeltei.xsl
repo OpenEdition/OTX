@@ -36,7 +36,7 @@
 -->
 <xsl:stylesheet
   exclude-result-prefixes="office style text table draw fo xlink dc meta number svg chart dr3d math form script ooo ooow oooc dom xforms xsd xsi"
-  office:version="1.0" version="1.0" xmlns="http://www.tei-c.org/ns/1.0"
+  office:version="1.2" version="1.0" xmlns="http://www.tei-c.org/ns/1.0"
   xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0"
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:dom="http://www.w3.org/2001/xml-events"
