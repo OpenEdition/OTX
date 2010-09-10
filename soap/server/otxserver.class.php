@@ -285,7 +285,7 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
         $OOTX = array();
         $nbEmStyle = $nbOtxStyle = 0;
         foreach ($domxml->getElementsByTagName('row') as $node) {
-            $value = $keys = $g_otx = '';
+            $value = $keys = $g_otx = $lang = '';
             if ($node->hasChildNodes()) {
                 $row=array(); $otxvalue=null; $bstyle=false;
                 foreach ($node->childNodes as $tag) {
@@ -1583,7 +1583,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
             if ( preg_match("/keywords-(.+)/", $rend, $match)) {
-                $lang = $match[1];error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
+                $lang = $match[1]; error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
             } else {
                 $lang = null;
             }
@@ -1695,7 +1695,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
             if ( preg_match("/abstract-(.+)/", $rend, $match)) {
-                $lang = $match[1];error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
+                $lang = $match[1]; error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
             } else {
                 $lang = null;
             }
@@ -2428,6 +2428,7 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         }
                     }
                     list($lang, $rendition) = $this->styles2csswhitelist($properties); // // white list
+                    if ($lang == "") $lang = null;
                     $this->rendition[$key]['lang'] = $lang;
                     $this->rendition[$key]['rendition'] = $rendition;
                     $this->rendition[$key]['family'] = $family;
