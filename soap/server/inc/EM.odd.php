@@ -148,6 +148,7 @@ function _em2tei($schema="revorg") {
     => 'text:answer',
 "/tei:TEI/tei:text/tei:*/tei:p[@rend='break']"
     => 'text:break',
+
 // titreillustration
 "/tei:TEI/tei:text/tei:*/tei:figure/tei:head"
     => 'text:figure-title',

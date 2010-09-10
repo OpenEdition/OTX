@@ -727,7 +727,7 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
         $domfodt->normalizeDocument();
-        $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
+$debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
 
         # add xml:id (otxid.xsl)
         $xslfilter = $this->_param['INCPATH']."otxid.xsl";
@@ -752,7 +752,7 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
         $domidfodt->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
+$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
         $xslfilter = $this->_param['INCPATH']."oo2lodeltei.xsl";
@@ -778,7 +778,7 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
         $domteifodt->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteifodt->save($debugfile);
+$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteifodt->save($debugfile);
 
         $this->dom['teifodt'] = $domteifodt;
         //$this->lodeltei($domteifodt);
@@ -791,7 +791,9 @@ EOD;
  * transformation d'un lodel-odt en lodel-xml ( flat TEI... [raw mode] )
 **/
     protected function oo2lodelxml() {
-    error_log("<h3>oo2lodelxml()</h3>\n",3,self::_DEBUGFILE_);
+    error_log("\n<h3>oo2lodelxml()</h3>\n",3,self::_DEBUGFILE_);
+
+//$dbg="\n<li>EMotx<pre>".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
         $dom = $this->dom['teifodt'];
 
@@ -881,6 +883,11 @@ EOD;
         $entries = $xpath->query("//tei:p[@rend]");
         foreach ($entries as $item) {
             $rend = $item->getAttribute("rend");
+            if ( isset($this->EMotx[$rend])) {
+                error_log("\n<li>lodel style ($rend) : skip !</li>\n",3,self::_DEBUGFILE_);
+                continue;  // lodel style : skip !
+            }
+
             $key = '';
             if ($item->getAttribute("rendition")) {
                 $key = $item->getAttribute("rendition");
@@ -969,7 +976,7 @@ EOD;
             $current = $this->greedy($item);
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
-$dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+    $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
 
             if ($current != null) {
@@ -1067,7 +1074,7 @@ $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($d
         $dom->formatOutput = true;
         $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
+$debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -1083,7 +1090,7 @@ $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($d
                 $entries = $xpath->query($query);
                 if (! $entries->length) {
                     $this->_status = "dc:{$match[1]} not found";
-                        array_push($mandatory, $this->_status);
+                    array_push($mandatory, $this->_status);
                     array_push($this->log['warning'], $this->_status);
                     error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 }
@@ -1274,22 +1281,8 @@ $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($d
                 array_push($items, $entry->nodeValue);
                 $uid = 0;
             }
-$dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+    $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
-/*
-            if (! preg_match("/,/", $item->nodeValue)) {
-                $newitem = $dom->createElement("item", $item->nodeValue);
-                $newlist->appendChild($newitem);
-            }
-            else {
-                $index = explode(",", $item->nodeValue);
-                foreach ($index as $ndx) {
-                    $ndx = trim($ndx);
-                    $newitem = $dom->createElement("item", $ndx);
-                    $newlist->appendChild($newitem);
-                }
-            }
-*/
             foreach ($items as $item) {
                 $item = trim($item);
 
@@ -1327,14 +1320,16 @@ $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self
                             if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
                             if ($next->hasChildNodes()) {
                                 foreach ($next->childNodes as $child) {
-                                    if ($child->nodeName == "#text") {
-                                        //error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
-                                        $desc->nodeValue = $child->nodeValue;
+                                    /*if ($child->nodeName == "#text") {
+                                        error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
+                                        //$desc->nodeValue = $child->nodeValue;
+                                        $clone = $child->cloneNode(true);
+                                        $desc->appendChild($clone);
                                     }
-                                    else if ($attr=$child->getAttribute('rend')) {
-                                        //error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
+                                    else*/ if ($child->hasAttributes() AND $attr=$child->getAttribute('rend')) {
+                                        error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
                                         if ( preg_match("/^author-(.+)$/", $attr, $match)) {
-                                            //error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
+                                            error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
                                             switch ($match[1]) {
                                                 case 'prefix':
                                                     //error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
@@ -1360,7 +1355,7 @@ $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self
                                             }
                                         }
                                         else {
-                                            //error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
+                                            error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
                                             $clone = $child->cloneNode(true);
                                             $desc->appendChild($clone);
                                         }
@@ -1380,6 +1375,8 @@ $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self
             }
             $parent->removeChild($entry);
         }
+$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($debugfile);
+
         # /tei/teiHeader/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:publicationStmt"); $pubstmt = $entries->item(0);
         # /tei/teiHeader/publicationStmt/date
@@ -1437,7 +1434,7 @@ $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self
         // TODO : idno@uri
         // TODO : idno@doi
 
-$dbg="\n<li><pre>".print_r($lodelmeta,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+    $dbg="\n<li><pre>".print_r($lodelmeta,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
         # /tei/teiHeader/sourceDesc
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc"); $srcdesc = $entries->item(0);
@@ -1863,43 +1860,10 @@ $dbg="\n<li><pre>".print_r($lodelmeta,true)."</pre></li>";error_log($dbg,3,self:
         }
 
         # /tei/text/back
-error_log("\n<li>tei:back</li>\n",3,self::_DEBUGFILE_);
+        error_log("\n<li>tei:back</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
         # Bibliography
-/*
-error_log("\n<li>tei:div[@rend='bibliography']</li>\n",3,self::_DEBUGFILE_);
-        $entries = $xpath->query("//tei:*[@rend='bibliography']");
-        if ($entries->length) {
-            # /tei/text/back/div@type=bibliogr
-            $div = $dom->createElement("div");
-            $div->setAttribute('type', "bibliogr");
-            $back->appendChild($div);
-            $listbibl = $dom->createElement("listBibl");
-            $div->appendChild($listbibl);
-            foreach ($entries as $item) {
-                $parent = $item->parentNode;
-                if ( preg_match("/^bibliography-(.+)$/", $item->getAttribute("rend"), $matches)) {
-                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                        $bibl = $dom->createElement("head", $item->nodeValue);
-                        $bibl->setAttribute('subtype', "level".$match[1]);
-                        $list->appendChild($bibl);
-                        $parent->removeChild($item);
-                        continue;
-                    }
-                }
-                $bibl = $dom->createElement("bibl");
-                if ($lang=$item->getAttribute('xml:lang')) { $bibl->setAttribute('xml:lang', $lang); }
-                if ($id=$item->getAttribute('xml:id')) { $bibl->setAttribute('xml:id', $id); }
-                foreach ($item->childNodes as $child) {
-                    $clone = $child->cloneNode(true);
-                    $bibl->appendChild($clone);
-                }
-                $listbibl->appendChild($bibl);
-                $parent->removeChild($item);
-            }
-        }
-*/
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
         if ($entries->length) {
             $lodel = $entries->item(0);
@@ -1936,7 +1900,7 @@ error_log("\n<li>tei:div[@rend='bibliography']</li>\n",3,self::_DEBUGFILE_);
         }
 
         # Appendix
-error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
+        error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
         if ($entries->length) {
             $lodel = $entries->item(0);
@@ -1956,33 +1920,11 @@ error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
                 }
                 $appendix->appendChild($clone);
             }
-/*
-            $list = $dom->createElement("list");
-            $appendix->appendChild($list);
-            $tags = $lodel->childNodes;
-            foreach ($tags as $tag) {
-                if ( preg_match("/^appendix-(.+)$/", $tag->getAttribute("rend"), $matches)) {
-                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                        $item = $dom->createElement("item");
-                        $ab = $dom->createElement("ab", $tag->nodeValue);
-                        $ab->setAttribute('type', "head");
-                        $ab->setAttribute('subtype', "level".$match[1]);
-                        $item->appendChild($ab);
-                        $list->appendChild($item);
-                        continue;
-                    }
-                }
-                $item = $dom->createElement("item");
-                $list->appendChild($item);
-                $clone = $tag->cloneNode(true);
-                $item->appendChild($clone);
-            }
-*/
             $parent->removeChild($lodel);
         }
 
         // clean Lodel sections
-error_log("\n<li>clean Lodel sections</li>\n",3,self::_DEBUGFILE_);
+        error_log("\n<li>clean Lodel sections</li>\n",3,self::_DEBUGFILE_);
 
         $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
         if ($entries->length) {
@@ -2022,7 +1964,7 @@ error_log("\n<li>clean Lodel sections</li>\n",3,self::_DEBUGFILE_);
         }
 
         # 
-error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
+    error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//@rendition");
         foreach ($entries as $attr) {
             $element = $attr->ownerElement;
@@ -2078,11 +2020,10 @@ error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
             $parent->replaceChild($floatingText, $entry);
         }
 
-if ( $headlevel=$this->summary($dom, $xpath)) {
-    $this->heading2div($dom, $xpath, $headlevel);
+        if ( $headlevel=$this->summary($dom, $xpath)) {
+            $this->heading2div($dom, $xpath, $headlevel);
 $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
-}
-
+        }
 
         // clean++
         //$otxml = str_replace("<pb/>", "<!-- <pb/> -->", $dom->saveXML());
@@ -2092,7 +2033,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         $dom->loadXML($otxml);
 
         $dom->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
+$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -2113,7 +2054,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
 
         $dom->loadXML($otxml);
-        $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
+$debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -2269,26 +2210,41 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             if ( trim($mime) != "OpenDocument Text") {
                 switch ($mime) {
                     case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
-                    case "text/rtf":
-                    error_log("<li>Rich Text Format data</li>\n",3,self::_DEBUGFILE_);
+                    case 'application/rtf':
+                    case 'application/x-rtf':
+                    case 'text/rtf':
+                    case 'text/richtext':
+                        error_log("<li>Rich Text Format data</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".rtf";
                         break;
                     case "Microsoft Office Document":
-                    case "application/msword":
-                    error_log("<li>Microsoft Office Document</li>\n",3,self::_DEBUGFILE_);
+                    case 'application/msword':
+                    case 'application/doc':
+                    case 'appl/text':
+                    case 'application/vnd.msword':
+                    case 'application/vnd.ms-word':
+                    case 'application/winword':
+                    case 'application/word':
+                    case 'application/x-msw6':
+                    case 'application/x-msword':
+                        error_log("<li>Microsoft Office Document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".doc";
                         break;
                     case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                    error_log("<li>Microsoft Office -docx- Document</li>\n",3,self::_DEBUGFILE_);
+                        error_log("<li>Microsoft Office -docx- Document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".docx";
                         break;
                     case "OpenOffice.org 1.x Writer document":
-                    case "application/vnd.sun.xml.writer":
-                    error_log("<li>OpenOffice.org 1.x Writer document</li>\n",3,self::_DEBUGFILE_);
+                    case 'application/x-soffice':
+                    case 'application/vnd.sun.xml.writer':
+                    case 'application/x-vnd.oasis.opendocument.text':
+                    case 'application/vnd.oasis.opendocument.text':
+                    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                        error_log("<li>OpenOffice.org 1.x Writer document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".sxw";
                         break;
                     default:
-                    error_log("<li>Warning: extension based</li>\n",3,self::_DEBUGFILE_);
+                        error_log("<li>Warning: extension based</li>\n",3,self::_DEBUGFILE_);
                         # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
                         $temp = explode(".", $sourcepath);
                         $ext = trim( array_pop($temp));
@@ -2511,7 +2467,9 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         $key = $name.$this->automatic[$name];
                     }
                 }
+error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
                 if ( isset($this->EMotx[$key])) {
+error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                     continue; // Lodel style definition: skip
                 }
 
