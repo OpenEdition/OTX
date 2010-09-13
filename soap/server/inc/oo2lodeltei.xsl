@@ -531,14 +531,17 @@
 
     <xsl:template match="draw:frame">
         <xsl:choose>
-        <xsl:when test="ancestor::draw:frame">
-            <xsl:apply-templates/>
-        </xsl:when>
-        <xsl:otherwise>
-            <figure>
-            <xsl:apply-templates/>
-            </figure>
-        </xsl:otherwise>
+            <xsl:when test="ancestor::draw:frame">
+                <xsl:apply-templates/>
+            </xsl:when>
+
+            <xsl:when test="@text:anchor-type='page'" />
+
+            <xsl:otherwise>
+                <figure>
+                <xsl:apply-templates/>
+                </figure>
+            </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
 
@@ -578,7 +581,7 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template match="office:binary-data">    
+    <xsl:template match="office:binary-data">
         <binaryObject mimeType="image/jpg">
             <xsl:value-of select="."/>
         </binaryObject>

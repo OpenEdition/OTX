@@ -2337,38 +2337,46 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             $entries = $xpath->query("//draw:image");
             // TODO : test Pictures !
             foreach ($entries as $item) {
-                $attributes = $item->attributes;
-                $attribute = $attributes->getNamedItem("href");
-                if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
-                    $match = $attribute->nodeValue;
-                    error_log("<li>draw:image: $match</li>\n",3,self::_DEBUGFILE_);
-                    $imgindex++;
-                    list($imgpre, $imgext) = explode(".", trim($match));
-                    list($pictures, $imgname) = explode("/", $imgpre);
-                    if ($this->_param['mode'] === "lodel") {
-                        $picturepath = "Pictures/img-$imgindex.$imgext";
-                    } else { // TODO : TEI lodel mode ??!
-                        //http://XXX.revues.org/docannexe/image/XXX/img-X.jpg <draw:image xlink:href="Pictures/100002000000021000000121BB042930.png"
-                        $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
+                //  text:anchor-type="as-char"
+                $parent = $item->parentNode;
+                if ($anchortype=$parent->getAttribute('text:anchor-type')) {
+                    if ($anchortype=="as-char") {
+
+                        $attributes = $item->attributes;
+                        $attribute = $attributes->getNamedItem("href");
+                        if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
+                            $match = $attribute->nodeValue;
+                            error_log("<li>draw:image: $match</li>\n",3,self::_DEBUGFILE_);
+                            $imgindex++;
+                            list($imgpre, $imgext) = explode(".", trim($match));
+                            list($pictures, $imgname) = explode("/", $imgpre);
+                            if ($this->_param['mode'] === "lodel") {
+                                $picturepath = "Pictures/img-$imgindex.$imgext";
+                            } else { // TODO : TEI lodel mode ??!
+                                //http://XXX.revues.org/docannexe/image/XXX/img-X.jpg <draw:image xlink:href="Pictures/100002000000021000000121BB042930.png"
+                                $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
+                            }
+                            $currentname = "Pictures/$imgname.$imgext";
+                            $newname = "Pictures/img-$imgindex.$imgext";
+                            if (! $za->renameName($currentname, $newname)) {
+                                $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                                throw new Exception($this->_status,E_ERROR);
+                            }
+                            $attribute->nodeValue = $newname;
+                        }
+                        else {
+                            /*
+                            $finfo = finfo_open(FILEINFO_MIME_TYPE); // mimetype extension
+                            $mime =  finfo_file( $za->getStream($attribute->nodeValue));
+                            finfo_close($finfo);
+                            */
+                            $this->_status = "{$attribute->nodeValue} skipped";
+                            array_push($this->log['warning'], $this->_status);
+                            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                            // TODO Warning !
+                        }
+
                     }
-                    $currentname = "Pictures/$imgname.$imgext";
-                    $newname = "Pictures/img-$imgindex.$imgext";
-                    if (! $za->renameName($currentname, $newname)) {
-                        $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
-                        throw new Exception($this->_status,E_ERROR);
-                    }
-                    $attribute->nodeValue = $newname;
-                }
-                else {
-                    /*
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE); // mimetype extension
-                    $mime =  finfo_file( $za->getStream($attribute->nodeValue));
-                    finfo_close($finfo);
-                    */
-                    $this->_status = "{$attribute->nodeValue} skipped";
-                    array_push($this->log['warning'], $this->_status);
-                    error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                    // TODO Warning !
                 }
             }
             return true;
@@ -2639,8 +2647,10 @@ error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
 $dbgvalue='';
             if ($rend=$node->getAttribute("rend")) {
 
-if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) { list($prefix,$rend)=explode("-",$rend); 
-error_log("<li>? [greedy] bak section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); } 
+                if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) { 
+                    list($prefix,$rend) = explode("-",$rend);
+error_log("<li>? [greedy] bak section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); 
+                } 
 
                 if ( isset($this->EMotx[$rend]['surround'])) {
                     $surround = $this->EMotx[$rend]['surround'];
@@ -2677,8 +2687,8 @@ error_log("<li>? [greedy] default section = body ({$node->nodeName} : {$node->no
                 return array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
             }
             else {
-            if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
-            error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
+                if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
+                error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
                 return null;
             }
         }
