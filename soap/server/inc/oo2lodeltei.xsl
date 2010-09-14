@@ -604,7 +604,7 @@
         <xsl:when test="contains(@xlink:href,'://')">
             <xsl:choose>
             <xsl:when test=".=@xlink:href">
-                <ptr target="{@xlink:href}"/>
+                <ref target="{@xlink:href}"><xsl:apply-templates/></ref>
             </xsl:when>
             <xsl:otherwise>
                 <ref target="{@xlink:href}"><xsl:apply-templates/></ref>
