@@ -2210,6 +2210,8 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             if ( trim($mime) != "OpenDocument Text") {
                 switch ($mime) {
                     case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
+                    case "Rich Text Format data, version 1,":
+                    case "Rich Text Format data, version 1, ANSI":
                     case 'application/rtf':
                     case 'application/x-rtf':
                     case 'text/rtf':
