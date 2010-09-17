@@ -12,7 +12,7 @@ include_once('inc/EM.odd.php');
 
 /**
  * Singleton class
--*/
+**/
 class OTXserver
 {
     // Hold an instance of the Singleton class
@@ -969,6 +969,8 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
         $section = $newsection = "";
         $newbacksection = $backsection = "";
         foreach ($entries as $item) {
+error_log("<li>item: {$item->nodeName}</li>\n",3,self::_DEBUGFILE_);
+if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,self::_DEBUGFILE_);
 
             // prev
             $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
@@ -976,37 +978,41 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
             $current = $this->greedy($item);
             // next
             $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
-    $dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
-
+//$dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
             if ($current != null) {
                 if ( isset($current['surround'])) {
                     $surround = $current['surround'];
                     switch($surround) {
                         case "-*":
-                        if ( isset($previtem['section'])) {
-                            $newsection = $previtem['section'];
-                            if ($newsection=="back" and isset($previtem['rend'])) {
-                                $newbacksection = $previtem['rend'];
+                        error_log("<li>case -*</li>\n",3,self::_DEBUGFILE_);
+                            if ( isset($previtem['section'])) {
+                                $newsection = $previtem['section'];
+                                if ($newsection=="back" and isset($previtem['rend'])) {
+                                    $newbacksection = $previtem['rend'];
+                                }
+                            } else {
+                                if ( isset($current['section'])) {
+                                    $newsection = $current['section'];
+                                }
                             }
-                        } else {
-                            if ( isset($current['section'])) {
-                                $newsection = $current['section'];
+                            break;
+                        case "*-":
+                        error_log("<li>case *-</li>\n",3,self::_DEBUGFILE_);
+                            if ( isset($nextitem['section'])) {
+                                $newsection = $nextitem['section'];
+                                if ($newsection=="back" and isset($nextitem['rend'])) {
+                                    $newbacksection = $nextitem['rend'];
+                                }
+                            } else {
+                                if ( isset($current['section'])) {
+                                    $newsection = $current['section'];
+                                }
                             }
-                        }
-                        break;
-                    case "*-":
-                        if ( isset($nextitem['section'])) {
-                            $newsection = $nextitem['section'];
-                            if ($newsection=="back" and isset($nextitem['rend'])) {
-                                $newbacksection = $nextitem['rend'];
-                            }
-                        } else {
-                            if ( isset($current['section'])) {
-                                $newsection = $current['section'];
-                            }
-                        }
-                        break;
+                            break;
+                        default:
+                        error_log("<li>case default ???</li>\n",3,self::_DEBUGFILE_);
+                            break;
                     }
                 } else {
                     if ( isset($current['section'])) {
@@ -1021,39 +1027,62 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
                     }
                 }
             } else {
+            error_log("<li>=> newsection = body</li>\n",3,self::_DEBUGFILE_);
                 $newsection = "body";
             }
+
             if ($section!==$newsection or $backsection!==$newbacksection) { // new section
-                $section = $newsection;
+            error_log("<li>newsection: $newsection or $newbacksection</li>\n",3,self::_DEBUGFILE_);
+                if ($section!==$newsection) {
+                error_log("<li>=> newsection: $newsection</li>\n",3,self::_DEBUGFILE_);
+                    $section = $newsection;
+                } 
+                elseif ($backsection!==$newbacksection) {
+                error_log("<li>=> newbacksection: $newbacksection</li>\n",3,self::_DEBUGFILE_);
+                    $section = "back";
+                }
+
                 switch ($section) {
                     case 'head';
+                    error_log("<li>case head</li>\n",3,self::_DEBUGFILE_);
                         $div = $dom->createElement("div");
                         $div->setAttribute('rend', "LodelMeta");
                         $front->appendChild($div);
                         break;
                     case 'body';
+                    error_log("<li>case body</li>\n",3,self::_DEBUGFILE_);
                         $div = $body;
                         break;
                     case 'back';
+                    error_log("<li>case back</li>\n",3,self::_DEBUGFILE_);
                         if ($backsection !== $newbacksection) {
                             $backsection = $newbacksection;
                             switch($backsection) {
                                 case 'appendix':
+                                error_log("<li>case appendix</li>\n",3,self::_DEBUGFILE_);
                                     $div = $dom->createElement("div");
                                     $div->setAttribute('rend', "LodelAppendix");
                                     $back->appendChild($div);
                                     break;
                                 case 'bibliography':
+                                error_log("<li>case bibliography</li>\n",3,self::_DEBUGFILE_);
                                     $div = $dom->createElement("div");
                                     $div->setAttribute('rend', "LodelBibliography");
                                     $back->appendChild($div);
                                     break;
+                                default:
+                                error_log("<li>case default back ???</li>\n",3,self::_DEBUGFILE_);
+                                    break;
                             }
                         }
+                        break;
+                    default:
+                    error_log("<li>case default ??</li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
             }
             if ($backsection and $backsection!=$current['rend']) {
+            error_log("\n<li>$backsection != {$current['rend']}</li>\n",3,self::_DEBUGFILE_);
                 $item->setAttribute('rend', "$backsection-{$current['rend']}");
             }
 
@@ -2649,17 +2678,18 @@ error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
 $dbgvalue='';
             if ($rend=$node->getAttribute("rend")) {
 
-                if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) { 
+                if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) {
                     list($prefix,$rend) = explode("-",$rend);
-error_log("<li>? [greedy] bak section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); 
-                } 
+                    $section = "back";
+error_log("<li>? [greedy] BAK section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); 
+                }
 
                 if ( isset($this->EMotx[$rend]['surround'])) {
                     $surround = $this->EMotx[$rend]['surround'];
                 }
                 elseif ($node->nodeName=="ab") { 
                     $surround = "*-"; // heading > 6 !
-                $dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no surround ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
+                //$dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no surround ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
                 }
 
                 if ( isset($this->EMotx[$rend]['key'])) {
@@ -2676,21 +2706,21 @@ error_log("<li>? [greedy] bak section ({$node->nodeName} : {$node->nodeValue})</
                             $section = "body";
                             break;
                         default:
-error_log("<li>? [greedy] default section = body ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_);
+                        error_log("<li>? [greedy($rend)] default section = body ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_);
                             $section = "body";
                             break;
                     }
                 }
                 elseif ($node->nodeName=="ab") {
                     $section = "body"; // heading > 6 !
-                $dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no key/section ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
+                //$dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no key/section ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
                 }
 
                 return array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
             }
             else {
                 if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
-                error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
+                //error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
                 return null;
             }
         }

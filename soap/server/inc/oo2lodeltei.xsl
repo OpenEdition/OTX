@@ -345,6 +345,9 @@
             <xsl:when test="starts-with($Style,'T')">
                 <hi rendition="#{$Style}"><xsl:apply-templates/></hi>
             </xsl:when>
+            <xsl:when test="$Style='internetlink'">
+                <xsl:apply-templates/>
+            </xsl:when>
             <xsl:otherwise>
                 <hi rend="{$Style}"><xsl:apply-templates/></hi>
             </xsl:otherwise>

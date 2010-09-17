@@ -38,19 +38,19 @@ function _em2tei($schema="revorg") {
     => 'header:scientificeditor',
 
 // descriptionauteur
-"//tei:affiliation"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation"
+"//tei:affiliation"
     => 'header:author-description',
 // prefixe, .prefixe
-"//tei:roleName[@type='honorific']"   // "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName[@type='honorific']"
+"//tei:affiliation/tei:roleName[@type='honorific']"
     => 'header:author-prefix',
 // affiliation, .affiliation
-"//tei:affiliation/tei:orgName"   //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:orgName"
+"//tei:affiliation/tei:orgName"
     => 'header:author-affiliation',
 // fonction, .fonction
-"//tei:affiliation/tei:roleName"      //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:roleName"
+"//tei:affiliation/tei:roleName"
     => 'header:author-function',
 // courriel, .courriel
-"//tei:affiliation/tei:email"     //"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:*/tei:affiliation/tei:email"
+"//tei:affiliation/tei:email"
     => 'header:author-email',
 
 // titretraduitfr:fr,titrefr:fr, titretraduiten:en,titleen:en,titreen:en, titretraduites:es,tituloes:es,titrees:es, titretraduitit:it,titoloit:it,titreit:it, titretraduitde:de,titelde:de,titrede:de, titretraduitpt:pt,titrept:pt, titretraduitru:ru,titreru:ru
