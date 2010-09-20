@@ -30,6 +30,7 @@ class OTXserver
     private $EMotx = array();
     private $EMTEI = array();
     private $EMandatory = array();
+    private $LodelImg = array();
 
     private $dom = array();
     private $automatic = array();
@@ -2372,26 +2373,31 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                 $parent = $item->parentNode;
                 if ($anchortype=$parent->getAttribute('text:anchor-type')) {
                     if ($anchortype=="as-char") {
-
                         $attributes = $item->attributes;
                         $attribute = $attributes->getNamedItem("href");
                         if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
                             $match = $attribute->nodeValue;
-                            error_log("<li>draw:image: $match</li>\n",3,self::_DEBUGFILE_);
-                            $imgindex++;
+                        error_log("<li>draw:image: $match</li>\n",3,self::_DEBUGFILE_);
                             list($imgpre, $imgext) = explode(".", trim($match));
                             list($pictures, $imgname) = explode("/", $imgpre);
+                            if (! isset($this->LodelImg[$imgname.$imgext])) {
+                                $imgindex++;
+                                $this->LodelImg[$imgname.$imgext] = $imgindex;
+                                $currentname = "Pictures/$imgname.$imgext";
+                                $newname = "Pictures/img-$imgindex.$imgext";
+                                if (! $za->renameName($currentname, $newname)) {
+                                    $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                                    throw new Exception($this->_status,E_ERROR);
+                                }
+                            } else {
+                                $imgindex = $this->LodelImg[$imgname.$imgext];
+                            }
+
                             if ($this->_param['mode'] === "lodel") {
                                 $picturepath = "Pictures/img-$imgindex.$imgext";
                             } else { // TODO : TEI lodel mode ??!
                                 //http://XXX.revues.org/docannexe/image/XXX/img-X.jpg <draw:image xlink:href="Pictures/100002000000021000000121BB042930.png"
                                 $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
-                            }
-                            $currentname = "Pictures/$imgname.$imgext";
-                            $newname = "Pictures/img-$imgindex.$imgext";
-                            if (! $za->renameName($currentname, $newname)) {
-                                $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
-                                throw new Exception($this->_status,E_ERROR);
                             }
                             $attribute->nodeValue = $newname;
                         }
@@ -2403,10 +2409,9 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                             */
                             $this->_status = "{$attribute->nodeValue} skipped";
                             array_push($this->log['warning'], $this->_status);
-                            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                        error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                             // TODO Warning !
                         }
-
                     }
                 }
             }
