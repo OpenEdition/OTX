@@ -52,6 +52,9 @@ function _em2tei($schema="revorg") {
 // courriel, .courriel
 "//tei:affiliation/tei:email"
     => 'header:author-email',
+// site
+"//tei:affiliation/tei:ref[@type='website']"
+    => 'header:author-website',
 
 // titretraduitfr:fr,titrefr:fr, titretraduiten:en,titleen:en,titreen:en, titretraduites:es,tituloes:es,titrees:es, titretraduitit:it,titoloit:it,titreit:it, titretraduitde:de,titelde:de,titrede:de, titretraduitpt:pt,titrept:pt, titretraduitru:ru,titreru:ru
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:title[@type='alt']"

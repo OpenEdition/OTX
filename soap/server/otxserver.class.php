@@ -295,14 +295,12 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                             if ($attr->name === "name") {
 //                            error_log("\n<li>{$attr->value} : {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                 switch ($attr->value) {
-
                                     case "name":
                                     case "type":
 //                                    error_log("\n<li>name = {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                         //$value = trim($tag->nodeValue);
                                         if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
                                       break;
-
                                     case "style":
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         $style = trim($tag->nodeValue);
@@ -312,24 +310,20 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                                         }
                                         $bstyle = true; 
                                         break;
-
                                     case "g_type":
                                     case "g_name":
                                         $gvalue = trim($tag->nodeValue);
                                         $row['gname'] = trim($tag->nodeValue);
                                         break;
-
                                     case 'surrounding':
                                         //$row[$attr->value] = $tag->nodeValue;
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
-
                                     case "lang":
 //                                    error_log("<li>=> lang = $lang</li>\n",3,self::_DEBUGFILE_);
                                         $lang = trim($tag->nodeValue);
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
-
                                     case "otx":
                                         $nodevalue = trim($tag->nodeValue);
                                         if ($nodevalue == '') {
@@ -338,7 +332,6 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                                         }
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
-
                                     default:
 //                                    error_log("<li>ME [{$attr->value} = {$tag->nodeValue}] : skip</li>\n",3,self::_DEBUGFILE_);
                                         break;
@@ -1356,7 +1349,8 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                         $clone = $child->cloneNode(true);
                                         $desc->appendChild($clone);
                                     }
-                                    else*/ if ($child->hasAttributes() AND $attr=$child->getAttribute('rend')) {
+                                    else*/ 
+                                    if ($child->hasAttributes() AND $attr=$child->getAttribute('rend')) {
                                         error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
                                         if ( preg_match("/^author-(.+)$/", $attr, $match)) {
                                             error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
@@ -1364,7 +1358,7 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                                 case 'prefix':
                                                     //error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('roleName', $child->nodeValue);
-                                                    $element ->setAttribute('type', "honorific");
+                                                    $element->setAttribute('type', "honorific");
                                                     $desc->appendChild($element);
                                                     break;
                                                 case 'function':
@@ -1380,6 +1374,13 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                                 case 'email':
                                                     //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('email', $child->nodeValue);
+                                                    $desc->appendChild($element);
+                                                    break;
+                                                case 'website':
+                                                    //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
+                                                    $element = $dom->createElement('ref', $child->nodeValue);
+                                                    $element->setAttribute('target', $child->nodeValue);
+                                                    $element->setAttribute('type', "website");
                                                     $desc->appendChild($element);
                                                     break;
                                             }
