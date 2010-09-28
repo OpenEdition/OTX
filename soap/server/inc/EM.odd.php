@@ -227,9 +227,10 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:body/child::*"   =>  'text:standard',    // texte, standard, normal, textbody
 
 // accroche
-"//*[@rend='pitch']"  => 'text:pitch',
+"//*[@rend='pitch']"    => 'text:pitch',
 // encadre
-"//*[@rend='box']"  => 'text:box'   // <floatingText type="box">
+"//*[@rend='box']"      => 'text:box'
+#"//tei:floatingText/tei:body/tei:p[@rend='box']"  => 'text:box'   // <floatingText type="box">
 
 );
 

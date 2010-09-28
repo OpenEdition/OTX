@@ -208,13 +208,13 @@ class OTXserver
             error_log("<li>case lodel</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice();
                 $this->oo2report('soffice', $this->_param['odtpath']);
-//                $this->output['report'] = _windobclean($this->_param['xmlreport']);
+                // $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
                 $this->lodelodt();
                 $this->oo2lodelxml();
                 $this->output['lodelxml'] = null; //_windobclean($this->_param['lodelTEI']);
                 $this->oo2report('lodel', $this->_param['lodelodtpath']);
-//                $this->output['report'] = _windobclean($this->_param['xmlreport']);
+                // $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
@@ -261,7 +261,6 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
 
         $this->EMTEI = _em2tei();
         //$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
-
 
         $domxml = new DOMDocument;
         $domxml->encoding = "UTF-8";
@@ -1507,32 +1506,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             $name = $dom->createElement('name', $translator);
             $respstmt->appendChild($name);
         }
-/*
-        $entries=$xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor']");
-        if ($entries->length) {
-            foreach ($entries as $entry) {
-                $parent = $entry->parentNode;
-                $respstmt = $dom->createElement('respStmt');
-                $titlestmt->appendChild($respstmt);
-                $rend = $entry->getAttribute('rend');
-                switch ($rend) {
-                    case 'author':
-                        $resp = $dom->createElement('resp', "author");
-                        break;
-                    case 'scientificeditor':
-                        $resp = $dom->createElement('resp', "editor");
-                        break;
-                    case 'translator':
-                        $resp = $dom->createElement('resp', "translator");
-                        break;
-                }
-                $respstmt->appendChild($resp);
-                $name = $dom->createElement('name', $entry->nodeValue);
-                $respstmt->appendChild($name);
-                $parent->removeChild($entry);
-            }
-        }
-*/
         # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
         # LodelEM:creationdate
@@ -2039,17 +2012,18 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             }
         }
 
-        // <floatingText type="box">
-        $entries = $xpath->query("//tei:body/tei:p[@rend='box']");
-        foreach ($entries as $entry) {
-            $parent = $entry->parentNode;
-            $clone = $entry->cloneNode(true);
-            $floatingText = $dom->createElement("floatingText");
-            $floatingBody = $dom->createElement("body");
-            $floatingText->appendChild($floatingBody);
-            $floatingBody->appendChild($clone);
-            $parent->replaceChild($floatingText, $entry);
-        }
+        # TODO ! <floatingText><body><p rend="box">...</p></body></floatingText>
+//        $entries = $xpath->query("//tei:body/tei:p[@rend='box']");
+//        foreach ($entries as $entry) {
+//            $parent = $entry->parentNode;
+//            $clone = $entry->cloneNode(true);
+//            $floatingText = $dom->createElement("floatingText");
+//            $floatingBody = $dom->createElement("body");
+//            $floatingText->appendChild($floatingBody);
+//            $floatingBody->appendChild($clone);
+//            $parent->replaceChild($floatingText, $entry);
+//        }
+
 
         if ( $headlevel=$this->summary($dom, $xpath)) {
             $this->heading2div($dom, $xpath, $headlevel);
@@ -2472,7 +2446,7 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                                 break;
                         }
                     }
-                    list($lang, $rendition) = $this->styles2csswhitelist($properties); // // white list
+                    list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
                     if ($lang == "") $lang = null;
                     $this->rendition[$key]['lang'] = $lang;
                     $this->rendition[$key]['rendition'] = $rendition;
@@ -2487,6 +2461,8 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
         error_log("<h4>oostyles()</h4>\n",3,self::_DEBUGFILE_);
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//style:style");
+//        $entries = $xpath->query("//@rendition");
+
             foreach ($entries as $item) {
                 $properties=array(); $key='';
                 $attributes = $item->attributes;
@@ -2513,9 +2489,9 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         $key = $name.$this->automatic[$name];
                     }
                 }
-error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
+    error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
                 if ( isset($this->EMotx[$key])) {
-error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
+    error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                     continue; // Lodel style definition: skip
                 }
 
@@ -2560,7 +2536,7 @@ error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                     } else {
                         $this->rendition[$key]['lang'] = $lang;
                         $this->rendition[$key]['family'] = $family;
-                        //$this->rendition[$key]['rendition'] = $rendition; # Lodel style
+                        //$this->rendition[$key]['rendition'] = $rendition; // Lodel style
                     }
                 }
             }

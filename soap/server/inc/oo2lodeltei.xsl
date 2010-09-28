@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- # The Contents of this file are made available subject to the terms of
- # the GNU Lesser General Public License Version 2.1
-
- # Nicolas Barts
- # copyright 2010, Cléo/Revue.org
-
- # OpenOffice v3.x
+# The Contents of this file are made available subject to the terms of
+# the GNU Lesser General Public License Version 2.1
+# Nicolas Barts
+# copyright 2010, Cléo/Revue.org
+# OpenOffice v3.x
 -->
 <!--
  # This stylesheet is derived from the OpenOffice to TEIP5 conversion
