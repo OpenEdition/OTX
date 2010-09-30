@@ -421,8 +421,8 @@ error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
         }
 
         // more++
-//        $this->EModel['FootnoteSymbol'] = "footnotesymbol";
-//        $this->EModel['Standard'] = "standard";
+        //$this->EModel['FootnoteSymbol'] = "footnotesymbol";
+        //$this->EModel['Standard'] = "standard";
         unset($Model);
         unset($OOTX);
 
@@ -1239,7 +1239,10 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
             }
         }
         else {
-        // TODO : warning no title defined
+            // TODO : warning no title defined
+            $new = $dom->createElement('title'); // car si pas de balise <title>, TEI invalide
+            $new->setAttribute('type', "main");
+            $titlestmt->appendChild($new);
         error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
         }
         # lodel:subtitle
@@ -2012,7 +2015,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             }
         }
 
-        # TODO ! <floatingText><body><p rend="box">...</p></body></floatingText>
+# TODO ! <floatingText><body><p rend="box">...</p></body></floatingText>
 //        $entries = $xpath->query("//tei:body/tei:p[@rend='box']");
 //        foreach ($entries as $entry) {
 //            $parent = $entry->parentNode;

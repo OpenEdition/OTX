@@ -121,12 +121,11 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:front/tei:div[@type='review']/tei:p[@rend='review-date']"
     => 'front:review-date',
 
-//
-"/tei:TEI/tei:text/tei:body/tei:*/tei:note[@place='foot']"
-    => 'text:footnote',
-// notefin
-"/tei:TEI/tei:text/tei:body/tei:*/tei:note[@place='end']"
-    => 'text:endnote',
+# // notesbaspage
+# "/tei:TEI/tei:text/tei:body/tei:*/tei:note[@place='foot']"  =>  'text:footnote',
+# // notefin
+# "/tei:TEI/tei:text/tei:body/tei:*/tei:note[@place='end']"   =>  'text:endnote',
+
 // paragraphesansretrait
 "/tei:TEI/tei:text/tei:*/tei:p[@rend='noindent']"
     => 'text:noindent',
