@@ -1359,23 +1359,31 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                             switch ($match[1]) {
                                                 case 'prefix':
                                                     //error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
-                                                    $element = $dom->createElement('roleName', $child->nodeValue);
+                                                    $element = $dom->createElement('roleName');
                                                     $element->setAttribute('type', "honorific");
+                                                    $s = $dom->createElement('s', $child->nodeValue);
+                                                    $element->appendChild($s);
                                                     $desc->appendChild($element);
                                                     break;
                                                 case 'function':
                                                     //error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
-                                                    $element = $dom->createElement('roleName', $child->nodeValue);
+                                                    $element = $dom->createElement('roleName');
+                                                    $s = $dom->createElement('s', $child->nodeValue);
+                                                    $element->appendChild($s);
                                                     $desc->appendChild($element);
                                                     break;
                                                 case 'affiliation':
                                                     //error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
-                                                    $element = $dom->createElement('orgName', $child->nodeValue);
+                                                    $element = $dom->createElement('orgName');
+                                                    $s = $dom->createElement('s', $child->nodeValue);
+                                                    $element->appendChild($s);
                                                     $desc->appendChild($element);
                                                     break;
                                                 case 'email':
                                                     //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
-                                                    $element = $dom->createElement('email', $child->nodeValue);
+                                                    $element = $dom->createElement('email');
+                                                    $s = $dom->createElement('s', $child->nodeValue);
+                                                    $element->appendChild($s);
                                                     $desc->appendChild($element);
                                                     break;
                                                 case 'website':
