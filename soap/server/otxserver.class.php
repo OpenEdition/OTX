@@ -1340,18 +1340,14 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                     if ($rend=$next->getAttribute('rend')) {
                         if ($rend==="author-description") {
                             $desc = $dom->createElement('affiliation');
+                            $s = $dom->createElement('s', $next->nodeValue);
+                            $desc->appendChild($s);
                             $author->appendChild($desc);
                             if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
                             if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
+
                             if ($next->hasChildNodes()) {
                                 foreach ($next->childNodes as $child) {
-                                    /*if ($child->nodeName == "#text") {
-                                        error_log("<li>text ?</li>\n",3,self::_DEBUGFILE_);
-                                        //$desc->nodeValue = $child->nodeValue;
-                                        $clone = $child->cloneNode(true);
-                                        $desc->appendChild($clone);
-                                    }
-                                    else*/ 
                                     if ($child->hasAttributes() AND $attr=$child->getAttribute('rend')) {
                                         error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
                                         if ( preg_match("/^author-(.+)$/", $attr, $match)) {
@@ -1363,51 +1359,52 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                                     $element->setAttribute('type', "honorific");
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
-                                                    $desc->appendChild($element);
+                                                    $author->appendChild($element);
                                                     break;
                                                 case 'function':
                                                     //error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('roleName');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
-                                                    $desc->appendChild($element);
+                                                    $author->appendChild($element);
                                                     break;
                                                 case 'affiliation':
                                                     //error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('orgName');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
-                                                    $desc->appendChild($element);
+                                                    $author->appendChild($element);
                                                     break;
                                                 case 'email':
                                                     //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('email');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
-                                                    $desc->appendChild($element);
+                                                    $author->appendChild($element);
                                                     break;
                                                 case 'website':
                                                     //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('ref', $child->nodeValue);
                                                     $element->setAttribute('target', $child->nodeValue);
                                                     $element->setAttribute('type', "website");
-                                                    $desc->appendChild($element);
+                                                    $author->appendChild($element);
                                                     break;
                                             }
-                                        }
+                                        }/*
                                         else {
                                             error_log("<li>rend clone</li>\n",3,self::_DEBUGFILE_);
                                             $clone = $child->cloneNode(true);
                                             $desc->appendChild($clone);
-                                        }
-                                    }
+                                        }*/
+                                    }/*
                                     else {
                                         $clone = $child->cloneNode(true);
                                         //error_log("<li>clone : {$clone->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                         $desc->appendChild($clone);
-                                    }
+                                    }*/
                                 }
                             }
+                            
                             $parent->removeChild($next);
                         } else break;
                     } else break;

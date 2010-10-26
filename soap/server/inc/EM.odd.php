@@ -41,19 +41,19 @@ function _em2tei($schema="revorg") {
 "//tei:affiliation"
     => 'header:author-description',
 // prefixe, .prefixe
-"//tei:affiliation/tei:roleName[@type='honorific']"
+"//tei:roleName[@type='honorific']"
     => 'header:author-prefix',
 // affiliation, .affiliation
-"//tei:affiliation/tei:orgName"
+"//tei:orgName"
     => 'header:author-affiliation',
 // fonction, .fonction
-"//tei:affiliation/tei:roleName"
+"//tei:roleName[@type='function']"
     => 'header:author-function',
 // courriel, .courriel
-"//tei:affiliation/tei:email"
+"//tei:email"
     => 'header:author-email',
 // site
-"//tei:affiliation/tei:ref[@type='website']"
+"//tei:ref[@type='website']"
     => 'header:author-website',
 
 // titretraduitfr:fr,titrefr:fr, titretraduiten:en,titleen:en,titreen:en, titretraduites:es,tituloes:es,titrees:es, titretraduitit:it,titoloit:it,titreit:it, titretraduitde:de,titelde:de,titrede:de, titretraduitpt:pt,titrept:pt, titretraduitru:ru,titreru:ru
