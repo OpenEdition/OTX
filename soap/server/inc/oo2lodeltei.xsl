@@ -267,10 +267,26 @@
     </xsl:template>
 
     <!-- list-item -->
+    <xsl:template match="text:list[@text:style-name]">
+        <xsl:variable name="Style">
+            <xsl:value-of select="@text:style-name"/>
+        </xsl:variable>
+        <xsl:choose>
+            <xsl:when test="descendant::text:h[@text:outline-level]">
+                <xsl:call-template name="copyxmlid"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <list rendition="#{$Style}">
+                <xsl:call-template name="copyxmlid"/>
+                </list>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
     <xsl:template match="text:list">
         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
-            <xsl:call-template name="copyxmlid"/>
+                <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <!--
             <xsl:when test="text:list-item/text:p">
@@ -278,7 +294,6 @@
                     <xsl:apply-templates/>
                 </xsl:for-each>
             </xsl:when>
-            -->
             <xsl:when test="@text:style-name='Var List'">
                 <list>
                 <xsl:call-template name="copyxmlid"/>
@@ -289,8 +304,9 @@
                 <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:when>
+            -->
             <xsl:otherwise>
-                <list type="unordered">
+                <list>
                 <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:otherwise>

@@ -814,6 +814,20 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
             }
         }
 
+        $entries = $xpath->query("//tei:list[@rendition]");
+        foreach ($entries as $item) {
+            $rendition = $item->getAttribute("rendition");
+            if ( isset($this->rendition[$rendition])) {
+                if ($this->rendition[$rendition]['rendition']=="ordered") {
+                    $item->setAttribute("type", "ordered");
+                }
+            }
+            else {
+                $item->setAttribute("type", "unordered");
+            }
+            $item->removeAttribute("rendition");
+        }
+
         // $entries = $xpath->query("//tei:p[@rendition] or //tei:s[@rendition]");
         $entries = $xpath->query("//tei:*[@rendition]");
         foreach ($entries as $item) {
@@ -958,7 +972,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
         $entries = $xpath->query("//tei:body/tei:*");
-        $current = $prev = $next = array();
+        $current = $previtem = $nextitem = array();
         $section = $newsection = "";
         $newbacksection = $backsection = "";
         foreach ($entries as $item) {
@@ -966,14 +980,20 @@ error_log("<li>item: {$item->nodeName}</li>\n",3,self::_DEBUGFILE_);
 if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,self::_DEBUGFILE_);
 
             // prev
-            $item->previousSibling ? $previtem=$this->greedy($item->previousSibling) : $previtem=null;
+                $item->previousSibling ? $this->greedy($item->previousSibling, $previtem) : $previtem=null;
+
             // current
-            $current = $this->greedy($item);
+            $this->greedy($item, $current);
+
             // next
-            $item->nextSibling ? $nextitem=$this->greedy($item->nextSibling) : $nextitem=null;
+            $next = $item;
+            do {
+                $next = $next->nextSibling;
+            } while (!$this->greedy($next, $nextitem) and $next);
+
 //$dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
-            if ($current != null) {
+            if ($current!=null) {
                 if ( isset($current['surround'])) {
                     $surround = $current['surround'];
                     switch($surround) {
@@ -2468,9 +2488,27 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
         private function oostyles(&$dom) {
         error_log("<h4>oostyles()</h4>\n",3,self::_DEBUGFILE_);
             $xpath = new DOMXPath($dom);
-            $entries = $xpath->query("//style:style");
-//        $entries = $xpath->query("//@rendition");
+            // listes
+            $entries = $xpath->query("//text:list-style[@style:name]");
+            foreach ($entries as $item) {
+                $properties=array(); $key='';
+                $attributes = $item->attributes;
+                if ($attrname=$attributes->getNamedItem("name")) {
+                    $name = $attrname->nodeValue;
+                    $key = '#'.$name;
+                }
+                $list = "unordered";
+                if ($item->hasChildNodes()) {
+                    $first = $item->firstChild;
+                    $last = $item->lastChild;
+                    if ($first->nodeName=="text:list-level-style-number" and $last->nodeName=="text:list-level-style-number") {
+                        $list = "ordered";
+                    }
+                }
+                $this->rendition[$key]['rendition'] = $list;
+            }
 
+            $entries = $xpath->query("//style:style[@style:name]");
             foreach ($entries as $item) {
                 $properties=array(); $key='';
                 $attributes = $item->attributes;
@@ -2497,9 +2535,9 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         $key = $name.$this->automatic[$name];
                     }
                 }
-    error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
                 if ( isset($this->EMotx[$key])) {
-    error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                     continue; // Lodel style definition: skip
                 }
 
@@ -2653,25 +2691,17 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             return array($lang, $rendition);
         }
 
-        /** @return array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
-        private function greedy(&$node) {
+        /** array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
+        private function greedy(&$node, &$greedy) {
         //error_log("<h4>greedy()</h4>\n",3,self::_DEBUGFILE_);
             $section = $surround = $key = $rend = null;
-/*
-<p rend="appendix-heading1" xml:lang="fr">Ouvrages en langues occidentales</p>
-<p rend="bibliography-heading1" xml:lang="fr">Ouvrages en chinois</p>
-*/
-/*
-<ab type="head" subtype="level1" xml:id="otx_61" rend="appendix-">Ouvrages en langues occidentales</ab>
-<ab type="head" subtype="level1" xml:id="otx_83" rend="bibliography-">Ouvrages en chinois</ab>
-*/
-$dbgvalue='';
+            $greedy = null; $status = true;
+
             if ($rend=$node->getAttribute("rend")) {
 
                 if (strpos($rend, "bibliography-") or strpos($rend, "appendix-")) {
                     list($prefix,$rend) = explode("-",$rend);
                     $section = "back";
-error_log("<li>? [greedy] BAK section ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_); 
                 }
 
                 if ( isset($this->EMotx[$rend]['surround'])) {
@@ -2679,7 +2709,10 @@ error_log("<li>? [greedy] BAK section ({$node->nodeName} : {$node->nodeValue})</
                 }
                 elseif ($node->nodeName=="ab") { 
                     $surround = "*-"; // heading > 6 !
-                //$dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no surround ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
+                }
+                if ($surround=="*-" or $surround=="-*") {
+error_log("<li>[greedy] surround = $surround\n",3,self::_DEBUGFILE_); 
+                    $status = false;
                 }
 
                 if ( isset($this->EMotx[$rend]['key'])) {
@@ -2703,16 +2736,18 @@ error_log("<li>? [greedy] BAK section ({$node->nodeName} : {$node->nodeValue})</
                 }
                 elseif ($node->nodeName=="ab") {
                     $section = "body"; // heading > 6 !
-                //$dbgvalue=$node->nodeValue;error_log("<li>? [greedy] no key/section ({$node->nodeName} : $dbgvalue) </li>\n",3,self::_DEBUGFILE_); 
                 }
 
-                return array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
+                $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
+                
+                return $status;
             }
             else {
                 if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
-                //error_log("<li>? [greedy] no rend atrribute ({$node->nodeName} : $dbgvalue)</li>\n",3,self::_DEBUGFILE_);
-                return null;
+                return $status;
             }
+
+            return $status;
         }
 
         /** css tagsDecl to tei:hi rendition ! **/
