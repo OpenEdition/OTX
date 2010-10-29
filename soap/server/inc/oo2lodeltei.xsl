@@ -288,12 +288,12 @@
             <xsl:when test="descendant::text:h[@text:outline-level]">
                 <xsl:call-template name="copyxmlid"/>
             </xsl:when>
-            <!--
             <xsl:when test="text:list-item/text:p">
                 <xsl:for-each select="text:list-item">
                     <xsl:apply-templates/>
                 </xsl:for-each>
             </xsl:when>
+<!--
             <xsl:when test="@text:style-name='Var List'">
                 <list>
                 <xsl:call-template name="copyxmlid"/>
@@ -304,7 +304,7 @@
                 <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:when>
-            -->
+-->
             <xsl:otherwise>
                 <list>
                 <xsl:call-template name="copyxmlid"/>
@@ -330,6 +330,7 @@
             <xsl:when test="ancestor::text:list[@text:continue-numbering='true']">
                 <xsl:call-template name="copyxmlid"/>
             </xsl:when>
+<!--
             <xsl:when test="parent::text:list/@text:style-name='Var List'">
                 <item>
                 <xsl:for-each select="text:p[@text:style-name='VarList Term']">
@@ -337,6 +338,7 @@
                 </xsl:for-each>
                 </item>
             </xsl:when>
+-->
             <xsl:otherwise>
                 <item>
                 <xsl:call-template name="copyxmlid"/>

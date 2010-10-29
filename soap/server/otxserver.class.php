@@ -208,19 +208,16 @@ class OTXserver
             error_log("<li>case lodel</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice();
                 $this->oo2report('soffice', $this->_param['odtpath']);
-                // $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->Schema2OO();
                 $this->lodelodt();
                 $this->oo2lodelxml();
-                $this->output['lodelxml'] = null; //_windobclean($this->_param['lodelTEI']);
+                $this->output['lodelxml'] = null;
                 $this->oo2report('lodel', $this->_param['lodelodtpath']);
-                // $this->output['report'] = _windobclean($this->_param['xmlreport']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
-//$dbg="<li><pre>".print_r($this->report,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
-                    $jsonreport = json_encode($this->report);
-$debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
+                $jsonreport = json_encode($this->report);
+                $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
                 $this->output['report'] = $jsonreport;
                 break;
             case 'partners':
@@ -251,16 +248,9 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
     error_log("<h2>Schema2OO()</h2>\n",3,self::_DEBUGFILE_);
 
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-
-        /**
-        *   TODO DEBUG TODO    => $EMOTX[$EMLodel[$odfstyle]]
-        **/
-        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."teipub/"."model.xml";
-        //$modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH']."model.xml";
         error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
         $this->EMTEI = _em2tei();
-        //$dbg="<li><pre>".print_r($this->EMTEI,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
         $domxml = new DOMDocument;
         $domxml->encoding = "UTF-8";
@@ -292,19 +282,15 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                     if ($tag->hasAttributes()) {
                         foreach ($tag->attributes as $attr) {
                             if ($attr->name === "name") {
-//                            error_log("\n<li>{$attr->value} : {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                                 switch ($attr->value) {
                                     case "name":
                                     case "type":
-//                                    error_log("\n<li>name = {$tag->nodeValue}</li>\n",3,self::_DEBUGFILE_);
-                                        //$value = trim($tag->nodeValue);
                                         if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
                                       break;
                                     case "style":
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         $style = trim($tag->nodeValue);
                                         if ($style == '') { // empty : no style defined !
-//                                        error_log("<li>empty : no style defined !</li>\n",3,self::_DEBUGFILE_);
                                             continue 4;
                                         }
                                         $bstyle = true; 
@@ -315,24 +301,20 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                                         $row['gname'] = trim($tag->nodeValue);
                                         break;
                                     case 'surrounding':
-                                        //$row[$attr->value] = $tag->nodeValue;
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
                                     case "lang":
-//                                    error_log("<li>=> lang = $lang</li>\n",3,self::_DEBUGFILE_);
                                         $lang = trim($tag->nodeValue);
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
                                     case "otx":
                                         $nodevalue = trim($tag->nodeValue);
                                         if ($nodevalue == '') {
-//                                        error_log("<li>case otx empty : skip</li>\n",3,self::_DEBUGFILE_);
                                             continue 4;
                                         }
                                         $row[$attr->value] = trim($tag->nodeValue);
                                         break;
                                     default:
-//                                    error_log("<li>ME [{$attr->value} = {$tag->nodeValue}] : skip</li>\n",3,self::_DEBUGFILE_);
                                         break;
                                 }
                             }
@@ -365,10 +347,9 @@ $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile,
                             $this->EMotx[$otxvalue]['key'] = $otxkey;
                         } else {
                             $otxvalue = $emotx;
-error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
+                            error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
                             continue;
                         }
-                    error_log("<li>=> otx: $otxvalue</li>\n",3,self::_DEBUGFILE_);
                     }
 
                     $style = $row['style']; $nbEmStyle++;
@@ -419,10 +400,6 @@ error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
                     $this->EModel[$key] = $value;
             }
         }
-
-        // more++
-        //$this->EModel['FootnoteSymbol'] = "footnotesymbol";
-        //$this->EModel['Standard'] = "standard";
         unset($Model);
         unset($OOTX);
 
@@ -466,7 +443,6 @@ error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
         }
         // default
         $this->EMotx['standard']['key'] = "text";
-        //$this->EMotx['standard']['surround'] = "*-";
 
         error_log("<li>DONE.</li>\n",3,self::_DEBUGFILE_);
         unset($domxml);
@@ -786,8 +762,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
     protected function oo2lodelxml() {
     error_log("\n<h3>oo2lodelxml()</h3>\n",3,self::_DEBUGFILE_);
 
-//$dbg="\n<li>EMotx<pre>".print_r($this->EMotx,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
-
         $dom = $this->dom['teifodt'];
 
         $tagsdecl = array();
@@ -891,7 +865,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
         foreach ($entries as $item) {
             $rend = $item->getAttribute("rend");
             if ( isset($this->EMotx[$rend])) {
-                error_log("\n<li>lodel style ($rend) : skip !</li>\n",3,self::_DEBUGFILE_);
                 continue;  // lodel style : skip !
             }
 
@@ -976,22 +949,29 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
         $section = $newsection = "";
         $newbacksection = $backsection = "";
         foreach ($entries as $item) {
-error_log("<li>item: {$item->nodeName}</li>\n",3,self::_DEBUGFILE_);
-if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,self::_DEBUGFILE_);
 
-            // prev
-                $item->previousSibling ? $this->greedy($item->previousSibling, $previtem) : $previtem=null;
+error_log("\n\n<li>ITEM {$item->nodeName} : {$item->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,self::_DEBUGFILE_);
 
             // current
             $this->greedy($item, $current);
+$dbg="<li>CURRENT = <pre>\n".print_r($current,true)."</pre></li>\n";error_log($dbg,3,self::_DEBUGFILE_);
 
-            // next
-            $next = $item;
+/*
             do {
-                $next = $next->nextSibling;
-            } while (!$this->greedy($next, $nextitem) and $next);
-
-//$dbg="<li>nextitem = <pre>\n".print_r($nextitem,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
+                $prev = $prev->previousSibling;
+                error_log("<li>prev {$prev->nodeName} : {$prev->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+            } while ($prev and !$this->greedy($prev, $previtem));
+$dbg="<li>PREV = <pre>\n".print_r($previtem,true)."</pre></li>\n";error_log($dbg,3,self::_DEBUGFILE_);
+*/
+/*
+                            $next = $item;
+                            do {
+                                $next = $next->nextSibling;
+                                error_log("<li>next {$next->nodeName} : {$next->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                            } while ($next and !$this->greedy($next, $nextitem));
+$dbg="<li>NEXT = <pre>\n".print_r($nextitem,true)."</pre></li>\n";error_log($dbg,3,self::_DEBUGFILE_);
+*/
 
             if ($current!=null) {
                 if ( isset($current['surround'])) {
@@ -999,6 +979,14 @@ if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,se
                     switch($surround) {
                         case "-*":
                         error_log("<li>case -*</li>\n",3,self::_DEBUGFILE_);
+                            // prev
+                            $prev = $item;
+                                $prev = $prev->previousSibling;
+                                if ($prev) {
+                                error_log("<li>prev {$prev->nodeName} : {$prev->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                                $this->greedy($prev, $previtem);
+$dbg="<li>PREV = <pre>\n".print_r($previtem,true)."</pre></li>\n";error_log($dbg,3,self::_DEBUGFILE_);
+                                }
                             if ( isset($previtem['section'])) {
                                 $newsection = $previtem['section'];
                                 if ($newsection=="back" and isset($previtem['rend'])) {
@@ -1012,6 +1000,14 @@ if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,se
                             break;
                         case "*-":
                         error_log("<li>case *-</li>\n",3,self::_DEBUGFILE_);
+                            // next
+                            $next = $item;
+                                $next = $next->nextSibling;
+                                if ($next) {
+                                error_log("<li>next {$next->nodeName} : {$next->nodeValue}</li>\n",3,self::_DEBUGFILE_);
+                                $this->greedy($next, $nextitem);
+$dbg="<li>NEXT = <pre>\n".print_r($nextitem,true)."</pre></li>\n";error_log($dbg,3,self::_DEBUGFILE_);
+                                }
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
                                 if ($newsection=="back" and isset($nextitem['rend'])) {
@@ -1040,14 +1036,19 @@ if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,se
                     }
                 }
             } else {
-            error_log("<li>=> newsection = body</li>\n",3,self::_DEBUGFILE_);
-                $newsection = "body";
+                $newsection = $section;
+error_log("<li>??? newsection = $section</li>\n",3,self::_DEBUGFILE_);
             }
 
+error_log("<li>=> section = $section</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>=> newsection = $newsection</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>=> backsection = $backsection</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>=> newbacksection = $newbacksection</li>\n",3,self::_DEBUGFILE_);
+
             if ($section!==$newsection or $backsection!==$newbacksection) { // new section
-            error_log("<li>newsection: $newsection or $newbacksection</li>\n",3,self::_DEBUGFILE_);
+                error_log("<li>newsection: $newsection or $newbacksection</li>\n",3,self::_DEBUGFILE_);
                 if ($section!==$newsection) {
-                error_log("<li>=> newsection: $newsection</li>\n",3,self::_DEBUGFILE_);
+                    error_log("<li>=> newsection: $newsection</li>\n",3,self::_DEBUGFILE_);
                     $section = $newsection;
                 } 
                 elseif ($backsection!==$newbacksection) {
@@ -1116,7 +1117,7 @@ if ($rend=$item->getAttribute("rend")) error_log("<li>@rend = $rend</li>\n",3,se
         $dom->formatOutput = true;
         $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
-$debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
+        $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -1326,7 +1327,6 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                 array_push($items, $entry->nodeValue);
                 $uid = 0;
             }
-    $dbg="\nITEMS<li><pre>".print_r($items,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
             foreach ($items as $item) {
                 $item = trim($item);
@@ -1355,7 +1355,6 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                 if (! isset($lodelmeta[$rend])) { $lodelmeta[$rend] = array(); }
                 array_push($lodelmeta[$rend], $name->nodeValue);
                 // author-description ==> affiliation
-                //error_log("<li>author-description</li>\n",3,self::_DEBUGFILE_);
                 while ($next=$entry->nextSibling) {
                     if ($rend=$next->getAttribute('rend')) {
                         if ($rend==="author-description") {
@@ -1369,12 +1368,9 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                             if ($next->hasChildNodes()) {
                                 foreach ($next->childNodes as $child) {
                                     if ($child->hasAttributes() AND $attr=$child->getAttribute('rend')) {
-                                        error_log("<li>@rend</li>\n",3,self::_DEBUGFILE_);
                                         if ( preg_match("/^author-(.+)$/", $attr, $match)) {
-                                            error_log("<li>@rend=author-</li>\n",3,self::_DEBUGFILE_);
                                             switch ($match[1]) {
                                                 case 'prefix':
-                                                    //error_log("<li>@rend=author-prefix</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('roleName');
                                                     $element->setAttribute('type', "honorific");
                                                     $s = $dom->createElement('s', $child->nodeValue);
@@ -1382,28 +1378,24 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                                     $author->appendChild($element);
                                                     break;
                                                 case 'function':
-                                                    //error_log("<li>@rend=author-function</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('roleName');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
                                                     $author->appendChild($element);
                                                     break;
                                                 case 'affiliation':
-                                                    //error_log("<li>@rend=author-affiliation</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('orgName');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
                                                     $author->appendChild($element);
                                                     break;
                                                 case 'email':
-                                                    //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('email');
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
                                                     $author->appendChild($element);
                                                     break;
                                                 case 'website':
-                                                    //error_log("<li>@rend=author-email</li>\n",3,self::_DEBUGFILE_);
                                                     $element = $dom->createElement('ref', $child->nodeValue);
                                                     $element->setAttribute('target', $child->nodeValue);
                                                     $element->setAttribute('type', "website");
@@ -1424,16 +1416,14 @@ $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
                                     }*/
                                 }
                             }
-                            
                             $parent->removeChild($next);
                         } else break;
                     } else break;
                 }
-
             }
             $parent->removeChild($entry);
         }
-$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($debugfile);
+        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($debugfile);
 
         # /tei/teiHeader/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:publicationStmt"); $pubstmt = $entries->item(0);
@@ -1615,7 +1605,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
             if ( preg_match("/keywords-(.+)/", $rend, $match)) {
-                $lang = $match[1]; error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
+                $lang = $match[1];
             } else {
                 $lang = null;
             }
@@ -1727,7 +1717,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
             if ( preg_match("/abstract-(.+)/", $rend, $match)) {
-                $lang = $match[1]; error_log("<li>$rend : $lang</li>\n",3,self::_DEBUGFILE_);
+                $lang = $match[1];
             } else {
                 $lang = null;
             }
@@ -1996,7 +1986,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($deb
         }
 
         # 
-    error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
+        error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//@rendition");
         foreach ($entries as $attr) {
             $element = $attr->ownerElement;
@@ -2113,7 +2103,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 }
             }
             $this->report['summary'] = $summary;
-//$dbg="<li>maxlevel = $max</li><li><pre>".print_r($summary,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
             return $max;
         }
 
@@ -2122,7 +2111,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
            if ($level == 0) return;
             $entries = $xpath->query("//tei:text/tei:body/tei:ab[@rend='heading$level']", $dom);
             foreach ($entries as $item) {
-//error_log("<h3>{$item->nodeName} : {$item->nodeValue}</h3>\n",3,self::_DEBUGFILE_);
                 $parent = $item->parentNode;
                 $div = $dom->createElement("div");
                 $div->setAttribute("type", "div$level");
@@ -2146,7 +2134,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 $next = $item;
                 while ($next = $next->nextSibling) {
                     if ($next->nodeName == "ab") break;
-//error_log("<li>{$next->nodeName} : {$next->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                     $clone = $next->cloneNode(true);
                     $div->appendChild($clone);
                     array_push($nodetoremove, $next);
@@ -2231,12 +2218,12 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
 
             error_log("<li>[getmime] sourcepath = $sourcepath</li>\n",3,self::_DEBUGFILE_);
             $mime = mime_content_type($sourcepath);
-error_log("<li>[getmime] => mime_content_type() = $mime</li>\n",3,self::_DEBUGFILE_);
+            error_log("<li>[getmime] => mime_content_type() = $mime</li>\n",3,self::_DEBUGFILE_);
 
             if ($mime === "application/x-zip" OR $mime === "application/zip") {
                 $file = escapeshellarg($sourcepath);
                 list($mime, $tmp) = explode(",", system("file -b $file"));
-error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
+                error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             }
 
             $extension = ".odt";
@@ -2380,7 +2367,6 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         $attribute = $attributes->getNamedItem("href");
                         if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
                             $match = $attribute->nodeValue;
-                        error_log("<li>draw:image: $match</li>\n",3,self::_DEBUGFILE_);
                             list($imgpre, $imgext) = explode(".", trim($match));
                             list($pictures, $imgname) = explode("/", $imgpre);
                             if (! isset($this->LodelImg[$imgname.$imgext])) {
@@ -2412,7 +2398,7 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                             */
                             $this->_status = "{$attribute->nodeValue} skipped";
                             array_push($this->log['warning'], $this->_status);
-                        error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                             // TODO Warning !
                         }
                     }
@@ -2535,9 +2521,7 @@ error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
                         $key = $name.$this->automatic[$name];
                     }
                 }
-error_log("<li>oostyles [ $key ]</li>\n",3,self::_DEBUGFILE_);
                 if ( isset($this->EMotx[$key])) {
-error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                     continue; // Lodel style definition: skip
                 }
 
@@ -2710,8 +2694,9 @@ error_log("<li>Lodel style definition $key : skip</li>\n",3,self::_DEBUGFILE_);
                 elseif ($node->nodeName=="ab") { 
                     $surround = "*-"; // heading > 6 !
                 }
+
                 if ($surround=="*-" or $surround=="-*") {
-error_log("<li>[greedy] surround = $surround\n",3,self::_DEBUGFILE_); 
+error_log("<li>! [greedy] surround = $surround\n",3,self::_DEBUGFILE_); 
                     $status = false;
                 }
 
@@ -2729,24 +2714,24 @@ error_log("<li>[greedy] surround = $surround\n",3,self::_DEBUGFILE_);
                             $section = "body";
                             break;
                         default:
-                        error_log("<li>? [greedy($rend)] default section = body ({$node->nodeName} : {$node->nodeValue})</li>\n",3,self::_DEBUGFILE_);
+error_log("<li>? [greedy($rend)] default section = body ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
                             $section = "body";
                             break;
                     }
                 }
                 elseif ($node->nodeName=="ab") {
+error_log("<li>?? [greedy($rend)] ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
                     $section = "body"; // heading > 6 !
                 }
 
-                $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
-                
-                return $status;
             }
             else {
-                if ($node->nodeName=="ab") { $dbgvalue=$node->nodeValue; }
+error_log("<li>??? [greedy($rend)] ({$node->nodeName})</li>\n",3,self::_DEBUGFILE_);
+                $section = "body"; // heading > 6 !
                 return $status;
             }
 
+            $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
             return $status;
         }
 
@@ -2975,8 +2960,8 @@ error_log("<li>[greedy] surround = $surround\n",3,self::_DEBUGFILE_);
                 $za->close();
                 $this->log['report'][$step] = $xmlmeta;
 
-# json
-error_log("<h4>JSON</h4>\n",3,self::_DEBUGFILE_);
+                # json
+                error_log("<h4>JSON</h4>\n",3,self::_DEBUGFILE_);
                 $prop = array();
                 $xpath = new DOMXPath($dommeta);
                 $entries = $xpath->query("//office:meta/*");
@@ -2995,7 +2980,6 @@ error_log("<h4>JSON</h4>\n",3,self::_DEBUGFILE_);
                     }
                 }
                 $this->report["meta-$step"] = $prop;
-//$dbg="<li><pre>".print_r($prop,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
                 break;
             default:
                 break;
