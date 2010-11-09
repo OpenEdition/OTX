@@ -277,7 +277,7 @@
             </xsl:when>
             <xsl:otherwise>
                 <list rendition="#{$Style}">
-                <xsl:call-template name="copyxmlid"/>
+                    <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:otherwise>
         </xsl:choose>
@@ -328,7 +328,9 @@
                 <xsl:call-template name="copyxmlid"/>
             </xsl:when>
             <xsl:when test="ancestor::text:list[@text:continue-numbering='true']">
-                <xsl:call-template name="copyxmlid"/>
+                <item>
+                    <xsl:call-template name="copyxmlid"/>
+                </item>
             </xsl:when>
 <!--
             <xsl:when test="parent::text:list/@text:style-name='Var List'">
