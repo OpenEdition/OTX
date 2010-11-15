@@ -315,10 +315,13 @@
 
     <xsl:template match="text:list-header">
         <head>
-        <xsl:call-template name="copyxmlid"/>
+            <xsl:for-each select="text:p">
+                <xsl:value-of select="." />
+            </xsl:for-each> 
+<!--             <xsl:call-template name="copyxmlid"/>  -->
         </head>
     </xsl:template>
-
+    
     <xsl:template match="text:list-item">
         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
