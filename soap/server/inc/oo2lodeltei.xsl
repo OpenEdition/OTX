@@ -64,7 +64,7 @@
         name="STYLES"
         match="style:style"
         use="@style:name"/>
-
+    
     <xsl:param name="META" select="/"/>
 
     <xsl:output 
@@ -262,12 +262,12 @@
             <xsl:value-of select="concat('heading',@text:outline-level)"/>
         </xsl:variable>
         <ab type="head" rend="{$heading}">
-        <xsl:call-template name="copyxmlid"/>
+            <xsl:call-template name="copyxmlid"/>
         </ab>
     </xsl:template>
 
     <!-- list-item -->
-    <xsl:template match="text:list[@text:style-name]">
+<!--    <xsl:template match="text:list[@text:style-name]">
         <xsl:variable name="Style">
             <xsl:value-of select="@text:style-name"/>
         </xsl:variable>
@@ -282,32 +282,21 @@
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
-
+-->
     <xsl:template match="text:list">
-        <xsl:choose>
+         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
                 <xsl:call-template name="copyxmlid"/>
             </xsl:when>
-            <xsl:when test="text:list-item/text:p">
-                <xsl:for-each select="text:list-item">
-                    <xsl:apply-templates/>
-                </xsl:for-each>
-            </xsl:when>
-<!--
-            <xsl:when test="@text:style-name='Var List'">
-                <list>
-                <xsl:call-template name="copyxmlid"/>
-                </list>
-            </xsl:when>
-            <xsl:when test="starts-with(@text:style-name,'ordered')">
-                <list type="ordered">
-                <xsl:call-template name="copyxmlid"/>
-                </list>
-            </xsl:when>
--->
             <xsl:otherwise>
                 <list>
-                <xsl:call-template name="copyxmlid"/>
+                    <xsl:if test="@text:style-name">
+	                    <xsl:attribute name="rendition">
+	                        <xsl:text>#</xsl:text>
+	                        <xsl:value-of select="@text:style-name" />
+	                    </xsl:attribute>
+                    </xsl:if>
+                   <xsl:call-template name="copyxmlid"/>
                 </list>
             </xsl:otherwise>
         </xsl:choose>

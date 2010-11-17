@@ -691,7 +691,7 @@ EOD;
         $domfodt->resolveExternals = false;
         $domfodt->preserveWhiteSpace = false;
         $domfodt->formatOutput = true;
-        if (! $domfodt->loadXML($xmlfodt)) {
+        if (! @$domfodt->loadXML($xmlfodt)) {
             $this->_status="error load fodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
             throw new Exception($this->_status,E_ERROR);
         }
@@ -747,7 +747,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             throw new Exception($this->_status,E_ERROR);
         }
         $domteifodt->normalizeDocument();
-$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteifodt->save($debugfile);
+        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";$domteifodt->save($debugfile);
 
         $this->dom['teifodt'] = $domteifodt;
         //$this->lodeltei($domteifodt);
@@ -790,16 +790,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
 
         $entries = $xpath->query("//tei:list[@rendition]");
         foreach ($entries as $item) {
-            $rendition = $item->getAttribute("rendition");
-            if ( isset($this->rendition[$rendition])) {
-                if ($this->rendition[$rendition]['rendition']=="ordered") {
-                    $item->setAttribute("type", "ordered");
-                }
-            }
-            else {
-                $item->setAttribute("type", "unordered");
-            }
-            $item->removeAttribute("rendition");
+            $this->liststyles($item);
         }
 
         // $entries = $xpath->query("//tei:p[@rendition] or //tei:s[@rendition]");
@@ -1139,34 +1130,59 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";@$domteif
         return true;
     }
 
-        private function hicleanup(&$dom, &$xpath) {
-        error_log("<h4>hicleanup()</h4>\n",3,self::_DEBUGFILE_);
-            $bool = false;
-            $entries = $xpath->query("//tei:hi", $dom); 
-            foreach ($entries as $item) {
-                if (! $item->hasAttributes()) {
-                    $parent = $item->parentNode;
-                    $newitem = $dom->createElement("nop");
-                    if ($item->hasChildNodes()) {
-                        foreach ($item->childNodes as $child) {
-                            $clone = $child->cloneNode(true);
-                            $newitem->appendChild($clone);
-                        }
+	private function liststyles($list, $level = 1, $rendition = null){
+		if(!isset($rendition)){
+			$rendname  = $list->getAttribute('rendition') or $list->getAttribute('text:style-name');
+			$rendition = $this->rendition[$rendname];
+		}
+
+		if(isset($rendition['levels']))
+			$list->setAttribute('type', $rendition['levels'][$level]);
+
+		/* Items parsing */
+		foreach($list->childNodes as $childitem){
+			$newlevel = $level + 1;
+			
+			/* Sub-list parsing */
+			foreach($childitem->childNodes as $childlist){
+				if($childlist->nodeName == "list")
+					$this->liststyles($childlist, $newlevel, $rendition);
+			}
+			
+		}
+		
+		$list->removeAttribute('rendition');
+		
+	}
+
+    private function hicleanup(&$dom, &$xpath) {
+    	error_log("<h4>hicleanup()</h4>\n",3,self::_DEBUGFILE_);
+        $bool = false;
+        $entries = $xpath->query("//tei:hi", $dom); 
+        foreach ($entries as $item) {
+            if (! $item->hasAttributes()) {
+                $parent = $item->parentNode;
+                $newitem = $dom->createElement("nop");
+                if ($item->hasChildNodes()) {
+                    foreach ($item->childNodes as $child) {
+                        $clone = $child->cloneNode(true);
+                        $newitem->appendChild($clone);
                     }
-                    else {
-                        $newitem->nodeValue = $item->nodeValue;
-                    }
-                    if (! $parent->replaceChild($newitem, $item)) {
-                        $this->_status="error replaceChild";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-                        throw new Exception($this->_status,E_ERROR);
-                    }
-                    $bool = true;
                 }
-            }
-            if ($bool) {
-                $this->hicleanup($dom, $xpath);
+                else {
+                    $newitem->nodeValue = $item->nodeValue;
+                }
+                if (! $parent->replaceChild($newitem, $item)) {
+                    $this->_status="error replaceChild";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                    throw new Exception($this->_status,E_ERROR);
+                }
+                $bool = true;
             }
         }
+        if ($bool) {
+            $this->hicleanup($dom, $xpath);
+        }
+    }
 
 
 /**
@@ -2391,8 +2407,21 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function ooautomaticstyles(&$dom) {
-        error_log("<h4>ooautomaticstyles()</h4>\n",3,self::_DEBUGFILE_);
+        	error_log("<h4>ooautomaticstyles()</h4>\n");
             $xpath = new DOMXPath($dom);
+            
+            // Listes locales
+            $entries = $xpath->query("//text:list-style[@style:name]");
+            foreach ($entries as $item){
+            	$listkey = "#" . $item->getAttribute('style:name');
+            	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+           		foreach($levelstyles as $style){
+           			$level = $style->getAttribute('text:level');
+           			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
+           			$this->rendition[$listkey]['levels'][$level] = $order;
+           		}
+            }
+
             $entries = $xpath->query("//style:style");
             foreach ($entries as $item) {
                 $name = $family = $parent = '';
@@ -2455,26 +2484,19 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function oostyles(&$dom) {
-        error_log("<h4>oostyles()</h4>\n",3,self::_DEBUGFILE_);
+        	error_log("<h4>oostyles()</h4>\n");
             $xpath = new DOMXPath($dom);
+            
             // listes
             $entries = $xpath->query("//text:list-style[@style:name]");
-            foreach ($entries as $item) {
-                $properties=array(); $key='';
-                $attributes = $item->attributes;
-                if ($attrname=$attributes->getNamedItem("name")) {
-                    $name = $attrname->nodeValue;
-                    $key = '#'.$name;
-                }
-                $list = "unordered";
-                if ($item->hasChildNodes()) {
-                    $first = $item->firstChild;
-                    $last = $item->lastChild;
-                    if ($first->nodeName=="text:list-level-style-number" and $last->nodeName=="text:list-level-style-number") {
-                        $list = "ordered";
-                    }
-                }
-                $this->rendition[$key]['rendition'] = $list;
+            foreach ($entries as $item){
+            	$listkey = "#" . $item->getAttribute('style:name');
+            	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+           		foreach($levelstyles as $style){
+           			$level = $style->getAttribute('text:level');
+           			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
+           			$this->rendition[$listkey]['levels'][$level] = $order;
+           		}
             }
 
             $entries = $xpath->query("//style:style[@style:name]");
