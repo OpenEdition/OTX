@@ -1984,34 +1984,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             }
         }
 
-        # 
-        error_log("\n<li>renditions</li>\n",3,self::_DEBUGFILE_);
-        $entries = $xpath->query("//@rendition");
-        foreach ($entries as $attr) {
-            $element = $attr->ownerElement;
-            $tagdeclid = $element->getAttribute("rendition");
-            $rend = $this->tagsdecl2rendition($tagdeclid, $rendition);
-            if ( isset($rend)) {
-                if ( isset($rendition)) {
-                    $element->removeAttribute("rendition");
-                }
-                $element->setAttribute("rend", $rend);
-                list($tmp, $id) = explode("#", $tagdeclid);
-                $query = "//tei:rendition[@xml:id='$id']";
-                $entry = $xpath->query($query); 
-                if ($entry->length) {
-                    $node = $entry->item(0);
-                    if ( strlen($rendition)) {
-                        $node->nodeValue = $rendition;
-                    } else {
-                        $parent = $node->parentNode;
-                        $parent->removeChild($node);
-                    }
-                }
-            } else {
-                //error_log("<li>{$element->nodeName} : $tagdeclid => rend = ???</li>\n",3,self::_DEBUGFILE_);
-            }
-        }
         $entries = $xpath->query("//tei:tagsDecl");
         if ($entries->length) {
             $tagsDecl = $entries->item(0);
@@ -2629,6 +2601,8 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                         array_push($csswhitelist, "direction:rtl");
                         break;
                     // table no-border
+                    case 'border:none';
+						$prop = "border-style:none";
                     case 'border-right:none':
                     case 'border-left:none':
                     case 'border-top:none':
