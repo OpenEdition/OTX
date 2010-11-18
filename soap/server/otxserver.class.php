@@ -2629,6 +2629,10 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                         // TODO raw as cell !
                         continue;
                     }
+                    if ( preg_match("/^(color|background-color)\:/", $prop)) {
+                    	array_push($csswhitelist, $prop);
+                    	continue;
+                    }
                     /* TODO ?
                         line-height ?? */
                     switch ($prop) {
