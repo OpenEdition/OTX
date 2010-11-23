@@ -227,6 +227,13 @@
                 <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
+            <xsl:when test="starts-with($Style,'heading')">
+		        <ab type="head">
+		          <xsl:attribute name="rend"><xsl:value-of select="concat('heading',substring($Style,8,3))"/></xsl:attribute>
+		          <xsl:attribute name="subtype"><xsl:value-of select="concat('level',substring($Style,8,3))"/></xsl:attribute>
+		            <xsl:call-template name="copyxmlid"/>
+		        </ab>
+            </xsl:when>
             <xsl:otherwise>
                 <p rend="{$Style}">
                 <xsl:call-template name="copyxmlid"/>
