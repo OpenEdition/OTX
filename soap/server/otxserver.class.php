@@ -2272,11 +2272,6 @@ EOD;
                             $imgindex = $this->LodelImg[$imgname.$imgext];
                         }
 
-                        if ($this->_param['mode'] === "lodel") {
-                            $picturepath = "Pictures/img-$imgindex.$imgext";
-                        } else { // TODO : TEI lodel mode ??!
-                            $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
-                        }
                         $attribute->nodeValue = $newname;
                     }
                     else {
