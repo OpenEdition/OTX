@@ -38,13 +38,10 @@ class OTXSoapServer
 
 
     public function __construct() {
-    error_log(date("Y-m-d H:i:s")." WebServoo SoapServer\n", 3, self::__LOGFILE__);
         $this->_isLogged = false;
         $this->_user = null;
     }
-    public function __destruct() {
-    error_log("---\n", 3, self::__LOGFILE__);
-    }
+    
     public function __toString() {
         return $this->status;
     }
@@ -56,11 +53,9 @@ class OTXSoapServer
     **/
     public final function otxToken()
     {
-        error_log(date("Y-m-d H:i:s")." Token()\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Token()\n",3,__DEBUG__);
-	$this->_sessionToken = md5(uniqid(mt_rand(),true));
-
-	return array('sessionToken' => $this->_sessionToken);
+		$this->_sessionToken = md5(uniqid(mt_rand(),true));
+	
+		return array('sessionToken' => $this->_sessionToken);
     }
 
     /**
@@ -73,8 +68,6 @@ class OTXSoapServer
     **/
     public final function otxAuth($input)
     {
-        error_log(date("Y-m-d H:i:s")." {$input->login} ; {$input->password} ; {$input->lodel_user} ; {$input->lodel_site} ?\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Auth()\n",3,__DEBUG__);
 /*
 	if ($this->_isLogged) {
             // simple check
@@ -109,13 +102,13 @@ class OTXSoapServer
         }
 */
         $this->_user['login'] = $input->login;
-	$this->_user['id'] = $id;
-	$this->_user['lodel_user'] = $input->lodel_user;
-	$this->_user['lodel_site'] = $input->lodel_site;
-	unset($input, $passwd, $id);
-	$this->_isLogged = true;
+		$this->_user['id'] = $id;
+		$this->_user['lodel_user'] = $input->lodel_user;
+		$this->_user['lodel_site'] = $input->lodel_site;
+		unset($input, $passwd, $id);
+		$this->_isLogged = true;
 
-	return $this->otxAuthResponse(true);
+		return $this->otxAuthResponse(true);
     }
 
     /**
@@ -125,19 +118,16 @@ class OTXSoapServer
     **/
     public final function otxAuthResponse($result) 
     {
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." AuthResponse()\n",3,__DEBUG__);
-
-	if (!$result) {
-            error_log(date("Y-m-d H:i:s")." authentication FALSE\n", 3, self::__LOGFILE__);
-            // reset auth informations
-            $this->_user = null;
-            $this->_isLogged = false;
-	}
+		if (!$result) {
+	            // reset auth informations
+	            $this->_user = null;
+	            $this->_isLogged = false;
+		}
         else {
-            error_log(date("Y-m-d H:i:s")." authentication TRUE (id={$this->_user['id']})\n", 3, self::__LOGFILE__);
+            error_log(date("Y-m-d H:i:s")." authentication TRUE (id={$this->_user['id']})\n");
         }
 
-	return new SoapVar( array('AuthStatus'=>$result), SOAP_ENC_OBJECT);
+		return new SoapVar( array('AuthStatus'=>$result), SOAP_ENC_OBJECT);
     }
 
     /**
@@ -150,17 +140,16 @@ class OTXSoapServer
         if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." otxRequest()\n",3,__DEBUG__);
         // $server = null;
 
-	if (!$this->_isLogged) {
+		if (!$this->_isLogged) {
             throw new SoapFault('E_USER_ERROR', //faultcode
                                 'You need to be logged in to access this service.', //faultstring
                                 'OTXSoapServer', // faultactor, TODO ?
                                 "Soap authentification",  // detail
                                 "UTF-8" // faultname
                                 /*$headerfault // headerfault */ );
-	}
+		}
 
         $this->mode = $input->mode;
-        error_log(date("Y-m-d H:i:s")." {$this->mode}\n", 3, self::__LOGFILE__);
 
         // XML schema (lodel EM)
         if ($input->schema != '') {
@@ -206,12 +195,9 @@ class OTXSoapServer
             $return = $this->Server->run();
         }
         catch(Exception $e) {
-            throw new SoapFault($e->getCode(),
-                                $e->getMessage(),
-                                'OTXSoapServer',
-                                'run()',
-                                "UTF-8"
-                                /*$headerfault // headerfault */ );
+            throw new SoapFault("E_ERROR",
+                                $e->getMessage()
+                                 /*$headerfault // headerfault */ );
         }
 
         $this->status = $return['status'];
@@ -219,7 +205,6 @@ class OTXSoapServer
         $this->report = $return['report'];
 
         if ( preg_match("/^soffice/", $this->mode) or preg_match("/^lodel/", $this->mode) ) {
-            error_log(date("Y-m-d H:i:s")." contentpath = {$return['contentpath']}\n", 3, self::__LOGFILE__);
             if (! $this->odt = file_get_contents($return['contentpath'])) {
                 throw new SoapFault('E_ERROR',
                                     'file_get_contents()Error',
@@ -243,9 +228,6 @@ class OTXSoapServer
     **/
     public final function otxResponse()
     {
-        error_log(date("Y-m-d H:i:s")." status: {$this->status}\n", 3, self::__LOGFILE__);
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." Response()\n",3,__DEBUG__);
-
         if ( defined('__DUMP__')) { // debug/dump
             ob_start();
             var_dump($this->Server);

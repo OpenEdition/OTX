@@ -70,7 +70,6 @@ class OTXserver
 
     /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
-    error_log("<ul id=\"".date("Y-m-d H:i:s")."\">\n<h3>__construct()</h3>\n",3,self::_DEBUGFILE_);
         touch(self::_SOAP_LOCKFILE_);
         @unlink(self::_DEBUGFILE_);
 
@@ -111,7 +110,6 @@ class OTXserver
         throw new Exception($this->_status,E_ERROR);
     }
     public function __destruct() {
-    error_log("\n<h3>__destruct</h3></ul>",3,self::_DEBUGFILE_);
         //@unlink($this->_param['sourcepath']);
         $this->oo2report('otx');
 
@@ -129,7 +127,6 @@ class OTXserver
         return $this->_status;
     }
     public function __set($key, $value) {
-    error_log("<li>__set($key,$value)</li>\n",3,self::_DEBUGFILE_);
         if ( array_key_exists($key, $this->_param)) {
             $this->_param[$key] = $value;
         } else {
@@ -139,7 +136,6 @@ class OTXserver
         }
     }
     public function __get($name) {
-    error_log("<li>__get($name)</li>\n",3,self::_DEBUGFILE_);
         if ( array_key_exists($name, $this->_param)) {
             return $this->_param[$name];
         }
@@ -156,11 +152,9 @@ class OTXserver
             // First invocation only.
             $class = __CLASS__;
             self::$_instance_ = new $class($request, $mode, $modelpath, $entitypath);
-            error_log("<li>Singleton: First invocation only !</li>\n",3,self::_DEBUGFILE_);
             return self::$_instance_;
         }
         else {
-            error_log("<li>Singleton: return instance</li>\n",3,self::_DEBUGFILE_);
             return self::$_instance_;
         }
     }
@@ -171,8 +165,6 @@ class OTXserver
  * just do it !
 **/
     public function run() {
-    error_log("<h2>run()</h2>\n",3,self::_DEBUGFILE_);
-
         $suffix = "odt";
         if (false !== strpos($this->_param['mode'], ":")) {
             list($action, $tmp) = explode(":", $this->_param['mode']);
@@ -197,7 +189,6 @@ class OTXserver
 
         switch ($action) {
             case 'soffice':
-            error_log("<li>case soffice</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice($suffix);
                 $this->output['contentpath'] = $this->_param['outputpath'];
                 if ($suffix=="odt") {
@@ -205,7 +196,6 @@ class OTXserver
                 }
                 break;
             case 'lodel':
-            error_log("<li>case lodel</li>\n",3,self::_DEBUGFILE_);
                 $this->soffice();
                 $this->oo2report('soffice', $this->_param['odtpath']);
                 $this->Schema2OO();
@@ -230,7 +220,6 @@ class OTXserver
                 break;
             default:
                 $this->_status="error: unknown action ($action)";$this->_iserror=true;
-                error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 throw new Exception($this->_status,E_USER_ERROR);
         }
 
@@ -245,10 +234,7 @@ class OTXserver
  * dynamic mapping of Lodel EM
 **/
     protected function Schema2OO() {
-    error_log("<h2>Schema2OO()</h2>\n",3,self::_DEBUGFILE_);
-
         $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-        error_log("<li>EM: $modelpath</li>\n",3,self::_DEBUGFILE_);
 
         $this->EMTEI = _em2tei();
 
@@ -260,14 +246,14 @@ class OTXserver
         $domxml->preserveWhiteSpace = false;
         $domxml->formatOutput = true;
         if (! $domxml->load($this->_param['modelpath'])) {
-            $this->_status="error load model.xml";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load model.xml";
             throw new Exception($this->_status,E_ERROR);
         }
 
         # OTX EM test
         if (! strstr($domxml->saveXML(), "<col name=\"otx\">")) {
             // TODO : warning and load a default OTX EM ?!
-            $this->_status="error: EM not OTX compliant";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+            $this->_status="error: EM not OTX compliant";
             throw new Exception($this->_status,E_USER_ERROR);
         }
 
@@ -325,13 +311,11 @@ class OTXserver
                 // EM otx style definition
                 if ( isset($row['otx'])) {
                     if (! isset($row['style'])) {
-                    error_log("\n<h1>OUPS..!? (EMstyle)</h1>\n",3,self::_DEBUGFILE_);
                     continue;
                     }
 
                     $emotx = $row['otx'];
                     if (! isset($this->EMTEI[$emotx])) {
-                    error_log("<li>?? OTX: $emotx ??</li>\n",3,self::_DEBUGFILE_);
                         // TODO ?
                         continue;
                     } 
@@ -347,7 +331,6 @@ class OTXserver
                             $this->EMotx[$otxvalue]['key'] = $otxkey;
                         } else {
                             $otxvalue = $emotx;
-                            error_log("<h1>??? otx: $emotx ???</li>\n",3,self::_DEBUGFILE_);
                             continue;
                         }
                     }
@@ -372,7 +355,6 @@ class OTXserver
 
             }
         }
-        error_log("<li>parse EM ok</li>\n",3,self::_DEBUGFILE_);
 
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
@@ -404,7 +386,6 @@ class OTXserver
         unset($OOTX);
 
         # surrounding
-        error_log("<li>surrounding</li>\n",3,self::_DEBUGFILE_);
         $xpath = new DOMXPath($domxml);
         $query = '/lodelEM/table[@name="#_TP_internalstyles"]/datas/row';
         $entries = $xpath->query($query);
@@ -426,7 +407,6 @@ class OTXserver
                             case "otx":
                                 if ($value == '') continue;
                                 if (! isset($this->EMTEI[$value])) {
-                                error_log("<li>EMTEI: $value ???</li>\n",3,self::_DEBUGFILE_);
                                     continue;
                                 }
                                 $value = $this->EMTEI[$value];
@@ -444,7 +424,6 @@ class OTXserver
         // default
         $this->EMotx['standard']['key'] = "text";
 
-        error_log("<li>DONE.</li>\n",3,self::_DEBUGFILE_);
         unset($domxml);
         return true;
     }
@@ -455,7 +434,6 @@ class OTXserver
  * transformation d'un odt en lodel-odt : format pivot de travail
 **/
     protected function lodelodt() {
-    error_log("<h3>lodelodt</h3>\n",3,self::_DEBUGFILE_);
 
         $cleanup = array('/_20_Car/', '/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
@@ -463,19 +441,18 @@ class OTXserver
         $this->_param['lodelodtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
         $lodelodtfile = $this->_param['lodelodtpath'];
         if (! copy($odtfile, $lodelodtfile)) {
-            $this->_status="error copy file; ".$lodelodtfile;error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error copy file; ".$lodelodtfile;
             throw new Exception($this->_status,E_ERROR);
         }
         # odt...
         $za = new ZipArchive();
         if (! $za->open($lodelodtfile)) {
-            $this->_status="error open ziparchive; ".$lodelodtfile;error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error open ziparchive; ".$lodelodtfile;
             throw new Exception($this->_status,E_ERROR);
         }
         # ----- office:meta ----------------------------------------------------------
-        error_log("<li>office:meta</li>\n\n", 3, self::_DEBUGFILE_);
         if (! $OOmeta=$za->getFromName('meta.xml')) {
-            $this->_status="error get meta.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error get meta.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $dommeta = new DOMDocument;
@@ -484,7 +461,7 @@ class OTXserver
         $dommeta->preserveWhiteSpace = false;
         $dommeta->formatOutput = true;
         if (! $dommeta->loadXML($OOmeta)) {
-            $this->_status="error load meta.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load meta.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-meta.xml";@$dommeta->save($debugfile);
@@ -497,16 +474,15 @@ class OTXserver
         $domlodelmeta->preserveWhiteSpace = false;
         $domlodelmeta->formatOutput = true;
         if (! $domlodelmeta->loadXML($lodelmeta)) {
-            $this->_status="error load lodel-meta.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load lodel-meta.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domlodelmeta->normalizeDocument();
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-meta.lodel.xml";@$domlodelmeta->save($debugfile);
 
         # ----- office:settings ----------------------------------------------------------
-        error_log("<li>office:settings</li>\n\n", 3, self::_DEBUGFILE_);
         if (! $OOsettings=$za->getFromName('settings.xml')) {
-            $this->_status="error get settings.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error get settings.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domsettings = new DOMDocument;
@@ -515,7 +491,7 @@ class OTXserver
         $domsettings->preserveWhiteSpace = false;
         $domsettings->formatOutput = true;
         if (! $domsettings->loadXML($OOsettings)) {
-            $this->_status="error load settings.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load settings.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-settings.xml";@$domsettings->save($debugfile);
@@ -528,16 +504,15 @@ class OTXserver
         $domlodelsettings->preserveWhiteSpace = false;
         $domlodelsettings->formatOutput = true;
         if (! $domlodelsettings->loadXML($lodelsettings)) {
-            $this->_status="error load lodel-settings.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load lodel-settings.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domlodelsettings->normalizeDocument();
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-settings.lodel.xml";@$domlodelsettings->save($debugfile);
 
         # ----- office:styles ---------------------------------------
-        error_log("<li>office:styles</li>\n",3,self::_DEBUGFILE_);
         if (! $OOstyles=$za->getFromName('styles.xml')) {
-            $this->_status="error get styles.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error get styles.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domstyles = new DOMDocument;
@@ -546,7 +521,7 @@ class OTXserver
         $domstyles->preserveWhiteSpace = false;
         $domstyles->formatOutput = true;
         if (! $domstyles->loadXML($OOstyles)) {
-            $this->_status="error load styles.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load styles.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-styles.xml";@$domstyles->save($debugfile);
@@ -559,7 +534,7 @@ class OTXserver
         $domlodelstyles->preserveWhiteSpace = false;
         $domlodelstyles->formatOutput = true;
         if (! $domlodelstyles->loadXML($lodelstyles)) {
-            $this->_status="error load lodel-styles.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load lodel-styles.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         // lodel-cleanup++
@@ -568,9 +543,8 @@ class OTXserver
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-styles.lodel.xml";@$domlodelstyles->save($debugfile);
 
         # ----- office:content -------------------------------------------------------
-        error_log("<li>office:content</li>\n",3,self::_DEBUGFILE_);
         if (! $OOcontent=$za->getFromName('content.xml')) {
-            $this->_status="error get content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error get content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domcontent = new DOMDocument;
@@ -579,7 +553,7 @@ class OTXserver
         $domcontent->preserveWhiteSpace = false;
         $domcontent->formatOutput = true;
         if (! $domcontent->loadXML($OOcontent)) {
-            $this->_status="error load content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-content.xml";@$domcontent->save($debugfile);
@@ -592,7 +566,7 @@ class OTXserver
         $domlodelcontent->preserveWhiteSpace = false;
         $domlodelcontent->formatOutput = true;
         if (! $domlodelcontent->loadXML($lodelcontent)) {
-            $this->_status="error load lodel-content.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load lodel-content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         // lodel-cleanup++
@@ -612,19 +586,19 @@ class OTXserver
         $this->meta2lodelodt($domlodelmeta);
         # LodelODT
         if (! $za->addFromString('meta.xml', $domlodelmeta->saveXML())) {
-            $this->_status="error ZA addFromString lodelmeta";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error ZA addFromString lodelmeta";
             throw new Exception($this->_status,E_ERROR);
         }
         if (! $za->addFromString('settings.xml', $domlodelsettings->saveXML())) {
-            $this->_status="error ZA addFromString lodelsettings";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error ZA addFromString lodelsettings";
             throw new Exception($this->_status,E_ERROR);
         }
         if (! $za->addFromString('styles.xml', $domlodelstyles->saveXML())) {
-            $this->_status="error ZA addFromString lodelstyles";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error ZA addFromString lodelstyles";
             throw new Exception($this->_status,E_ERROR);
         }
         if (! $za->addFromString('content.xml', $domlodelcontent->saveXML())) {
-            $this->_status="error ZA addFromString lodelcontent";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error ZA addFromString lodelcontent";
             throw new Exception($this->_status,E_ERROR);
         }
         $za->close();
@@ -692,23 +666,23 @@ EOD;
         $domfodt->preserveWhiteSpace = false;
         $domfodt->formatOutput = true;
         if (! @$domfodt->loadXML($xmlfodt)) {
-            $this->_status="error load fodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load fodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domfodt->normalizeDocument();
-$debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
+		$debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
 
         # add xml:id (otxid.xsl)
         $xslfilter = $this->_param['INCPATH']."otxid.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
-            $this->_status="error load xsl ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load xsl ($xslfilter)";
             throw new Exception($this->_status,E_ERROR);
         }
         $proc = new XSLTProcessor;
         $proc->importStyleSheet($xsl);
         if (! $idfodt=$proc->transformToXML($domfodt)) {
-            $this->_status="error transform xslt ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error transform xslt ($xslfilter)";
             throw new Exception($this->_status,E_ERROR);
         }
         $domidfodt = new DOMDocument;
@@ -717,7 +691,7 @@ $debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->s
         $domidfodt->preserveWhiteSpace = false;
         $domidfodt->formatOutput = true;
         if (! $domidfodt->loadXML($idfodt)) {
-            $this->_status="error load idfodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load idfodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domidfodt->normalizeDocument();
@@ -727,13 +701,13 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $xslfilter = $this->_param['INCPATH']."oo2lodeltei.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
-            $this->_status="error load xsl ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load xsl ($xslfilter)";
             throw new Exception($this->_status,E_ERROR);
         }
         $proc = new XSLTProcessor;
         $proc->importStyleSheet($xsl);
         if (! $teifodt=$proc->transformToXML($domidfodt)) {
-            $this->_status="error transform xslt ($xslfilter)";error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error transform xslt ($xslfilter)";
             throw new Exception($this->_status,E_ERROR);
         }
 
@@ -743,7 +717,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $domteifodt->preserveWhiteSpace = false;
         $domteifodt->formatOutput = true;
         if (! $domteifodt->loadXML($teifodt)) {
-            $this->_status="error load teifodt xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load teifodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $domteifodt->normalizeDocument();
@@ -760,7 +734,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
  * transformation d'un lodel-odt en lodel-xml ( flat TEI... [raw mode] )
 **/
     protected function oo2lodelxml() {
-    error_log("\n<h3>oo2lodelxml()</h3>\n",3,self::_DEBUGFILE_);
 
         $dom = $this->dom['teifodt'];
 
@@ -942,9 +915,8 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
 	            $rendition->setAttribute('scheme', 'css');
 	        }
 	   	}
-        # surrounding internalstyles
-        error_log("<li># surrounding internalstyles</li>\n",3,self::_DEBUGFILE_);
 
+        # surrounding internalstyles
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
         $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
@@ -956,7 +928,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         foreach ($entries as $item) {
             // current
             $this->greedy($item, $current);
-
             if (isset($current)) {
             	
                 if ( isset($current['surround']) ) {
@@ -1000,10 +971,8 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                                     $newsection = $current['section'];
                                 }
                             }
-
                             break;
                         default:
-                        	error_log("surround : case default\n");
                             break;
                     }
                 } else {
@@ -1019,7 +988,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                     }
                 }
             } else {
-                $newsection = $section;
+                $newsection = "body";
             }
 
             if ( $section!==$newsection or $backsection!==$newbacksection ) { // new section
@@ -1032,13 +1001,11 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
 
                 switch ($section) {
                     case 'head';
-                    	error_log("<li>case head</li>\n",3,self::_DEBUGFILE_);
                         $div = $dom->createElement("div");
                         $div->setAttribute('rend', "LodelMeta");
                         $front->appendChild($div);
                         break;
                     case 'body';
-                    	error_log("<li>case body</li>\n",3,self::_DEBUGFILE_);
                         $div = $body;
                         break;
                     case 'back';
@@ -1046,30 +1013,25 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                             $backsection = $newbacksection;
                             switch($backsection) {
                                 case 'appendix':
-                                	error_log("<li>case appendix</li>\n");
                                     $div = $dom->createElement("div");
                                     $div->setAttribute('rend', "LodelAppendix");
                                     $back->appendChild($div);
                                     break;
                                 case 'bibliographie':
-                                	error_log("<li>case bibliography</li>\n");
                                     $div = $dom->createElement("div");
                                     $div->setAttribute('rend', "LodelBibliography");
                                     $back->appendChild($div);
                                     break;
                                 default:
-                                	error_log("<li>case default back ???</li>\n");
                                     break;
                             }
                         }
                         break;
                     default:
-                   	 	error_log("<li>case default ??</li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
             }
             if ($backsection and $backsection!=$current['rend']) {
-            	error_log("\n<li>$backsection != {$current['rend']}</li>\n",3,self::_DEBUGFILE_);
                 $item->setAttribute('rend', "$backsection-{$current['rend']}");
             }
 			if(isset($div))
@@ -1108,7 +1070,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                     $this->_status = "dc:{$match[1]} not found";
                     array_push($mandatory, $this->_status);
                     array_push($this->log['warning'], $this->_status);
-                    error_log("<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                 }
             }
         }
@@ -1156,7 +1117,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
 	}
 
     private function hicleanup(&$dom, &$xpath) {
-    	error_log("<h4>hicleanup()</h4>\n",3,self::_DEBUGFILE_);
         $bool = false;
         $entries = $xpath->query("//tei:hi", $dom); 
         foreach ($entries as $item) {
@@ -1173,7 +1133,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                     $newitem->nodeValue = $item->nodeValue;
                 }
                 if (! $parent->replaceChild($newitem, $item)) {
-                    $this->_status="error replaceChild";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error replaceChild";
                     throw new Exception($this->_status,E_ERROR);
                 }
                 $bool = true;
@@ -1198,7 +1158,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         if (! $dom->loadXML($this->_param['lodelTEI'])) {
-            $this->_status="error load lodel.tei.xml";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+            $this->_status="error load lodel.tei.xml";
             throw new Exception($this->_status,E_ERROR);
         }
         $xpath = new DOMXPath($dom);
@@ -1260,7 +1220,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             $new = $dom->createElement('title'); // car si pas de balise <title>, TEI invalide
             $new->setAttribute('type', "main");
             $titlestmt->appendChild($new);
-        error_log("<li>? [Warning] no title defined</li>\n",3,self::_DEBUGFILE_);
         }
         # lodel:subtitle
         $entries = $xpath->query("//tei:p[@rend='subtitle']");
@@ -1440,7 +1399,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         }
         else {
             // TODO : warning no date defined
-            error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
+            error_log("<li>? [Warning] no date defined</li>\n");
         }
 
         # /tei/teiHeader/publicationStmt/availability [lodel:license]
@@ -1477,8 +1436,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         }
         // TODO : idno@uri
         // TODO : idno@doi
-
-    $dbg="\n<li><pre>".print_r($lodelmeta,true)."</pre></li>";error_log($dbg,3,self::_DEBUGFILE_);
 
         # /tei/teiHeader/sourceDesc
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc"); $srcdesc = $entries->item(0);
@@ -1593,7 +1550,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         }
         else {
             // TODO : warning no date defined
-            error_log("<li>? [Warning] no date defined</li>\n",3,self::_DEBUGFILE_);
+            error_log("<li>? [Warning] no date defined</li>\n");
         }
 
         # /tei/teiHeader/profileDesc/textClass
@@ -1921,7 +1878,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         }
 
         # Appendix
-        error_log("\n<li>tei:div[@rend='appendix']</li>\n",3,self::_DEBUGFILE_);
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
         if ($entries->length) {
             $lodel = $entries->item(0);
@@ -1945,7 +1901,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         }
 
         // clean Lodel sections
-        error_log("\n<li>clean Lodel sections</li>\n",3,self::_DEBUGFILE_);
 
         $entries = $xpath->query("//tei:div[@rend='LodelMeta']");
         if ($entries->length) {
@@ -1954,7 +1909,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                 $parent = $lodelmeta->parentNode;
                 $parent->removeChild($lodelmeta);
             } else {
-                error_log("<li>? [Warning] /text/front/div[@rend='LodelMeta'] not empty !</li>\n",3,self::_DEBUGFILE_);
                 $this->_status = "Warning : metadata misspelling";
                 array_push($this->log['warning'], $this->_status);
             }
@@ -1966,7 +1920,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                 $parent = $lodelbiblgr->parentNode;
                 $parent->removeChild($lodelbiblgr);
             } else {
-                error_log("<li>? [Warning] /back/div[@rend=LodelBibliography] not empty !</li>\n",3,self::_DEBUGFILE_);
                 $this->_status = "? Warning : bibliograpy misspelling";
                 array_push($this->log['warning'], $this->_status);
             }
@@ -1978,7 +1931,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
                 $parent = $lodelappdx->parentNode;
                 $parent->removeChild($lodelappdx);
             } else {
-                error_log("<li>? [Warning] /back/div[@rend='LodelAppendix'] not empty !</li>\n",3,self::_DEBUGFILE_);
                 $this->_status = "? Warning : appendix misspelling";
                 array_push($this->log['warning'], $this->_status);
             }
@@ -2016,7 +1968,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
 
         if ( $headlevel=$this->summary($dom, $xpath)) {
             $this->heading2div($dom, $xpath, $headlevel);
-$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
+			$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         }
 
         // clean++
@@ -2027,7 +1979,7 @@ $debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         $dom->loadXML($otxml);
 
         $dom->normalizeDocument();
-$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-otxtei.xml";@$dom->save($debugfile);
+		$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -2048,7 +2000,7 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-otxtei.xml";@$dom->save($deb
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
 
         $dom->loadXML($otxml);
-$debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
+		$debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -2058,7 +2010,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
 
 
         private function summary(&$dom, &$xpath) {
-        error_log("<h4>summary()</h4>\n",3,self::_DEBUGFILE_);
             $max = 0;
             $summary = array();
             $entries = $xpath->query("//tei:text/tei:body/tei:ab", $dom);
@@ -2078,7 +2029,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function heading2div(&$dom, &$xpath, $level) {
-        error_log("<h4>heading2div(level=$level)</h4>\n",3,self::_DEBUGFILE_);
            if ($level == 0) return;
             $entries = $xpath->query("//tei:text/tei:body/tei:ab[@rend='heading$level']", $dom);
             foreach ($entries as $item) {
@@ -2127,8 +2077,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
     * ! system call inside (soffice)
     **/
     protected function soffice($suffix="odt") {
-    error_log("<h2>soffice()</h2>\n",3,self::_DEBUGFILE_);
-
         # get the mime type
         $this->getmime();
         $sourcepath = $this->_param['sourcepath'];
@@ -2148,7 +2096,7 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
             case "tei":
                 break;
             default:
-                $this->_status = "error mime type: unknown output file type";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                $this->_status = "error mime type: unknown output file type";
                 throw new Exception($this->_status,E_USER_ERROR);
         }
         //$odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".$suffix";
@@ -2161,7 +2109,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
             $command = self::_SOFFICE_PYTHONPATH_." {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
             /*  //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
                 //$command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter3.jar -f odt ". $sourcepath;  */
-            error_log("<li>command : $command</li>\n",3,self::_DEBUGFILE_);
             /*
             $output = array(); $returnvar=0;
             $result = ''. exec($command, $output, $returnvar);
@@ -2171,9 +2118,9 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
             passthru($command, $returnvar); sleep(1);
             $result = ob_get_contents();
             ob_end_clean();
-            if ($returnvar /*or $result!=''*/) {
+            if ($returnvar) {
                 @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
-                $this->_status = "error soffice";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                $this->_status = "error soffice";
                 throw new Exception($this->_status,E_USER_ERROR);
             }
         }
@@ -2184,17 +2131,13 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
     }
 
         private function getmime() {
-        error_log("<li>getmime()</li>\n",3,self::_DEBUGFILE_);
             $sourcepath = $this->_param['sourcepath'];
 
-            error_log("<li>[getmime] sourcepath = $sourcepath</li>\n",3,self::_DEBUGFILE_);
             $mime = mime_content_type($sourcepath);
-            error_log("<li>[getmime] => mime_content_type() = $mime</li>\n",3,self::_DEBUGFILE_);
 
             if ($mime === "application/x-zip" OR $mime === "application/zip") {
                 $file = escapeshellarg($sourcepath);
                 list($mime, $tmp) = explode(",", system("file -b $file"));
-                error_log("<li>[getmime] => file -b = $mime</li>\n",3,self::_DEBUGFILE_);
             }
 
             $extension = ".odt";
@@ -2207,7 +2150,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                     case 'application/x-rtf':
                     case 'text/rtf':
                     case 'text/richtext':
-                        error_log("<li>Rich Text Format data</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".rtf";
                         break;
                     case "Microsoft Office Document":
@@ -2220,11 +2162,9 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                     case 'application/word':
                     case 'application/x-msw6':
                     case 'application/x-msword':
-                        error_log("<li>Microsoft Office Document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".doc";
                         break;
                     case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                        error_log("<li>Microsoft Office -docx- Document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".docx";
                         break;
                     case "OpenOffice.org 1.x Writer document":
@@ -2233,37 +2173,29 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                     case 'application/x-vnd.oasis.opendocument.text':
                     case 'application/vnd.oasis.opendocument.text':
                     case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                        error_log("<li>OpenOffice.org 1.x Writer document</li>\n",3,self::_DEBUGFILE_);
                         $extension = ".sxw";
                         break;
                     default:
-                        error_log("<li>Warning: extension based</li>\n",3,self::_DEBUGFILE_);
                         # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
                         $temp = explode(".", $sourcepath);
                         $ext = trim( array_pop($temp));
                         $this->_status = "Warning : mime detection based on document extension (.$ext)";
                         array_push($this->log['warning'], $this->_status);
-                        error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
                         switch (strtolower($ext)) {
                             case "rtf":
-                                error_log("<li>warning: .rtf</li>\n",3,self::_DEBUGFILE_);
                                 $extension = ".rtf";
                                 break;
                             case "sxw":
-                                error_log("<li>warning: .sxw</li>\n",3,self::_DEBUGFILE_);
                                 $extension = ".sxw";
                                 break;
                             case "doc":
-                                error_log("<li>warning: .doc</li>\n",3,self::_DEBUGFILE_);
                                 $extension = ".doc";
                                 break;
                             case "docx":
-                                error_log("<li>warning: .docx</li>\n",3,self::_DEBUGFILE_);
                                 $extension = ".docx";
                                 break;
                             default:
                                 $this->_status="error: unknown mime type: $mime ($sourcepath)";$this->_iserror=true;
-                                error_log("<li>! error: {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                                 throw new Exception($this->_status,E_USER_ERROR);
                                 break;
                         }
@@ -2271,7 +2203,7 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 }
 
                 if (! rename($sourcepath, $sourcepath.$extension)) {
-                    $this->_status="error: rename [$sourcepath]";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error: rename [$sourcepath]";
                     throw new Exception($this->_status,E_ERROR);
                 }
                 $this->_param['sourcepath'] = $sourcepath.$extension;
@@ -2285,7 +2217,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
 
         /** lodel-cleanup **/
         private function lodelcleanup(&$dom) {
-        error_log("<h3>lodelcleanup()</h3>\n",3,self::_DEBUGFILE_);
             $patterns = array('/\s+/', '/\(/', '/\)/', '/\[/', '/\]/');
 
             $xpath = new DOMXPath($dom);
@@ -2324,7 +2255,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function lodelpictures(&$dom, &$za) {
-        error_log("<h3>lodelpictures()</h3>\n",3,self::_DEBUGFILE_);
             $imgindex = 0;
             $xpath = new DOMXPath($dom);
             $entries = $xpath->query("//draw:image");
@@ -2346,7 +2276,7 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                                 $currentname = "Pictures/$imgname.$imgext";
                                 $newname = "Pictures/img-$imgindex.$imgext";
                                 if (! $za->renameName($currentname, $newname)) {
-                                    $this->_status="error rename files in ziparchive ($currentname => $newname)";error_log("<h1>! {$this->_status} </h1>\n",3,self::_DEBUGFILE_);
+                                    $this->_status="error rename files in ziparchive ($currentname => $newname)";
                                     throw new Exception($this->_status,E_ERROR);
                                 }
                             } else {
@@ -2369,7 +2299,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                             */
                             $this->_status = "{$attribute->nodeValue} skipped";
                             array_push($this->log['warning'], $this->_status);
-                            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
                             // TODO Warning !
                         }
                     }
@@ -2379,7 +2308,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function ooautomaticstyles(&$dom) {
-        	error_log("<h4>ooautomaticstyles()</h4>\n");
             $xpath = new DOMXPath($dom);
             
             // Listes locales
@@ -2403,6 +2331,7 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 if ($attrname=$attributes->getNamedItem("family")) {
                     $family = $attrname->nodeValue;
                 }
+
                 //style:name
                 if ($attrname=$attributes->getNamedItem("name")) {
                     $name = $attrname->nodeValue;
@@ -2456,7 +2385,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         }
 
         private function oostyles(&$dom) {
-        	error_log("<h4>oostyles()</h4>\n");
             $xpath = new DOMXPath($dom);
             
             // listes
@@ -2647,7 +2575,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                             array_push($csswhitelist, "text-align:right");
                             break;
                         default:
-                        //error_log("<li><i>TODO: $prop ?! [large mode]</i></li>\n",3,self::_DEBUGFILE_);
                             break;
                     }
                 }
@@ -2659,7 +2586,6 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
 
         /** array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
         private function greedy(&$node, &$greedy) {
-        //error_log("<h4>greedy()</h4>\n",3,self::_DEBUGFILE_);
             $section = $surround = $key = $rend = null;
             $greedy = null; $status = true;
 
@@ -2911,11 +2837,11 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
             case 'lodel':
                 $za = new ZipArchive();
                 if (! $za->open($filepath)) {
-                    $this->_status="error open ziparchive ($filepath)";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error open ziparchive ($filepath)";
                     throw new Exception($this->_status,E_ERROR);
                 }
                 if (! $meta=$za->getFromName('meta.xml')) {
-                    $this->_status="error get meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error get meta.xml";
                     throw new Exception($this->_status,E_ERROR);
                 }
                 $dommeta = new DOMDocument;
@@ -2924,7 +2850,7 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 $dommeta->preserveWhiteSpace = false;
                 $dommeta->formatOutput = true;
                 if (! $dommeta->loadXML($meta)) {
-                    $this->_status="error load meta.xml";error_log("<h1>{$this->_status}</h1>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error load meta.xml";
                     throw new Exception($this->_status,E_ERROR);
                 }
                 $xmlmeta = str_replace('<?xml version="1.0" encoding="UTF-8"?>', "", $dommeta->saveXML());
@@ -2932,15 +2858,12 @@ $debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
                 $this->log['report'][$step] = $xmlmeta;
 
                 # json
-                error_log("<h4>JSON</h4>\n",3,self::_DEBUGFILE_);
                 $prop = array();
                 $xpath = new DOMXPath($dommeta);
                 $entries = $xpath->query("//office:meta/*");
                 foreach ($entries as $entry) {
-                    //error_log("<li>{$entry->nodeName} : {$entry->nodeValue}</li>\n",3,self::_DEBUGFILE_);
                     if ($entry->nodeName == "meta:document-statistic") {
                         foreach ($entry->attributes as $attr) {
-                            //error_log("<li>{$attr->name} : {$attr->value}</li>\n",3,self::_DEBUGFILE_);
                             $prop[$attr->name] = $attr->value;
                         }
                     } 
@@ -3168,14 +3091,12 @@ EOD;
 
 
     private function params() {
-    error_log("<h4>_param()</h4>\n",3,self::_DEBUGFILE_);
         $request = $this->_param['request'];
         $mode = $this->_param['mode'];
 
         $domrequest = new DOMDocument;
 	if (! $domrequest->loadXML($request)) {
             $this->_status="error: can't load xml request";$this->_iserror=true;
-            error_log("<li>! {$this->_status}</li>\n", 3, self::_DEBUGFILE_);
             throw new Exception($this->_status,E_ERROR);
 	}
 
@@ -3229,14 +3150,12 @@ EOD;
             $this->_status="error: failed copy {$this->input['entitypath']} to {$this->_param['sourcepath']}";
             throw new Exception($this->_status,E_ERROR);
         }
-        error_log("<li>[_params] sourcepath={$this->_param['sourcepath']}</li>\n",3,self::_DEBUGFILE_);
 
         $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
         if (! copy($this->input['modelpath'], $this->_param['modelpath'])) {
             $this->_status="error: failed copy {$this->_param['modelpath']}";
             throw new Exception($this->_status,E_ERROR);
         }
-        error_log("<li>[_params] modelpath={$this->_param['modelpath']}</li>\n",3,self::_DEBUGFILE_);
 
         // save the rdf request
         $requestfile=$this->_param['TMPPATH'].$this->_param['prefix'].".rdf";@$domrequest->save($requestfile);
