@@ -10,7 +10,6 @@
 if (! class_exists('OTXserver', FALSE))
     require_once('server/otxserver.class.php');
 
-
 /**
  * OTX SoapServer Class
 **/ 
@@ -33,7 +32,6 @@ class OTXSoapServer
     private $Server = null;
 
     const __ATTACHMENTPATH__    = __SOAP_ATTACHMENT__;
-    const __SCHEMAPATH__        = __SOAP_SCHEMA__;
     const __LOGFILE__           = __SOAP_LOG__;
 
 
@@ -101,11 +99,10 @@ class OTXSoapServer
             return $this->otxAuthResponse(false);
         }
 */
-        $this->_user['login'] = $input->login;
-		$this->_user['id'] = $id;
-		$this->_user['lodel_user'] = $input->lodel_user;
-		$this->_user['lodel_site'] = $input->lodel_site;
-		unset($input, $passwd, $id);
+        $this->_user['login'] 		= $input->login;
+		$this->_user['lodel_user'] 	= $input->lodel_user;
+		$this->_user['lodel_site'] 	= $input->lodel_site;
+		unset($input);
 		$this->_isLogged = true;
 
 		return $this->otxAuthResponse(true);
@@ -124,7 +121,7 @@ class OTXSoapServer
 	            $this->_isLogged = false;
 		}
         else {
-            error_log(date("Y-m-d H:i:s")." authentication TRUE (id={$this->_user['id']})\n");
+            error_log(date("Y-m-d H:i:s")." authentication TRUE (id={$this->_user['login']})\n");
         }
 
 		return new SoapVar( array('AuthStatus'=>$result), SOAP_ENC_OBJECT);
@@ -137,9 +134,6 @@ class OTXSoapServer
     **/
     public final function otxRequest($input)
     {
-        if (defined('__DEBUG__')) error_log(date("Y-m-d H:i:s")." otxRequest()\n",3,__DEBUG__);
-        // $server = null;
-
 		if (!$this->_isLogged) {
             throw new SoapFault('E_USER_ERROR', //faultcode
                                 'You need to be logged in to access this service.', //faultstring
@@ -149,28 +143,28 @@ class OTXSoapServer
                                 /*$headerfault // headerfault */ );
 		}
 
-        $this->mode = $input->mode;
+        $this->mode 	 		= $input->mode;
+		$this->schemapath 		= self::__ATTACHMENTPATH__ . uniqid("schema");
+		$this->attachmentpath	= self::__ATTACHMENTPATH__ . uniqid("attachment");
 
         // XML schema (lodel EM)
         if ($input->schema != '') {
-            @unlink(self::__SCHEMAPATH__); 
-            if (! file_put_contents(self::__SCHEMAPATH__, $input->schema)) {
+            if (! file_put_contents($this->schemapath, $input->schema)) {
                 throw new SoapFault('E_ERROR',
                                     "file_put_contents(schema)",
                                     'OTXSoapServer',
-                                    self::__SCHEMAPATH__,
+                                    $this->schemapath,
                                     "UTF-8"
                                     /*$headerfault // headerfault */ );
             }
         }
         // source document (entity lodel)
         if ($input->attachment != '') {
-            @unlink(self::__ATTACHMENTPATH__); 
-            if (! file_put_contents(self::__ATTACHMENTPATH__, $input->attachment)) {
+            if (! file_put_contents($this->attachmentpath, $input->attachment)) {
                 throw new SoapFault('E_ERROR',
                                     "file_put_contents(attachment)",
                                     'OTXSoapServer',
-                                    self::__ATTACHMENTPATH__,
+                                    $this->attachmentpath,
                                     "UTF-8"
                                     /*$headerfault // headerfault */ );
             }
@@ -178,7 +172,7 @@ class OTXSoapServer
 
         // singleton pattern
         try {
-            $this->Server = OTXserver::singleton($input->request, $input->mode, self::__SCHEMAPATH__, self::__ATTACHMENTPATH__);
+            $this->Server = OTXserver::singleton($input->request, $input->mode, $this->schemapath, $this->attachmentpath);
         } 
         catch(Exception $e) {
             throw new SoapFault('E_ERROR',
@@ -218,6 +212,11 @@ class OTXSoapServer
         if (preg_match("/^lodel/", $this->mode)) {
             $this->lodelxml = $return['lodelxml'];
         }
+		
+		$this->Server->cleanup();
+		unlink($this->schemapath);
+		unlink($this->attachmentpath);
+		unlink($return['contentpath']);
 
         return $this->otxResponse();
     }
@@ -228,14 +227,7 @@ class OTXSoapServer
     **/
     public final function otxResponse()
     {
-        if ( defined('__DUMP__')) { // debug/dump
-            ob_start();
-            var_dump($this->Server);
-            file_put_contents(__DUMP__, ob_get_contents());
-            ob_end_clean();
-        }
-
-	return array(  'status'     => $this->status,
+		return array(  'status'     => $this->status,
                        'xml'        => $this->xml,
                        'report'     => $this->report,
                        'odt'        => $this->odt,

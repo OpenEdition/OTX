@@ -19,43 +19,45 @@ class OTXserver
     private static $_instance_;
 
     // Inputs
-    protected $input = array('request'=>"", 'mode'=>"", 'modelpath'=>"", 'entitypath'=>"");
+    protected $input 	= array('request'=>"", 'mode'=>"", 'modelpath'=>"", 'entitypath'=>"");
     // Outputs
-    protected $output = array('status'=>"", 'xml'=>"", 'report'=>"", 'contentpath'=>"", 'lodelxml'=>"");
+    protected $output 	= array('status'=>"", 'xml'=>"", 'report'=>"", 'contentpath'=>"", 'lodelxml'=>"");
 
-    private $report = array();
+    private $report 	= array();
 
-    protected $meta = array();
-    protected $EModel = array();
-    private $EMotx = array();
-    private $EMTEI = array();
+    protected $meta 	= array();
+    protected $EModel 	= array();
+    private $EMotx 		= array();
+    private $EMTEI 		= array();
     private $EMandatory = array();
-    private $LodelImg = array();
+    private $LodelImg 	= array();
 
-    private $dom = array();
-    private $automatic = array();
-    private $rend = array();
-    private $rendition = array();
-    private $Pnum = 0;
-    private $Tnum = 0;
-    private $tagsDecl = array();
+    private $dom 		= array();
+    private $automatic 	= array();
+    private $rend 		= array();
+    private $rendition 	= array();
+    private $Pnum 		= 0;
+    private $Tnum 		= 0;
+    private $tagsDecl 	= array();
 
-    private $log = array();
+    private $log 		= array();
 
-    private $_param = array();
-    private $_data = array();
-    private $_status="";
-    private $_trace="";
-    private $_iserror=false;
-    private $_isdebug=true;
-    private $oostyle = array();
-    private $_dbg = 1;
-    private $_db; // adodb instance
+    private $_param 	= array();
+    private $_data 		= array();
+    private $_status	= "";
+    private $_trace		= "";
+    private $_iserror	= false;
+    private $_isdebug	= true;
+    private $oostyle 	= array();
+    private $_dbg 		= 1;
+    private $_db; 		// adodb instance
+    
+    private $_usedfiles = array();
 
-    const _SOAP_MODELPATH_  = __SOAP_SCHEMA__;
-    const _SOAP_ENTITYPATH_ = __SOAP_ATTACHMENT__;
-    const _SOAP_LOCKFILE_   = __SOAP_LOCK__;
-    const _DEBUGFILE_       = __DEBUG__;
+    const _SOAP_MODELPATH_  	= __SOAP_SCHEMA__;
+    const _SOAP_ENTITYPATH_ 	= __SOAP_ATTACHMENT__;
+    const _SOAP_LOCKFILE_   	= __SOAP_LOCK__;
+    const _DEBUGFILE_       	= __DEBUG__;
     const _SERVER_CACHETIME_    = __SERVER_CACHETIME__;
     const _SERVER_CACHE_        = __SERVER_CACHE__;
     const _SERVER_TMP_          = __SERVER_TMP__;
@@ -63,16 +65,13 @@ class OTXserver
     const _SERVER_LIB_          = __SERVER_LIB__;
     const _SERVER_SERVER_       = __SERVER_SERVER__;
     const _SERVER_PORT_         = __SERVER_PORT__;
-    const _SOFFICE_PYTHONPATH_      = __SOFFICE_PYTHONPATH__;
-    const _DB_DRIVER_               = __DB_DRIVER__;
-    const _DB_PATH_                 = __DB_PATH__;
+    const _SOFFICE_PYTHONPATH_  = __SOFFICE_PYTHONPATH__;
+    const _DB_DRIVER_           = __DB_DRIVER__;
+    const _DB_PATH_             = __DB_PATH__;
 
 
     /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
-        touch(self::_SOAP_LOCKFILE_);
-        @unlink(self::_DEBUGFILE_);
-
         $this->input['request'] = $request;
         $this->input['mode'] = $mode;
         $this->input['modelpath'] = $modelpath;
@@ -104,17 +103,17 @@ class OTXserver
         $this->_db = ADONewConnection(self::_DB_DRIVER_);
         $this->_db->connect(self::_DB_PATH_);
     }
+
     /** Prevent users to clone the instance (singleton because) **/
     public function __clone() {
         $this->_status="Cannot duplicate a singleton !";$this->_iserror=true;
         throw new Exception($this->_status,E_ERROR);
     }
-    public function __destruct() {
-        //@unlink($this->_param['sourcepath']);
-        $this->oo2report('otx');
 
-        unlink(self::_SOAP_LOCKFILE_);
+    public function __destruct() {
+        $this->oo2report('otx');
     }
+
     public function __wakeup(){
        if (!self::$_instance_) {
             self::$_instance_ = $this;
@@ -123,9 +122,11 @@ class OTXserver
             return null;
         }
     }
+    
     public function __toString() {
         return $this->_status;
     }
+    
     public function __set($key, $value) {
         if ( array_key_exists($key, $this->_param)) {
             $this->_param[$key] = $value;
@@ -207,7 +208,6 @@ class OTXserver
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
                 $jsonreport = json_encode($this->report);
-                $debugfile=$this->_param['TMPPATH']."report.json";@file_put_contents($debugfile, $jsonreport);
                 $this->output['report'] = $jsonreport;
                 break;
             case 'partners':
@@ -234,8 +234,6 @@ class OTXserver
  * dynamic mapping of Lodel EM
 **/
     protected function Schema2OO() {
-        $modelpath = $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-
         $this->EMTEI = _em2tei();
 
         $domxml = new DOMDocument;
@@ -437,9 +435,11 @@ class OTXserver
 
         $cleanup = array('/_20_Car/', '/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
-        $odtfile = $this->_param['odtpath'];
-        $this->_param['lodelodtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
-        $lodelodtfile = $this->_param['lodelodtpath'];
+        $odtfile						= $this->_param['odtpath'];
+        $this->_param['lodelodtpath']	= $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
+        $lodelodtfile 					= $this->_param['lodelodtpath'];
+        $this->_usedfiles[] 			= $lodelodtfile;
+        
         if (! copy($odtfile, $lodelodtfile)) {
             $this->_status="error copy file; ".$lodelodtfile;
             throw new Exception($this->_status,E_ERROR);
@@ -464,7 +464,7 @@ class OTXserver
             $this->_status="error load meta.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-meta.xml";@$dommeta->save($debugfile);
+
         # cleanup
         $lodelmeta = _windobclean($OOmeta);
         # lodel
@@ -478,7 +478,6 @@ class OTXserver
             throw new Exception($this->_status,E_ERROR);
         }
         $domlodelmeta->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-meta.lodel.xml";@$domlodelmeta->save($debugfile);
 
         # ----- office:settings ----------------------------------------------------------
         if (! $OOsettings=$za->getFromName('settings.xml')) {
@@ -494,7 +493,6 @@ class OTXserver
             $this->_status="error load settings.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-settings.xml";@$domsettings->save($debugfile);
         # cleanup
         $lodelsettings = _windobclean($OOsettings);
         # lodel
@@ -508,7 +506,6 @@ class OTXserver
             throw new Exception($this->_status,E_ERROR);
         }
         $domlodelsettings->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-settings.lodel.xml";@$domlodelsettings->save($debugfile);
 
         # ----- office:styles ---------------------------------------
         if (! $OOstyles=$za->getFromName('styles.xml')) {
@@ -524,7 +521,6 @@ class OTXserver
             $this->_status="error load styles.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-styles.xml";@$domstyles->save($debugfile);
         # cleanup
         $lodelstyles = preg_replace($cleanup, "", _windobclean($OOstyles));
         # lodel
@@ -540,7 +536,6 @@ class OTXserver
         // lodel-cleanup++
         $this->lodelcleanup($domlodelstyles);
         $domlodelstyles->normalizeDocument(); 
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-styles.lodel.xml";@$domlodelstyles->save($debugfile);
 
         # ----- office:content -------------------------------------------------------
         if (! $OOcontent=$za->getFromName('content.xml')) {
@@ -556,7 +551,6 @@ class OTXserver
             $this->_status="error load content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-content.xml";@$domcontent->save($debugfile);
         # cleanup
         $lodelcontent = preg_replace($cleanup, "", _windobclean($OOcontent));
         # lodel
@@ -574,7 +568,6 @@ class OTXserver
         //
         $this->lodelpictures($domlodelcontent, $za);
         $domlodelcontent->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-content.lodel.xml";@$domlodelcontent->save($debugfile);
 
         // 1. office:automatic-styles
         $this->ooautomaticstyles($domlodelcontent);
@@ -670,7 +663,6 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
         $domfodt->normalizeDocument();
-		$debugFile=$this->_param['TMPPATH'].$this->_dbg++."-lodel.fodt.xml";@$domfodt->save($debugFile);
 
         # add xml:id (otxid.xsl)
         $xslfilter = $this->_param['INCPATH']."otxid.xsl";
@@ -695,7 +687,6 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
         $domidfodt->normalizeDocument();
-$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->save($debugfile);
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
         $xslfilter = $this->_param['INCPATH']."oo2lodeltei.xsl";
@@ -721,7 +712,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             throw new Exception($this->_status,E_ERROR);
         }
         $domteifodt->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.teilodel.xml";$domteifodt->save($debugfile);
 
         $this->dom['teifodt'] = $domteifodt;
         //$this->lodeltei($domteifodt);
@@ -1052,9 +1042,9 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $dom->formatOutput = true;
         $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
-        $debugfile=$this->_param['TMPPATH']."lodeltei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
+        $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
@@ -1378,7 +1368,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             }
             $parent->removeChild($entry);
         }
-        $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-dbgtei.xml";@$dom->save($debugfile);
 
         # /tei/teiHeader/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:publicationStmt"); $pubstmt = $entries->item(0);
@@ -1968,7 +1957,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
 
         if ( $headlevel=$this->summary($dom, $xpath)) {
             $this->heading2div($dom, $xpath, $headlevel);
-			$debugfile=$this->_param['TMPPATH']."div.xml";@$dom->save($debugfile);
         }
 
         // clean++
@@ -1979,9 +1967,9 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $dom->loadXML($otxml);
 
         $dom->normalizeDocument();
-		$debugfile=$this->_param['TMPPATH'].$this->_dbg++."-otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
+        $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
         $dom->resolveExternals = false;
 /*
@@ -2000,7 +1988,6 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
 
         $dom->loadXML($otxml);
-		$debugfile=$this->_param['TMPPATH']."otxtei.xml";@$dom->save($debugfile);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
@@ -2119,713 +2106,708 @@ $debugfile=$this->_param['TMPPATH'].$this->_dbg++."-fodt.id.xml";@$domidfodt->sa
             $result = ob_get_contents();
             ob_end_clean();
             if ($returnvar) {
-                @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
+                @copy($sourcepath, $sourcepath.".error");
+                @unlink($sourcepath);
                 $this->_status = "error soffice";
                 throw new Exception($this->_status,E_USER_ERROR);
             }
         }
-        $odtpath = $this->_param['odtpath'] = $targetpath;
+        $odtpath = $this->_param['odtpath'] = $this->_usedfiles[] = $targetpath;
 
         $this->_param['outputpath'] = $targetpath;
         return true;
     }
 
-        private function getmime() {
-            $sourcepath = $this->_param['sourcepath'];
+    private function getmime() {
+        $sourcepath = $this->_param['sourcepath'];
 
-            $mime = mime_content_type($sourcepath);
+        $mime = mime_content_type($sourcepath);
 
-            if ($mime === "application/x-zip" OR $mime === "application/zip") {
-                $file = escapeshellarg($sourcepath);
-                list($mime, $tmp) = explode(",", system("file -b $file"));
-            }
+        if ($mime === "application/x-zip" OR $mime === "application/zip") {
+            $file = escapeshellarg($sourcepath);
+            list($mime, $tmp) = explode(",", system("file -b $file"));
+        }
 
-            $extension = ".odt";
-            if ( trim($mime) != "OpenDocument Text") {
-                switch ($mime) {
-                    case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
-                    case "Rich Text Format data, version 1,":
-                    case "Rich Text Format data, version 1, ANSI":
-                    case 'application/rtf':
-                    case 'application/x-rtf':
-                    case 'text/rtf':
-                    case 'text/richtext':
-                        $extension = ".rtf";
-                        break;
-                    case "Microsoft Office Document":
-                    case 'application/msword':
-                    case 'application/doc':
-                    case 'appl/text':
-                    case 'application/vnd.msword':
-                    case 'application/vnd.ms-word':
-                    case 'application/winword':
-                    case 'application/word':
-                    case 'application/x-msw6':
-                    case 'application/x-msword':
-                        $extension = ".doc";
-                        break;
-                    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                        $extension = ".docx";
-                        break;
-                    case "OpenOffice.org 1.x Writer document":
-                    case 'application/x-soffice':
-                    case 'application/vnd.sun.xml.writer':
-                    case 'application/x-vnd.oasis.opendocument.text':
-                    case 'application/vnd.oasis.opendocument.text':
-                    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                        $extension = ".sxw";
-                        break;
-                    default:
-                        # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
-                        $temp = explode(".", $sourcepath);
-                        $ext = trim( array_pop($temp));
-                        $this->_status = "Warning : mime detection based on document extension (.$ext)";
-                        array_push($this->log['warning'], $this->_status);
-                        switch (strtolower($ext)) {
-                            case "rtf":
-                                $extension = ".rtf";
-                                break;
-                            case "sxw":
-                                $extension = ".sxw";
-                                break;
-                            case "doc":
-                                $extension = ".doc";
-                                break;
-                            case "docx":
-                                $extension = ".docx";
-                                break;
-                            default:
-                                $this->_status="error: unknown mime type: $mime ($sourcepath)";$this->_iserror=true;
-                                throw new Exception($this->_status,E_USER_ERROR);
-                                break;
-                        }
+        $extension = ".odt";
+        if ( trim($mime) != "OpenDocument Text") {
+            switch ($mime) {
+                case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
+                case "Rich Text Format data, version 1,":
+                case "Rich Text Format data, version 1, ANSI":
+                case 'application/rtf':
+                case 'application/x-rtf':
+                case 'text/rtf':
+                case 'text/richtext':
+                    $extension = ".rtf";
                     break;
-                }
-
-                if (! rename($sourcepath, $sourcepath.$extension)) {
-                    $this->_status="error: rename [$sourcepath]";
-                    throw new Exception($this->_status,E_ERROR);
-                }
-                $this->_param['sourcepath'] = $sourcepath.$extension;
+                case "Microsoft Office Document":
+                case 'application/msword':
+                case 'application/doc':
+                case 'appl/text':
+                case 'application/vnd.msword':
+                case 'application/vnd.ms-word':
+                case 'application/winword':
+                case 'application/word':
+                case 'application/x-msw6':
+                case 'application/x-msword':
+                    $extension = ".doc";
+                    break;
+                case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    $extension = ".docx";
+                    break;
+                case "OpenOffice.org 1.x Writer document":
+                case 'application/x-soffice':
+                case 'application/vnd.sun.xml.writer':
+                case 'application/x-vnd.oasis.opendocument.text':
+                case 'application/vnd.oasis.opendocument.text':
+                case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                    $extension = ".sxw";
+                    break;
+                default:
+                    # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
+                    $temp = explode(".", $sourcepath);
+                    $ext = trim( array_pop($temp));
+                    $this->_status = "Warning : mime detection based on document extension (.$ext)";
+                    array_push($this->log['warning'], $this->_status);
+                    switch (strtolower($ext)) {
+                        case "rtf":
+                            $extension = ".rtf";
+                            break;
+                        case "sxw":
+                            $extension = ".sxw";
+                            break;
+                        case "doc":
+                            $extension = ".doc";
+                            break;
+                        case "docx":
+                            $extension = ".docx";
+                            break;
+                        default:
+                            $this->_status="error: unknown mime type: $mime ($sourcepath)";$this->_iserror=true;
+                            throw new Exception($this->_status,E_USER_ERROR);
+                            break;
+                    }
+                break;
             }
 
-            $this->_param['extension'] = $extension;
-            $this->_param['mime'] = $mime;
-
-            return true;
+            if (! rename($sourcepath, $sourcepath.$extension)) {
+                $this->_status="error: rename [$sourcepath]";
+                throw new Exception($this->_status,E_ERROR);
+            }
+            $this->_param['sourcepath'] = $sourcepath.$extension;
+            $this->_usedfiles[] = $this->_param['sourcepath']; 
         }
 
-        /** lodel-cleanup **/
-        private function lodelcleanup(&$dom) {
-            $patterns = array('/\s+/', '/\(/', '/\)/', '/\[/', '/\]/');
+        $this->_param['extension'] = $extension;
+        $this->_param['mime'] = $mime;
 
-            $xpath = new DOMXPath($dom);
-            $entries = $xpath->query("//@*");
-            foreach ($entries as $entry) {
-                switch ($entry->nodeName) {
-                    case 'style:name':
-                    case 'style:display-name':
-                    case 'style:parent-style-name':
-                    case 'style:next-style-name':
-                    case 'style:master-page-name':
-                    case 'text:note-class':
-                    case 'text:citation-style-name':
-                    case 'text:citation-body-style-name':
-                    case 'text:style-name':
-                    case 'table:style-name':
-                        if (! preg_match("/^[TP]\d+$/", $entry->nodeValue)) {
-                            $nodevalue = _makeSortKey( preg_replace($patterns, "", $entry->nodeValue));
-                            if ( isset( $this->EModel[$nodevalue])) {
-                                $nodevalue = $this->EModel[$nodevalue];
-                                $entry->nodeValue = $nodevalue;
-                            }
-                            else if ( preg_match("/^(titre|heading)(\d*)$/i", $nodevalue, $match)) {
-                                $nodevalue = "heading".$match[2];
-                                $entry->nodeValue = $nodevalue;
-                            }
-                            else { 
-                                $entry->nodeValue = $nodevalue;
-                            }
+        return true;
+    }
+
+    /** lodel-cleanup **/
+    private function lodelcleanup(&$dom) {
+        $patterns = array('/\s+/', '/\(/', '/\)/', '/\[/', '/\]/');
+
+        $xpath = new DOMXPath($dom);
+        $entries = $xpath->query("//@*");
+        foreach ($entries as $entry) {
+            switch ($entry->nodeName) {
+                case 'style:name':
+                case 'style:display-name':
+                case 'style:parent-style-name':
+                case 'style:next-style-name':
+                case 'style:master-page-name':
+                case 'text:note-class':
+                case 'text:citation-style-name':
+                case 'text:citation-body-style-name':
+                case 'text:style-name':
+                case 'table:style-name':
+                    if (! preg_match("/^[TP]\d+$/", $entry->nodeValue)) {
+                        $nodevalue = _makeSortKey( preg_replace($patterns, "", $entry->nodeValue));
+                        if ( isset( $this->EModel[$nodevalue])) {
+                            $nodevalue = $this->EModel[$nodevalue];
+                            $entry->nodeValue = $nodevalue;
                         }
-                        break;
-                    default:
-                        break;
+                        else if ( preg_match("/^(titre|heading)(\d*)$/i", $nodevalue, $match)) {
+                            $nodevalue = "heading".$match[2];
+                            $entry->nodeValue = $nodevalue;
+                        }
+                        else { 
+                            $entry->nodeValue = $nodevalue;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private function lodelpictures(&$dom, &$za) {
+        $imgindex = 0;
+        $xpath = new DOMXPath($dom);
+        $entries = $xpath->query("//draw:image");
+        // TODO : test Pictures !
+        foreach ($entries as $item) {
+            //  text:anchor-type="as-char"
+            $parent = $item->parentNode;
+            if ($anchortype=$parent->getAttribute('text:anchor-type')) {
+                if ($anchortype=="as-char") {
+                    $attributes = $item->attributes;
+                    $attribute = $attributes->getNamedItem("href");
+                    if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
+                        $match = $attribute->nodeValue;
+                        list($imgpre, $imgext) = explode(".", trim($match));
+                        list($pictures, $imgname) = explode("/", $imgpre);
+                        if (! isset($this->LodelImg[$imgname.$imgext])) {
+                            $imgindex++;
+                            $this->LodelImg[$imgname.$imgext] = $imgindex;
+                            $currentname = "Pictures/$imgname.$imgext";
+                            $newname = "Pictures/img-$imgindex.$imgext";
+                            if (! $za->renameName($currentname, $newname)) {
+                                $this->_status="error rename files in ziparchive ($currentname => $newname)";
+                                throw new Exception($this->_status,E_ERROR);
+                            }
+                        } else {
+                            $imgindex = $this->LodelImg[$imgname.$imgext];
+                        }
+
+                        if ($this->_param['mode'] === "lodel") {
+                            $picturepath = "Pictures/img-$imgindex.$imgext";
+                        } else { // TODO : TEI lodel mode ??!
+                            $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
+                        }
+                        $attribute->nodeValue = $newname;
+                    }
+                    else {
+
+                        $this->_status = "{$attribute->nodeValue} skipped";
+                        array_push($this->log['warning'], $this->_status);
+                        // TODO Warning !
+                    }
                 }
             }
         }
+        return true;
+    }
 
-        private function lodelpictures(&$dom, &$za) {
-            $imgindex = 0;
-            $xpath = new DOMXPath($dom);
-            $entries = $xpath->query("//draw:image");
-            // TODO : test Pictures !
-            foreach ($entries as $item) {
-                //  text:anchor-type="as-char"
-                $parent = $item->parentNode;
-                if ($anchortype=$parent->getAttribute('text:anchor-type')) {
-                    if ($anchortype=="as-char") {
-                        $attributes = $item->attributes;
-                        $attribute = $attributes->getNamedItem("href");
-                        if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
-                            $match = $attribute->nodeValue;
-                            list($imgpre, $imgext) = explode(".", trim($match));
-                            list($pictures, $imgname) = explode("/", $imgpre);
-                            if (! isset($this->LodelImg[$imgname.$imgext])) {
-                                $imgindex++;
-                                $this->LodelImg[$imgname.$imgext] = $imgindex;
-                                $currentname = "Pictures/$imgname.$imgext";
-                                $newname = "Pictures/img-$imgindex.$imgext";
-                                if (! $za->renameName($currentname, $newname)) {
-                                    $this->_status="error rename files in ziparchive ($currentname => $newname)";
-                                    throw new Exception($this->_status,E_ERROR);
+    private function ooautomaticstyles(&$dom) {
+        $xpath = new DOMXPath($dom);
+        
+        // Listes locales
+        $entries = $xpath->query("//text:list-style[@style:name]");
+        foreach ($entries as $item){
+        	$listkey = "#" . $item->getAttribute('style:name');
+        	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+       		foreach($levelstyles as $style){
+       			$level = $style->getAttribute('text:level');
+       			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
+       			$this->rendition[$listkey]['levels'][$level] = $order;
+       		}
+        }
+
+        $entries = $xpath->query("//style:style");
+        foreach ($entries as $item) {
+            $name = $family = $parent = '';
+            $properties=array(); $key='';
+            $attributes = $item->attributes;
+            //style:family
+            if ($attrname=$attributes->getNamedItem("family")) {
+                $family = $attrname->nodeValue;
+            }
+
+            //style:name
+            if ($attrname=$attributes->getNamedItem("name")) {
+                $name = $attrname->nodeValue;
+                if (false !== strpos($name, "table")) {
+                    $id = ''; list($table, $id) = explode(".", $name);
+                    $key = "#td".$table[strlen($table)-1].$id;
+                    //$key = "#".$name;
+                } else {
+                    $key = "#".$name;
+                    if ( preg_match("/^T(\d+)$/", $name, $match)) {
+                        $this->Tnum = $match[1];
+                    }
+                }
+            }
+            if ($attrparent=$attributes->getNamedItem("parent-style-name")) {
+                $parent = $attrparent->nodeValue;
+                if ( preg_match("/^P(\d+)$/", $name, $match) and $parent!="standard") {
+                    $this->automatic["#".$name] = $parent;
+                    $this->automatic[$parent] = "#".$name;
+                    $this->Pnum = $match[1];
+                    $key = $parent."#".$name;
+                }
+            }
+            if ($item->hasChildNodes()) {
+                foreach ($item->childNodes as $child) {
+                    switch ($child->nodeName) {
+                        case 'style:paragraph-properties':
+                        case 'style:text-properties':
+                        case 'style:table-cell-properties':
+                            $childattributes = $child->attributes;
+                            foreach ($childattributes as $childattr) {
+                                if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) { // black list
+                                    $value = ''. "{$childattr->name}:{$childattr->value}";
+                                    array_push($properties, $value);
                                 }
-                            } else {
-                                $imgindex = $this->LodelImg[$imgname.$imgext];
                             }
-
-                            if ($this->_param['mode'] === "lodel") {
-                                $picturepath = "Pictures/img-$imgindex.$imgext";
-                            } else { // TODO : TEI lodel mode ??!
-                                //http://XXX.revues.org/docannexe/image/XXX/img-X.jpg <draw:image xlink:href="Pictures/100002000000021000000121BB042930.png"
-                                $picturepath = "http://".$revue.".revues.org/docannexe/image/".$prefix."/img-".$imgindex.".".$imgext;
-                            }
-                            $attribute->nodeValue = $newname;
-                        }
-                        else {
-                            /*
-                            $finfo = finfo_open(FILEINFO_MIME_TYPE); // mimetype extension
-                            $mime =  finfo_file( $za->getStream($attribute->nodeValue));
-                            finfo_close($finfo);
-                            */
-                            $this->_status = "{$attribute->nodeValue} skipped";
-                            array_push($this->log['warning'], $this->_status);
-                            // TODO Warning !
-                        }
+                            break;
+                        default:
+                            break;
                     }
                 }
+                list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
+                if ($lang == "") $lang = null;
+                $this->rendition[$key]['lang'] = $lang;
+                $this->rendition[$key]['rendition'] = $rendition;
+                $this->rendition[$key]['family'] = $family;
             }
-            return true;
         }
 
-        private function ooautomaticstyles(&$dom) {
-            $xpath = new DOMXPath($dom);
-            
-            // Listes locales
-            $entries = $xpath->query("//text:list-style[@style:name]");
-            foreach ($entries as $item){
-            	$listkey = "#" . $item->getAttribute('style:name');
-            	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
-           		foreach($levelstyles as $style){
-           			$level = $style->getAttribute('text:level');
-           			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
-           			$this->rendition[$listkey]['levels'][$level] = $order;
-           		}
-            }
+        return true;
+    }
 
-            $entries = $xpath->query("//style:style");
-            foreach ($entries as $item) {
-                $name = $family = $parent = '';
-                $properties=array(); $key='';
-                $attributes = $item->attributes;
-                //style:family
-                if ($attrname=$attributes->getNamedItem("family")) {
-                    $family = $attrname->nodeValue;
-                }
-
-                //style:name
-                if ($attrname=$attributes->getNamedItem("name")) {
-                    $name = $attrname->nodeValue;
-                    if (false !== strpos($name, "table")) {
-                        $id = ''; list($table, $id) = explode(".", $name);
-                        $key = "#td".$table[strlen($table)-1].$id;
-                        //$key = "#".$name;
-                    } else {
-                        $key = "#".$name;
-                        if ( preg_match("/^T(\d+)$/", $name, $match)) {
-                            $this->Tnum = $match[1];
-                        }
-                    }
-                }
-                if ($attrparent=$attributes->getNamedItem("parent-style-name")) {
-                    $parent = $attrparent->nodeValue;
-                    if ( preg_match("/^P(\d+)$/", $name, $match) and $parent!="standard") {
-                        $this->automatic["#".$name] = $parent;
-                        $this->automatic[$parent] = "#".$name;
-                        $this->Pnum = $match[1];
-                        $key = $parent."#".$name;
-                    }
-                }
-                if ($item->hasChildNodes()) {
-                    foreach ($item->childNodes as $child) {
-                        switch ($child->nodeName) {
-                            case 'style:paragraph-properties':
-                            case 'style:text-properties':
-                            case 'style:table-cell-properties':
-                                $childattributes = $child->attributes;
-                                foreach ($childattributes as $childattr) {
-                                    if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) { // black list
-                                        $value = ''. "{$childattr->name}:{$childattr->value}";
-                                        array_push($properties, $value);
-                                    }
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
-                    if ($lang == "") $lang = null;
-                    $this->rendition[$key]['lang'] = $lang;
-                    $this->rendition[$key]['rendition'] = $rendition;
-                    $this->rendition[$key]['family'] = $family;
-                }
-            }
-
-            return true;
+    private function oostyles(&$dom) {
+        $xpath = new DOMXPath($dom);
+        
+        // listes
+        $entries = $xpath->query("//text:list-style[@style:name]");
+        foreach ($entries as $item){
+        	$listkey = "#" . $item->getAttribute('style:name');
+        	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+       		foreach($levelstyles as $style){
+       			$level = $style->getAttribute('text:level');
+       			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
+       			$this->rendition[$listkey]['levels'][$level] = $order;
+       		}
         }
 
-        private function oostyles(&$dom) {
-            $xpath = new DOMXPath($dom);
-            
-            // listes
-            $entries = $xpath->query("//text:list-style[@style:name]");
-            foreach ($entries as $item){
-            	$listkey = "#" . $item->getAttribute('style:name');
-            	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
-           		foreach($levelstyles as $style){
-           			$level = $style->getAttribute('text:level');
-           			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
-           			$this->rendition[$listkey]['levels'][$level] = $order;
-           		}
+        $entries = $xpath->query("//style:style[@style:name]");
+        foreach ($entries as $item) {
+            $properties=array(); $key='';
+            $attributes = $item->attributes;
+            if ($attrname=$attributes->getNamedItem("name")) {
+                $name = $attrname->nodeValue;
+                $key = $name;
+            }
+            $family = '';
+            if ($attrfamily=$attributes->getNamedItem("family")) {
+                $family = $attrfamily->nodeValue;
+                if (! isset($this->automatic[$name])) {
+                    switch ($family) {
+                        case "paragraph":
+                            $P = "#P".++$this->Pnum;
+                            $this->automatic[$name] = $P;
+                            break;
+                        case "text":
+                            $T = "#T".++$this->Tnum;
+                            $this->automatic[$name] = $T;
+                            break;
+                    }
+                }
+                if ( isset($this->automatic[$name])) {
+                    $key = $name.$this->automatic[$name];
+                }
+            }
+            if ( isset($this->EMotx[$key])) {
+                continue; // Lodel style definition: skip
             }
 
-            $entries = $xpath->query("//style:style[@style:name]");
-            foreach ($entries as $item) {
-                $properties=array(); $key='';
-                $attributes = $item->attributes;
-                if ($attrname=$attributes->getNamedItem("name")) {
-                    $name = $attrname->nodeValue;
-                    $key = $name;
-                }
-                $family = '';
-                if ($attrfamily=$attributes->getNamedItem("family")) {
-                    $family = $attrfamily->nodeValue;
-                    if (! isset($this->automatic[$name])) {
-                        switch ($family) {
-                            case "paragraph":
-                                $P = "#P".++$this->Pnum;
-                                $this->automatic[$name] = $P;
-                                break;
-                            case "text":
-                                $T = "#T".++$this->Tnum;
-                                $this->automatic[$name] = $T;
-                                break;
-                        }
-                    }
-                    if ( isset($this->automatic[$name])) {
-                        $key = $name.$this->automatic[$name];
-                    }
-                }
-                if ( isset($this->EMotx[$key])) {
-                    continue; // Lodel style definition: skip
-                }
-
-                if ($item->hasChildNodes()) {
-                    foreach ($item->childNodes as $child) {
-                        switch ($child->nodeName) {
-                            case 'style:paragraph-properties':
-                            case 'style:text-properties':
-                                $childattributes = $child->attributes;
-                                foreach ($childattributes as $childattr) {
-                                    if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) {
-                                        $value = ''. "{$childattr->name}:{$childattr->value}";
-                                        array_push($properties, $value);
-                                    }
+            if ($item->hasChildNodes()) {
+                foreach ($item->childNodes as $child) {
+                    switch ($child->nodeName) {
+                        case 'style:paragraph-properties':
+                        case 'style:text-properties':
+                            $childattributes = $child->attributes;
+                            foreach ($childattributes as $childattr) {
+                                if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) {
+                                    $value = ''. "{$childattr->name}:{$childattr->value}";
+                                    array_push($properties, $value);
                                 }
-                                break;
-                            default:
-                                break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    if ($family == '') {
+                        if ($child->nodeName == 'style:paragraph-properties') {
+                            $family = "paragraph";
                         }
-                        if ($family == '') {
-                            if ($child->nodeName == 'style:paragraph-properties') {
-                                $family = "paragraph";
-                            }
-                            if ($child->nodeName == 'style:text-properties') {
-                                $family = "text";
-                            }
+                        if ($child->nodeName == 'style:text-properties') {
+                            $family = "text";
                         }
                     }
-                    list($lang, $rendition) = $this->styles2csswhitelist($properties);
+                }
+                list($lang, $rendition) = $this->styles2csswhitelist($properties);
 
-                    if ( isset($this->rendition[$key])) { // from automaticstyle
-                        // TODO : merge ?
-                        if ( array_key_exists('lang', $this->rendition[$key] ) && $this->rendition[$key]['lang']=='')
-                            $this->rendition[$key]['lang'] = $lang;
-                        if ( array_key_exists('rendition', $this->rendition[$key]) && $this->rendition[$key]['rendition']=='')
-                            $this->rendition[$key]['rendition'] = $rendition;
-
-                        if ( array_key_exists('family', $this->rendition[$key]) &&  $this->rendition[$key]['family']=='') {
-                            $this->rendition[$key]['family'] = $family;
-                        }
-                    } else {
+                if ( isset($this->rendition[$key])) { // from automaticstyle
+                    // TODO : merge ?
+                    if ( array_key_exists('lang', $this->rendition[$key] ) && $this->rendition[$key]['lang']=='')
                         $this->rendition[$key]['lang'] = $lang;
+                    if ( array_key_exists('rendition', $this->rendition[$key]) && $this->rendition[$key]['rendition']=='')
+                        $this->rendition[$key]['rendition'] = $rendition;
+
+                    if ( array_key_exists('family', $this->rendition[$key]) &&  $this->rendition[$key]['family']=='') {
                         $this->rendition[$key]['family'] = $family;
-                        //$this->rendition[$key]['rendition'] = $rendition; // Lodel style
                     }
+                } else {
+                    $this->rendition[$key]['lang'] = $lang;
+                    $this->rendition[$key]['family'] = $family;
+                    //$this->rendition[$key]['rendition'] = $rendition; // Lodel style
                 }
             }
-
-            return true;
         }
 
-        /** styles to css white list ! **/
-        private function styles2csswhitelist(&$properties, $type="strict") {
-        //error_log("<h4>styles2csswhitelist() [type=$type]</h4>\n",3,self::_DEBUGFILE_);
-            $lang = ""; $rendition = "";
-            $csswhitelist = array();
-            // default : strict mode
-            foreach ($properties as $prop) {
-                // xhtml:sup
-                if ( preg_match("/^text-position:super/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:super");
+        return true;
+    }
+
+    /** styles to css white list ! **/
+    private function styles2csswhitelist(&$properties, $type="strict") {
+        $lang = ""; $rendition = "";
+        $csswhitelist = array();
+        // default : strict mode
+        foreach ($properties as $prop) {
+            // xhtml:sup
+            if ( preg_match("/^text-position:super/", $prop)) {
+                array_push($csswhitelist, "vertical-align:super");
+                continue;
+            }
+            // xhtml:sub
+            if ( preg_match("/^text-position:sub/", $prop)) {
+                array_push($csswhitelist, "vertical-align:sub");
+                continue;
+            }
+            if ( preg_match("/^language:(.*)$/", $prop, $match)) {
+                $lang = $match[1];
+                continue;
+            }
+            switch ($prop) {
+                case 'font-style:italic':
+                    // <tei:emph rend="italic"> => <xhtml:em>
+                case 'font-weight:bold':
+                    // <tei:hi rend="bold"> => <xhtml:strong>
+                case 'font-weight:normal':
+                case 'font-variant:small-caps':
+                case 'text-transform:uppercase':
+                case 'text-transform:lowercase':
+                    array_push($csswhitelist, $prop);
+                    break;
+                case 'font-variant:uppercase':
+                    array_push($csswhitelist, "text-transform:uppercase");
+                    break;
+                case 'font-variant:lowercase':
+                    array_push($csswhitelist, "text-transform:lowercase");
+                    break;
+                case 'text-underline-style:solid':
+                    array_push($csswhitelist, "text-decoration:underline");
+                    break; 
+                case 'text-line-through-style:solid':
+                    array_push($csswhitelist, "text-decoration:line-through");
+                    break; 
+                case 'writing-mode:lr-tb':
+                    array_push($csswhitelist, "direction:ltr");
+                    break;
+                case 'writing-mode:rl-tb':
+                    array_push($csswhitelist, "direction:rtl");
+                    break;
+                // table no-border
+                case 'border:none';
+					$prop = "border-style:none";
+                case 'border-right:none':
+                case 'border-left:none':
+                case 'border-top:none':
+                case 'border-bottom:none':
+                    array_push($csswhitelist, $prop);
+                    break;
+                default:
+                    break;
+            }
+            $type = $this->_param['type'];
+            if ($type==="extended") {
+                if ( preg_match("/^font-size:/", $prop)) {
+                    array_push($csswhitelist, $prop);
                     continue;
                 }
-                // xhtml:sub
-                if ( preg_match("/^text-position:sub/", $prop)) {
-                    array_push($csswhitelist, "vertical-align:sub");
+                if ( preg_match("/^font-name:(.*)$/", $prop, $match)) {
+                    array_push($csswhitelist, "font-family:'{$match[1]}'");
+                }
+                // table border
+                if ( preg_match("/^(border.+):.+solid\s+(#\d+)$/", $prop, $match)) {
+                    $border = $match[1].":1px solid ".$match[2];
+                    array_push($csswhitelist, $border);
+                    // TODO raw as cell !
                     continue;
                 }
-                if ( preg_match("/^language:(.*)$/", $prop, $match)) {
-                    $lang = $match[1];
-                    continue;
+                if ( preg_match("/^(color|background-color)\:/", $prop)) {
+                	array_push($csswhitelist, $prop);
+                	continue;
                 }
+                /* TODO ?
+                    line-height ?? */
                 switch ($prop) {
-                    case 'font-style:italic':
-                        // <tei:emph rend="italic"> => <xhtml:em>
-                    case 'font-weight:bold':
-                        // <tei:hi rend="bold"> => <xhtml:strong>
-                    case 'font-weight:normal':
-                    case 'font-variant:small-caps':
-                    case 'text-transform:uppercase':
-                    case 'text-transform:lowercase':
+                    case 'text-align:center':
+                    case 'text-align:justify':
                         array_push($csswhitelist, $prop);
                         break;
-                    case 'font-variant:uppercase':
-                        array_push($csswhitelist, "text-transform:uppercase");
+                    case 'text-align:start':
+                        array_push($csswhitelist, "text-align:left");
                         break;
-                    case 'font-variant:lowercase':
-                        array_push($csswhitelist, "text-transform:lowercase");
-                        break;
-                    case 'text-underline-style:solid':
-                        array_push($csswhitelist, "text-decoration:underline");
-                        break; 
-                    case 'text-line-through-style:solid':
-                        array_push($csswhitelist, "text-decoration:line-through");
-                        break; 
-                    case 'writing-mode:lr-tb':
-                        array_push($csswhitelist, "direction:ltr");
-                        break;
-                    case 'writing-mode:rl-tb':
-                        array_push($csswhitelist, "direction:rtl");
-                        break;
-                    // table no-border
-                    case 'border:none';
-						$prop = "border-style:none";
-                    case 'border-right:none':
-                    case 'border-left:none':
-                    case 'border-top:none':
-                    case 'border-bottom:none':
-                        array_push($csswhitelist, $prop);
+                    case 'text-align:end':
+                        array_push($csswhitelist, "text-align:right");
                         break;
                     default:
-                    //error_log("<li><i>TODO: $prop ?! [strict mode]</i></li>\n",3,self::_DEBUGFILE_);
                         break;
                 }
-                $type = $this->_param['type'];
-                if ($type==="extended") {
-                    if ( preg_match("/^font-size:/", $prop)) {
-                        array_push($csswhitelist, $prop);
-                        continue;
-                    }
-                    if ( preg_match("/^font-name:(.*)$/", $prop, $match)) {
-                        array_push($csswhitelist, "font-family:'{$match[1]}'");
-                    }
-                    // table border
-                    if ( preg_match("/^(border.+):.+solid\s+(#\d+)$/", $prop, $match)) {
-                        $border = $match[1].":1px solid ".$match[2];
-                        array_push($csswhitelist, $border);
-                        // TODO raw as cell !
-                        continue;
-                    }
-                    if ( preg_match("/^(color|background-color)\:/", $prop)) {
-                    	array_push($csswhitelist, $prop);
-                    	continue;
-                    }
-                    /* TODO ?
-                        line-height ?? */
-                    switch ($prop) {
-                        case 'text-align:center':
-                        case 'text-align:justify':
-                            array_push($csswhitelist, $prop);
-                            break;
-                        case 'text-align:start':
-                            array_push($csswhitelist, "text-align:left");
-                            break;
-                        case 'text-align:end':
-                            array_push($csswhitelist, "text-align:right");
-                            break;
-                        default:
-                            break;
-                    }
-                }
             }
-            $rendition = implode(";", $csswhitelist);
-
-            return array($lang, $rendition);
         }
+        $rendition = implode(";", $csswhitelist);
 
-        /** array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
-        private function greedy(&$node, &$greedy) {
-            $section = $surround = $key = $rend = null;
-            $greedy = null; $status = true;
+        return array($lang, $rendition);
+    }
 
-            if ($rend=$node->getAttribute("rend")) {
-                if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix-") !== false ) {
-                    $section = "back";
-                }
+    /** array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
+    private function greedy(&$node, &$greedy) {
+        $section = $surround = $key = $rend = null;
+        $greedy = null; $status = true;
 
-                if ( isset($this->EMotx[$rend]['surround'])) {
-                    $surround = $this->EMotx[$rend]['surround'];
-                }
-                elseif ($node->nodeName=="ab") { 
-                    $surround = "*-"; // heading > 6 !
-                }
-
-                if ($surround=="*-" or $surround=="-*") {
-                    $status = false;
-                }
-
-                if ( isset($this->EMotx[$rend]['key'])) {
-                    $key = $this->EMotx[$rend]['key'];
-                    switch ($key) {
-                        case 'header':
-                        case 'front':
-                            $section = "head";
-                            break;
-                        case 'back':
-                            $section = "back";
-                            break;
-                        case 'text':
-                            $section = "body";
-                            break;
-                        default:
-                            $section = "body";
-                            break;
-                    }
-                }
-                elseif ($node->nodeName=="ab") {
-                    $section = "body"; // heading > 6 !
-                }
-
+        if ($rend=$node->getAttribute("rend")) {
+            if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix-") !== false ) {
+                $section = "back";
             }
-            else {
+
+            if ( isset($this->EMotx[$rend]['surround'])) {
+                $surround = $this->EMotx[$rend]['surround'];
+            }
+            elseif ($node->nodeName=="ab") { 
+                $surround = "*-"; // heading > 6 !
+            }
+
+            if ($surround=="*-" or $surround=="-*") {
+                $status = false;
+            }
+
+            if ( isset($this->EMotx[$rend]['key'])) {
+                $key = $this->EMotx[$rend]['key'];
+                switch ($key) {
+                    case 'header':
+                    case 'front':
+                        $section = "head";
+                        break;
+                    case 'back':
+                        $section = "back";
+                        break;
+                    case 'text':
+                        $section = "body";
+                        break;
+                    default:
+                        $section = "body";
+                        break;
+                }
+            }
+            elseif ($node->nodeName=="ab") {
                 $section = "body"; // heading > 6 !
-                return $status;
             }
 
-            $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
+        }
+        else {
+            $section = "body"; // heading > 6 !
             return $status;
         }
 
-        /** css tagsDecl to tei:hi rendition ! **/
-        private function tagsdecl2rendition($tagdeclid, &$rendition /*$type="strict"*/) {
+        $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
+        return $status;
+    }
 
-            if (! isset($this->tagsDecl[$tagdeclid])) {
-                return null;
-            }
-            $rend = $rendition = "";
-            $renditions = array();
-            $tagdecl = $this->tagsDecl[$tagdeclid].";";
-            foreach ( explode(";", $tagdecl) as $tgdcl) {
-                switch ($tgdcl) {
-                    case 'font-style:italic':
-                        $rend .= "italic";
-                        break;
-                    case 'font-weight:bold':
-                        $rend .= "bold";
-                        break;
-                    case 'font-weight:normal':
-                        $rend .= "normal";
-                        break;
-                    case 'text-decoration:underline':
-                        $rend .= "underline";
-                        break;
-                    case 'text-decoration:line-through':
-                        $rend .= "strike";
-                        break;
-                    case 'font-variant:small-caps':
-                        $rend .= "small-caps";
-                        break;
-                    case 'vertical-align:super':
-                        $rend .= "sup";
-                        break;
-                    case 'vertical-align:sub':
-                        $rend .= "sub";
-                        break;
-                    case 'font-size:80%':
-                        break;
-                    case 'text-transform:uppercase':
-                        $rend .= "uppercase";
-                        break;
-                    case 'text-transform:lowercase':
-                        $rend .= "lowercase";
-                        break;
-                    case 'direction:ltr':
-                        $rend .= "direction(ltr)";
-                        break;
-                    case 'direction:rtl':
-                        $rend .= "direction(rtl)";
-                        break;
-                    default:
-                        array_push($renditions, $tgdcl);
-                        break;
-                }
-                $rend .= " ";
-            }
-            if ( count($renditions)>0) {
-                $rendition = implode(";", $renditions);
-            } else {
-                $rendition = '';
-            }
+    /** css tagsDecl to tei:hi rendition ! **/
+    private function tagsdecl2rendition($tagdeclid, &$rendition /*$type="strict"*/) {
 
-            $rend = trim($rend);
-            if ( trim($rend) == "") {
-                return null;
-            } else {
-                return $rend;
+        if (! isset($this->tagsDecl[$tagdeclid])) {
+            return null;
+        }
+        $rend = $rendition = "";
+        $renditions = array();
+        $tagdecl = $this->tagsDecl[$tagdeclid].";";
+        foreach ( explode(";", $tagdecl) as $tgdcl) {
+            switch ($tgdcl) {
+                case 'font-style:italic':
+                    $rend .= "italic";
+                    break;
+                case 'font-weight:bold':
+                    $rend .= "bold";
+                    break;
+                case 'font-weight:normal':
+                    $rend .= "normal";
+                    break;
+                case 'text-decoration:underline':
+                    $rend .= "underline";
+                    break;
+                case 'text-decoration:line-through':
+                    $rend .= "strike";
+                    break;
+                case 'font-variant:small-caps':
+                    $rend .= "small-caps";
+                    break;
+                case 'vertical-align:super':
+                    $rend .= "sup";
+                    break;
+                case 'vertical-align:sub':
+                    $rend .= "sub";
+                    break;
+                case 'font-size:80%':
+                    break;
+                case 'text-transform:uppercase':
+                    $rend .= "uppercase";
+                    break;
+                case 'text-transform:lowercase':
+                    $rend .= "lowercase";
+                    break;
+                case 'direction:ltr':
+                    $rend .= "direction(ltr)";
+                    break;
+                case 'direction:rtl':
+                    $rend .= "direction(rtl)";
+                    break;
+                default:
+                    array_push($renditions, $tgdcl);
+                    break;
             }
+            $rend .= " ";
+        }
+        if ( count($renditions)>0) {
+            $rendition = implode(";", $renditions);
+        } else {
+            $rendition = '';
         }
 
-        /** get meta from lodel document **/
-        private function oolodel2meta(&$dom) {
-            $items = $dom->getElementsByTagName('*');
-            foreach ($items as $item) {
-                if ($item->nodeName==="text:p" and $item->hasAttributes()) {
-                    $attributes = $item->attributes;
-                    if ($attr=$attributes->getNamedItem("style-name")) {
-                        $stylename = $attr->value;
-                        if ( preg_match("/^P\d+$/", $stylename)) {
-                            if ( isset($this->automatic["#".$stylename])) {
-                                $stylename = $this->automatic["#".$stylename];
-                            } else continue;
-                        }
-                        switch ($stylename) {
-                            case "language":
-                                $this->meta['dc:language'] = $item->nodeValue;
-                                break;
-                            case "title":
-                                $this->meta['dc:title'] = $this->_ootitle($item->nodeValue);
-                                break;
-                            case "author":
-                                if (! isset($this->meta['meta:initial-creator'])) {
-                                    $this->meta['meta:initial-creator'] = $item->nodeValue;
-                                }
-                                if (! isset($this->meta['dc:creator'])) {
-                                    $this->meta['dc:creator'] = array();
-                                }
-                                array_push($this->meta['dc:creator'], $item->nodeValue);
-                                break;
-                            case "creationdate":
-                                $this->meta['meta:creation-date'] = $this->_oodate($item->nodeValue);
-                                break;
-                            case "date":
-                                $this->meta['dc:date'] = $this->_oodate($item->nodeValue);
-                                break;
-                        }
+        $rend = trim($rend);
+        if ( trim($rend) == "") {
+            return null;
+        } else {
+            return $rend;
+        }
+    }
+
+    /** get meta from lodel document **/
+    private function oolodel2meta(&$dom) {
+        $items = $dom->getElementsByTagName('*');
+        foreach ($items as $item) {
+            if ($item->nodeName==="text:p" and $item->hasAttributes()) {
+                $attributes = $item->attributes;
+                if ($attr=$attributes->getNamedItem("style-name")) {
+                    $stylename = $attr->value;
+                    if ( preg_match("/^P\d+$/", $stylename)) {
+                        if ( isset($this->automatic["#".$stylename])) {
+                            $stylename = $this->automatic["#".$stylename];
+                        } else continue;
                     }
-                    else continue;
+                    switch ($stylename) {
+                        case "language":
+                            $this->meta['dc:language'] = $item->nodeValue;
+                            break;
+                        case "title":
+                            $this->meta['dc:title'] = $this->_ootitle($item->nodeValue);
+                            break;
+                        case "author":
+                            if (! isset($this->meta['meta:initial-creator'])) {
+                                $this->meta['meta:initial-creator'] = $item->nodeValue;
+                            }
+                            if (! isset($this->meta['dc:creator'])) {
+                                $this->meta['dc:creator'] = array();
+                            }
+                            array_push($this->meta['dc:creator'], $item->nodeValue);
+                            break;
+                        case "creationdate":
+                            $this->meta['meta:creation-date'] = $this->_oodate($item->nodeValue);
+                            break;
+                        case "date":
+                            $this->meta['dc:date'] = $this->_oodate($item->nodeValue);
+                            break;
+                    }
                 }
+                else continue;
             }
-
-            return true;
         }
 
-        /** set lodel-document properties */
-        private function meta2lodelodt(&$dommeta) {
-            # office:document-meta/office:meta
-            $items = $dommeta->getElementsByTagName('*');
-            foreach ($items as $item) {
-                switch ($item->nodeName) {
-                    case "dc:title":
-                        if ( isset($this->meta['dc:title'])) {
-                            $item->nodeValue = $this->meta['dc:title'];
-                        }
-                        break;
-                    case "meta:initial-creator":
-                        if ( isset($this->meta['meta:initial-creator'])) {
-                            $item->nodeValue = $this->meta['meta:initial-creator'];
-                        }
-                        break;
-                    case "meta:creation-date":
-                        if ( isset($this->meta['meta:creation-date'])) {
-                            $item->nodeValue = $this->meta['meta:creation-date'];
-                        }
-                        break;
-                    case "dc:creator":
-                        if ( isset($this->meta['dc:creator'])) {
-                            $item->nodeValue = implode(",", $this->meta['dc:creator']);
-                        }
-                        break;
-                    case "dc:date":
-                        if ( isset($this->meta['dc:date'])) {
-                            $item->nodeValue = $this->meta['dc:date'];
-                        }
-                        break;
-                    case "meta:print-date":
-                        $date = date(DATE_ATOM);
-                        $this->nodeValue = $date;
-                        break;
-                    case "meta:editing-cycles":
-                        $item->nodeValue = 1;
-                        break;
-                    case "meta:editing-duration":
-                    case "meta:document-statistic":
-                    case "meta:generator":
-                        // TODO ?
-                        break;
-                    // TODO...
-                    # more
-                    case "dc:description":
-                        // abstract
-                        break;
-                    case "meta:keyword":
-                        // <keyword> <keyword> ...
-                        break;
-                    case "dc:subject":
-                        // suject [+chronological] [+geographical]
-                        break;
-                    # meta:user-defined
-                    // case meta:name="Document number"
-                    // case meta:name="E-Mail"
-                    // case meta:name="Editor"
-                    // case meta:name="Info"
-                    // case meta:name="Language"
-                    // case meta:name="Project" 
-                    // case meta:name="Publisher
-                    // case meta:name="Status"
-                    // case meta:name="URL
-                }
+        return true;
+    }
+
+    /** set lodel-document properties */
+    private function meta2lodelodt(&$dommeta) {
+        # office:document-meta/office:meta
+        $items = $dommeta->getElementsByTagName('*');
+        foreach ($items as $item) {
+            switch ($item->nodeName) {
+                case "dc:title":
+                    if ( isset($this->meta['dc:title'])) {
+                        $item->nodeValue = $this->meta['dc:title'];
+                    }
+                    break;
+                case "meta:initial-creator":
+                    if ( isset($this->meta['meta:initial-creator'])) {
+                        $item->nodeValue = $this->meta['meta:initial-creator'];
+                    }
+                    break;
+                case "meta:creation-date":
+                    if ( isset($this->meta['meta:creation-date'])) {
+                        $item->nodeValue = $this->meta['meta:creation-date'];
+                    }
+                    break;
+                case "dc:creator":
+                    if ( isset($this->meta['dc:creator'])) {
+                        $item->nodeValue = implode(",", $this->meta['dc:creator']);
+                    }
+                    break;
+                case "dc:date":
+                    if ( isset($this->meta['dc:date'])) {
+                        $item->nodeValue = $this->meta['dc:date'];
+                    }
+                    break;
+                case "meta:print-date":
+                    $date = date(DATE_ATOM);
+                    $this->nodeValue = $date;
+                    break;
+                case "meta:editing-cycles":
+                    $item->nodeValue = 1;
+                    break;
+                case "meta:editing-duration":
+                case "meta:document-statistic":
+                case "meta:generator":
+                    // TODO ?
+                    break;
+                // TODO...
+                # more
+                case "dc:description":
+                    // abstract
+                    break;
+                case "meta:keyword":
+                    // <keyword> <keyword> ...
+                    break;
+                case "dc:subject":
+                    // suject [+chronological] [+geographical]
+                    break;
+                # meta:user-defined
+                // case meta:name="Document number"
+                // case meta:name="E-Mail"
+                // case meta:name="Editor"
+                // case meta:name="Info"
+                // case meta:name="Language"
+                // case meta:name="Project" 
+                // case meta:name="Publisher
+                // case meta:name="Status"
+                // case meta:name="URL
             }
-            return true;
         }
+        return true;
+    }
 
-        /** set xml-document properties */
-        private function meta2otxml() {
-        // otx TEI xml
-        // author: name, affiliation, forename, surname
-        // idno: URI, DOI, EISSN, ISSN, ISBN, pagination
-        // front: abstract
-        }
+    /** set xml-document properties */
+    private function meta2otxml() {
+    // otx TEI xml
+    // author: name, affiliation, forename, surname
+    // idno: URI, DOI, EISSN, ISSN, ISBN, pagination
+    // front: abstract
+    }
 
 
     /**
@@ -2960,7 +2942,6 @@ EOD;
 </rdf:RDF>
 EOD;
 
-        $tmpfile=$this->_param['TMPPATH']."report.xml";file_put_contents($tmpfile, $xmlreport);
         $this->_param['xmlreport'] = $xmlreport;
     }
 
@@ -3095,10 +3076,10 @@ EOD;
         $mode = $this->_param['mode'];
 
         $domrequest = new DOMDocument;
-	if (! $domrequest->loadXML($request)) {
-            $this->_status="error: can't load xml request";$this->_iserror=true;
-            throw new Exception($this->_status,E_ERROR);
-	}
+		if (! $domrequest->loadXML($request)) {
+	            $this->_status="error: can't load xml request";$this->_iserror=true;
+	            throw new Exception($this->_status,E_ERROR);
+		}
 
         # !! TODO !!
         // document type
@@ -3151,14 +3132,6 @@ EOD;
             throw new Exception($this->_status,E_ERROR);
         }
 
-        $this->_param['modelpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/"."model.xml";
-        if (! copy($this->input['modelpath'], $this->_param['modelpath'])) {
-            $this->_status="error: failed copy {$this->_param['modelpath']}";
-            throw new Exception($this->_status,E_ERROR);
-        }
-
-        // save the rdf request
-        $requestfile=$this->_param['TMPPATH'].$this->_param['prefix'].".rdf";@$domrequest->save($requestfile);
     }
 
 
@@ -3245,14 +3218,10 @@ EOD;
             return trim($ootitle);
         }
 
-        private function _cleanup() {
-            @unlink(self::_SOAP_LOCKFILE_);
-            @unlink($this->input['modelpath']);
-            @unlink($this->input['entitypath']);
-
-            @unlink($this->_param['modelpath']);
-            @unlink($this->_param['sourcepath']);
-            @unlink($this->_param['odtpath']);
+        public function cleanup() {
+        	foreach($this->_usedfiles as $file){
+        		@unlink($file);
+        	}
         }
 
 

@@ -27,8 +27,7 @@ define('__SOAP_LOCATION__',    __OTX_URI__);
 define('__SOAP_WSDL__',        __OTX_URI__."?wsdl");
 define('__SOAP_LOG__',         __OTX_PWD__."CACHE/tmp/otx.log");
 define('__SOAP_ERRORLOG__',    __OTX_PWD__."CACHE/tmp/otx.error.log");
-define('__SOAP_ATTACHMENT__',  "/tmp/document.source");
-define('__SOAP_SCHEMA__',      "/tmp/model.xml");
+define('__SOAP_ATTACHMENT__',  __OTX_PWD__."CACHE/tmp/");
 define('__SOAP_LOCK__',        "/tmp/otx.lock");
 
 # --- server  ----------------------------------------------------------------
