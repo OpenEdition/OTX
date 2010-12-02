@@ -54,7 +54,6 @@ class OTXserver
     
     private $_usedfiles = array();
 
-    const _SOAP_MODELPATH_  	= __SOAP_SCHEMA__;
     const _SOAP_ENTITYPATH_ 	= __SOAP_ATTACHMENT__;
     const _SOAP_LOCKFILE_   	= __SOAP_LOCK__;
     const _DEBUGFILE_       	= __DEBUG__;
@@ -63,7 +62,6 @@ class OTXserver
     const _SERVER_TMP_          = __SERVER_TMP__;
     const _SERVER_INC_          = __SERVER_INC__;
     const _SERVER_LIB_          = __SERVER_LIB__;
-    const _SERVER_SERVER_       = __SERVER_SERVER__;
     const _SERVER_PORT_         = __SERVER_PORT__;
     const _SOFFICE_PYTHONPATH_  = __SOFFICE_PYTHONPATH__;
     const _DB_DRIVER_           = __DB_DRIVER__;
@@ -93,7 +91,6 @@ class OTXserver
         $this->_param['TMPPATH'] = self::_SERVER_TMP_;
         $this->_param['INCPATH'] = self::_SERVER_INC_;
         $this->_param['LIBPATH'] = self::_SERVER_LIB_;
-        $this->_param['SERVERURI'] =  self::_SERVER_SERVER_;
         $this->_param['SERVERPORT'] = self::_SERVER_PORT_;
         $this->_param['DEBUGPATH'] = self::_DEBUGFILE_;
 
@@ -438,7 +435,6 @@ class OTXserver
         $odtfile						= $this->_param['odtpath'];
         $this->_param['lodelodtpath']	= $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
         $lodelodtfile 					= $this->_param['lodelodtpath'];
-        $this->_usedfiles[] 			= $lodelodtfile;
         
         if (! copy($odtfile, $lodelodtfile)) {
             $this->_status="error copy file; ".$lodelodtfile;
@@ -2293,7 +2289,7 @@ EOD;
         $entries = $xpath->query("//text:list-style[@style:name]");
         foreach ($entries as $item){
         	$listkey = "#" . $item->getAttribute('style:name');
-        	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+        	$levelstyles = $xpath->evaluate("*[@text:level]", $item);
        		foreach($levelstyles as $style){
        			$level = $style->getAttribute('text:level');
        			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
@@ -2365,12 +2361,12 @@ EOD;
 
     private function oostyles(&$dom) {
         $xpath = new DOMXPath($dom);
-        
+
         // listes
         $entries = $xpath->query("//text:list-style[@style:name]");
         foreach ($entries as $item){
         	$listkey = "#" . $item->getAttribute('style:name');
-        	$levelstyles = $xpath->evaluate("//*[@text:level]", $item);
+        	$levelstyles = $xpath->evaluate("*[@text:level]", $item);
        		foreach($levelstyles as $style){
        			$level = $style->getAttribute('text:level');
        			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
@@ -2760,7 +2756,7 @@ EOD;
                     break;
                 case "meta:print-date":
                     $date = date(DATE_ATOM);
-                    $this->nodeValue = $date;
+                    $item->nodeValue = $date;
                     break;
                 case "meta:editing-cycles":
                     $item->nodeValue = 1;
