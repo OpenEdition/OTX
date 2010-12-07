@@ -1,0 +1,73 @@
+#! /bin/sh -x
+
+# Using LSB funtions:
+. /lib/lsb/init-functions
+
+set -e
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NAME=otx
+DESC="OTX OpenOffice Server"
+DAEMON=/usr/bin/soffice
+HOST=127.0.0.1
+PORT=8100
+PIDFILE=/var/run/$NAME.pid
+FLAGS="-headless -nofirststartwizard -nologo -norestore -accept=socket,host=${HOST},port=${PORT};urp;"
+
+# Function that starts the daemon/service.
+d_start() {
+    # Gracefully exit if the package has been removed.
+    test -x $DAEMON || exit 5
+
+    if [ -e $PIDFILE ]; then
+        pid=$(cat $PIDFILE)
+        if kill -0 "$pid" > /dev/null; then
+            log_success_msg "$DESC already running"
+            return
+        else
+            log_success_msg "Removing stale PID file $PIDFILE."
+            rm -f $PIDFILE
+        fi
+    fi
+    log_daemon_msg "Starting $DESC" "$NAME"
+    start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- $FLAGS >/dev/null
+    log_end_msg $?
+}
+
+# Function that stops the daemon/service.
+d_stop() {
+    if [ -e $PIDFILE ]; then
+        pid=$(cat $PIDFILE)
+        if kill -0 "$pid" > /dev/null; then
+            log_daemon_msg "Stopping $DESC" "$NAME"
+            start-stop-daemon --stop --quiet --pidfile $PIDFILE
+            log_end_msg $?
+        else
+            log_failure_msg "I can't stop $DESC" "Maybe it's NOT running?"
+            rm -f $PIDFILE
+        fi
+    fi
+}
+
+# Function that sends a SIGHUP to the daemon/service.
+case "$1" in
+  start)
+        d_start
+    ;;
+  stop)
+        d_stop
+    ;;
+  restart|force-reload)
+    log_daemon_msg "Restarting $DESC"
+    d_stop || /bin/true
+    sleep 1
+    d_start
+    log_daemon_msg "Done"
+    ;;
+  *)
+    log_daemon_msg "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+    exit 3
+    ;;
+esac
+
+exit 0
