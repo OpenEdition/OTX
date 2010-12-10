@@ -1,4 +1,4 @@
-#! /bin/sh -x
+#! /bin/sh
 
 # Using LSB funtions:
 . /lib/lsb/init-functions
