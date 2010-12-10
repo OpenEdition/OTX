@@ -149,7 +149,7 @@ class OTXserver
     public function run() {
         $suffix = "odt";
         if (false !== strpos($this->_param['mode'], ":")) {
-            list($action, $tmp) = explode(":", $this->_param['mode']);
+            list($action, $tmp, $tmp2) = explode(":", $this->_param['mode']);
             switch($action) {
                 case 'soffice':
                     $suffix = $tmp;
@@ -157,6 +157,9 @@ class OTXserver
                 case 'lodel':
                     $this->_param['type'] = $tmp;
                     break;
+		        case 'plugin':
+		            $this->_param['type'] = $tmp2;
+		            break;
             }
         }
         else {
@@ -195,10 +198,15 @@ class OTXserver
             case 'cairn':
                 $this->_status = "todo: partners/cairn";
                 break;
+            case 'plugin':
+                $this->plugin($tmp);
+                break;
             case 'hello':
                 $this->hello();
                 return $this->output;
                 break;
+
+
             default:
                 $this->_status="error: unknown action ($action)";$this->_iserror=true;
                 throw new Exception($this->_status,E_USER_ERROR);
@@ -3212,8 +3220,45 @@ EOD;
 		return true;
     }
 
+    private function plugin( $name )
+    {
+        try
+        {
+            $plugin = Plugin::get($name, $this->_db, $this->_param);
+            $plugin->run();
+            $this->output[$name] = $plugin->output[$name];
+        }
+        catch(Exception $e)
+        {
+            error_log($e->getMessage());
+        }
+    }
+
 
 // end of OTXserver class.
 }
 
-#EOF
+abstract class Plugin
+{
+
+        static private $_instances = array();
+        private $_status;
+
+        protected function __construct( $db, $param ){}
+
+        static public function get( $plugin, $db, $param )
+        {
+                if(!isset(self::$_instances[$plugin]))
+                {
+                	$plugin_class_file = "plugins/{$plugin}/{$plugin}.class.php";
+                	if(file_exists($plugin_class_file));
+                        require_once $plugin_class_file;
+                        self::$_instances[$plugin] = new $plugin( $db, $param );
+                }
+
+                return self::$_instances[$plugin];
+        }
+
+        abstract public function run();
+
+}

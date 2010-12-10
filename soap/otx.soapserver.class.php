@@ -212,7 +212,11 @@ class OTXSoapServer
         if (preg_match("/^lodel/", $this->mode)) {
             $this->lodelxml = $return['lodelxml'];
         }
-		
+
+        if (preg_match("/^plugin:(?P<plugin>\w+)/", $this->mode, $match)){
+                $this->plugin[$match['plugin']] = $return[$match['plugin']];
+        }
+
 		$this->Server->cleanup();
 		unlink($this->schemapath);
 		unlink($this->attachmentpath);
@@ -227,12 +231,19 @@ class OTXSoapServer
     **/
     public final function otxResponse()
     {
-		return array(  'status'     => $this->status,
-                       'xml'        => $this->xml,
-                       'report'     => $this->report,
-                       'odt'        => $this->odt,
-                       'lodelxml'   => $this->lodelxml,
+  	  $response = array(
+                    'status'     => $this->status,
+                    'xml'        => $this->xml,
+                    'report'     => $this->report,
+                    'odt'        => $this->odt,
+                    'lodelxml'   => $this->lodelxml,
                     );
+
+        if(isset($this->plugin)){
+                $pluginname              = current(array_keys($this->plugin));
+                $response[$pluginname]   = base64_encode(serialize($this->plugin[$pluginname]));
+        }
+        return $response;
     }
 
 // End of OTX SoapServer Class
