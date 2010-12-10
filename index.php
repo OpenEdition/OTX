@@ -21,7 +21,7 @@ include_once('otxconfig.inc.php');
 include_once('soap/otx.soapserver.inc.php');
 require_once('otx.class.php');
 require_once('soap/otx.soapserver.class.php');
-
+require_once('OTXConfig.class.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -37,15 +37,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     # create the server instantiation
     try {
+    	$config = OTXConfig::singleton();
+    	
         $options = array();
         $options['trace'] = TRUE;
         $options['soap_version'] = SOAP_1_2;
         $options['exceptions'] = TRUE;
         $options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
         $options['encoding'] = SOAP_LITERAL;
-        $wsdl = __SOAP_WSDL__;
         // service
-        $SoapServer = new SoapServer($wsdl, $options);
+        $SoapServer = new SoapServer($config->wsdl, $options);
         $SoapServer->setClass('OTXSoapServer');
         // 
         $SoapServer->setPersistence(SOAP_PERSISTENCE_SESSION);
@@ -58,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "\n<faultstring><![CDATA[".$fault->faultstring."]]></faultstring>";
         echo "\n<error>" .$Return['status'] ."</error>";
         echo "\n</otx>";
-    exit(1);
+    	exit(1);
     }
 
     return true;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+    <servicename></servicename>
+    <otxpath></otxpath>
+    <cachepath></cachepath>
+    <wsdl>http://otx.url/?wsdl</wsdl>
+    <soffice>
+        <pythonpath></pythonpath>
+        <host>127.0.0.1</host>
+        <port>8100</port>
+    </soffice>
+    <dbpath>soap/server/db/servel.db</dbpath>
+</config>

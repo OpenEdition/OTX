@@ -45,17 +45,19 @@ function otx_query() {
         readfile('./soap/otx.wsdl');
         return true;
     }
-
+	
+	$config = OTXConfig::singleton();
+	
     if ( isset($_GET['admin'])) {
         $admin = htmlspecialchars($_GET['admin']);
         switch ($admin) {
             case 'log':
                 header("Content-Type: text/plain; charset=UTF-8",true);
-                readfile(__OTX_PWD__."CACHE/tmp/otx.log");
+                readfile($config->cachepath . "/tmp/otx.log");
                 return true;
             case 'report':
                 header("content-type: application/xml; charset=UTF-8",true);
-                readfile(__OTX_PWD__."CACHE/report.up0.xml");
+                readfile($config->cachepath . "/report.up0.xml");
                 return true;
             case 'debug':
                 header("Content-Type: text/html; charset=UTF-8",true);
@@ -90,7 +92,7 @@ function _soffice(&$status) {
     $ps = array();
 
     $_output = array(); $_returnvar = -1;
-    $result = "" .exec("ps aux | grep soffice.bin | grep -v grep | grep -v su 2>&1", $_ouput, $_returnvar);
+    $result = "" .exec("ps aux | grep soffice.bin | grep -v grep | grep -v su 2>&1", $_output, $_returnvar);
     if ($result=="" OR $_returnvar==1) {
         $status = "down";
     }

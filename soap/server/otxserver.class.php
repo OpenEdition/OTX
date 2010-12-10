@@ -8,6 +8,7 @@
 **/
 include_once('inc/utils.inc.php');
 include_once('inc/EM.odd.php');
+require_once 'adodb/adodb.inc.php';
 
 
 /**
@@ -51,54 +52,37 @@ class OTXserver
     private $oostyle 	= array();
     private $_dbg 		= 1;
     private $_db; 		// adodb instance
+    private $_config;
     
     private $_usedfiles = array();
 
-    const _SOAP_ENTITYPATH_ 	= __SOAP_ATTACHMENT__;
-    const _SOAP_LOCKFILE_   	= __SOAP_LOCK__;
-    const _DEBUGFILE_       	= __DEBUG__;
-    const _SERVER_CACHETIME_    = __SERVER_CACHETIME__;
-    const _SERVER_CACHE_        = __SERVER_CACHE__;
-    const _SERVER_TMP_          = __SERVER_TMP__;
-    const _SERVER_INC_          = __SERVER_INC__;
-    const _SERVER_LIB_          = __SERVER_LIB__;
-    const _SERVER_PORT_         = __SERVER_PORT__;
-    const _SOFFICE_PYTHONPATH_  = __SOFFICE_PYTHONPATH__;
-    const _DB_DRIVER_           = __DB_DRIVER__;
-    const _DB_PATH_             = __DB_PATH__;
-
-
     /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
-        $this->input['request'] = $request;
-        $this->input['mode'] = $mode;
-        $this->input['modelpath'] = $modelpath;
-        $this->input['entitypath'] = $entitypath;
+    	$this->_config = OTXConfig::singleton();
+    	
+        $this->input['request'] 	= $request;
+        $this->input['mode'] 		= $mode;
+        $this->input['modelpath'] 	= $modelpath;
+        $this->input['entitypath'] 	= $entitypath;
 
-        $this->_param['request'] = $request;
-        $this->_param['mode'] = $mode;
-        $this->_param['modelpath'] = $modelpath;
+        $this->_param['EMreport']	= array();
+        $this->_param['request'] 	= $request;
+        $this->_param['mode'] 		= $mode;
+        $this->_param['modelpath'] 	= $modelpath;
         $this->_param['sourcepath'] = $entitypath;
-        $this->_param['mime'] = "";
-        $this->_param['prefix'] = "";
-        $this->_param['sufix'] = "";
-        $this->_param['odtpath'] = "";
-        $this->_param['xmlodt'] = "";
-        $this->_param['xmlreport'] = "";
-        $this->_param['EMreport'] = array();
-        $this->_param['CACHETIME'] = self::_SERVER_CACHETIME_;
-        $this->_param['CACHEPATH'] = self::_SERVER_CACHE_;
-        $this->_param['TMPPATH'] = self::_SERVER_TMP_;
-        $this->_param['INCPATH'] = self::_SERVER_INC_;
-        $this->_param['LIBPATH'] = self::_SERVER_LIB_;
-        $this->_param['SERVERPORT'] = self::_SERVER_PORT_;
-        $this->_param['DEBUGPATH'] = self::_DEBUGFILE_;
+        $this->_param['mime'] 		= "";
+        $this->_param['prefix'] 	= "";
+        $this->_param['sufix'] 		= "";
+        $this->_param['odtpath'] 	= "";
+        $this->_param['xmlodt'] 	= "";
+        $this->_param['xmlreport'] 	= "";
+        $this->_param['LIBPATH'] 	= "soap/server/lib/";
+        $this->_param['CACHEPATH'] 	= $this->_config->cachepath;
 
         $this->log['warning'] = array();
 
-        require self::_SERVER_LIB_.'adodb5/adodb.inc.php';
-        $this->_db = ADONewConnection(self::_DB_DRIVER_);
-        $this->_db->connect(self::_DB_PATH_);
+        $this->_db = ADONewConnection("sqlite");
+        $this->_db->connect($this->_config->dbpath);
     }
 
     /** Prevent users to clone the instance (singleton because) **/
@@ -220,7 +204,7 @@ class OTXserver
                 throw new Exception($this->_status,E_USER_ERROR);
         }
 
-        $this->_status = __OTX_NAME__;
+        $this->_status = $this->_config->servicename;
         $this->output['status'] = $this->_status;
 
         return $this->output;
@@ -661,7 +645,7 @@ EOD;
         $domfodt->normalizeDocument();
 
         # add xml:id (otxid.xsl)
-        $xslfilter = $this->_param['INCPATH']."otxid.xsl";
+        $xslfilter = "soap/server/inc/otxid.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
             $this->_status="error load xsl ($xslfilter)";
@@ -685,7 +669,7 @@ EOD;
         $domidfodt->normalizeDocument();
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
-        $xslfilter = $this->_param['INCPATH']."oo2lodeltei.xsl";
+        $xslfilter = "soap/server/inc/oo2lodeltei.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
             $this->_status="error load xsl ($xslfilter)";
@@ -2046,7 +2030,8 @@ EOD;
                     $parent->removeChild($node);
                 }
                 if (! $parent->replaceChild($div, $item)) {
-                    $this->_status="error replaceChild";error_log("<li>! {$this->_status}</li>\n",3,self::_DEBUGFILE_);
+                    $this->_status="error replaceChild";
+                    error_log($this->_status);
                     throw new Exception($this->_status,E_ERROR);
                 }
             }
@@ -2089,7 +2074,7 @@ EOD;
 
             $in = escapeshellarg($sourcepath);
             $out = escapeshellarg($targetpath);
-            $command = self::_SOFFICE_PYTHONPATH_." {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
+            $command = $this->_config->soffice['pythonpath'] . " {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
             /*  //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
                 //$command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter3.jar -f odt ". $sourcepath;  */
             /*
@@ -2105,6 +2090,7 @@ EOD;
                 @copy($sourcepath, $sourcepath.".error");
                 @unlink($sourcepath);
                 $this->_status = "error soffice";
+                error_log("$command returned " . var_export($returnvar,true));
                 throw new Exception($this->_status,E_USER_ERROR);
             }
         }

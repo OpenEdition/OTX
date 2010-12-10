@@ -28,16 +28,15 @@ class OTXSoapServer
     private $_isLogged;
     // session token
     private $_sessionToken;
+	// configuration object
+	private $_config;
 
     private $Server = null;
-
-    const __ATTACHMENTPATH__    = __SOAP_ATTACHMENT__;
-    const __LOGFILE__           = __SOAP_LOG__;
-
 
     public function __construct() {
         $this->_isLogged = false;
         $this->_user = null;
+        $this->_config = OTXConfig::singleton();
     }
     
     public function __toString() {
@@ -144,8 +143,9 @@ class OTXSoapServer
 		}
 
         $this->mode 	 		= $input->mode;
-		$this->schemapath 		= self::__ATTACHMENTPATH__ . uniqid("schema");
-		$this->attachmentpath	= self::__ATTACHMENTPATH__ . uniqid("attachment");
+        $tmppath 				= $this->_config->cachepath . "/tmp/";
+		$this->schemapath 		= $tmppath . uniqid("schema");
+		$this->attachmentpath	= $tmppath . uniqid("attachment");
 
         // XML schema (lodel EM)
         if ($input->schema != '') {
@@ -195,7 +195,7 @@ class OTXSoapServer
         }
 
         $this->status = $return['status'];
-        $this->xml = $return['xml'];
+        $this->xml    = $return['xml'];
         $this->report = $return['report'];
 
         if ( preg_match("/^soffice/", $this->mode) or preg_match("/^lodel/", $this->mode) ) {
