@@ -245,9 +245,11 @@
     </xsl:template>
 
     <xsl:template match="office:annotation/text:p">
+<!--
         <note>
         <xsl:call-template name="copyxmlid"/>
         </note>
+-->
     </xsl:template>
 
 
