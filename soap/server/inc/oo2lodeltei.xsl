@@ -117,10 +117,12 @@
                     </author>
                 </titleStmt>
                 <publicationStmt>
+<!--
                     <publisher>Revues.org</publisher>
                     <availability status="free">
                         <p>Open Access</p>
                     </availability>
+-->
                     <date>
                         <xsl:if test="$otxmode='soffice'">
                             <xsl:value-of select="/office:document/office:meta/dc:date"/>
