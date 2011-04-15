@@ -68,8 +68,8 @@ class OTXserver
         $this->_param['EMreport']	= array();
         $this->_param['request'] 	= $request;
         $this->_param['mode'] 		= $mode;
-        $this->_param['modelpath'] 	= $modelpath;
         $this->_param['sourcepath'] = $entitypath;
+        $this->_param['modelpath'] 	= $modelpath;
         $this->_param['mime'] 		= "";
         $this->_param['prefix'] 	= "";
         $this->_param['sufix'] 		= "";
@@ -806,6 +806,7 @@ EOD;
         $entries = $xpath->query("//tei:p[@rend]");
         foreach ($entries as $item) {
             $rend = $item->getAttribute("rend");
+
             if ( isset($this->EMotx[$rend])) {
                 continue;  // lodel style : skip !
             }
@@ -1292,7 +1293,10 @@ EOD;
                     if ($rend=$next->getAttribute('rend')) {
                         if ($rend==="author-description") {
                             $desc = $dom->createElement('affiliation');
-                            $s = $dom->createElement('s', $next->nodeValue);
+                            $s = $dom->createElement('s');
+                            foreach($entry->childNodes as $child){
+                                $s->appendChild($next->cloneNode(true));
+                            }
                             $desc->appendChild($s);
                             $author->appendChild($desc);
                             if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
@@ -1378,6 +1382,22 @@ EOD;
             // TODO : warning no date defined
             error_log("<li>? [Warning] no date defined</li>\n");
         }
+
+		# citations
+		$entries = $xpath->query("//tei:p[contains(@rend,'citation') or contains(@rend,'quotation')]");
+		foreach($entries as $entry){
+			$parent  = $entry->parentNode;
+//			$element = $dom->createElement("q", $entry->nodeValue);
+			$element = $dom->createElement("q");
+		    foreach($entry->childNodes as $child){
+		        $element->appendChild($child->cloneNode(true));
+            }
+
+			foreach($entry->attributes as $attribute){
+				$element->setAttribute($attribute->nodeName,$attribute->nodeValue);
+			}
+			$parent->replaceChild($element, $entry);
+		}
 
         # /tei/teiHeader/publicationStmt/availability [lodel:license]
         $entries=$xpath->query("//tei:p[@rend='license']");
@@ -1500,7 +1520,12 @@ EOD;
             }
             $notesstmt = $dom->createElement('notesStmt');
             $biblfull->appendChild($notesstmt);
-            $newnode = $dom->createElement('note', $entry->nodeValue);
+            $newnode = $dom->createElement('note');
+
+            foreach($entry->childNodes as $child){
+                $newnode->appendChild($child->cloneNode(true));
+            }
+
             $newnode->setAttribute('type', "bibl");
             if ($lang=$entry->getAttribute('xml:lang')) { $newnode->setAttribute('xml:lang', $lang); }
             if ($id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
@@ -2202,14 +2227,14 @@ EOD;
         $entries = $xpath->query("//@*");
         foreach ($entries as $entry) {
             switch ($entry->nodeName) {
+                case 'text:citation-style-name':
+                case 'text:citation-body-style-name':
                 case 'style:name':
                 case 'style:display-name':
                 case 'style:parent-style-name':
                 case 'style:next-style-name':
                 case 'style:master-page-name':
                 case 'text:note-class':
-                case 'text:citation-style-name':
-                case 'text:citation-body-style-name':
                 case 'text:style-name':
                 case 'table:style-name':
                     if (! preg_match("/^[TP]\d+$/", $entry->nodeValue)) {
