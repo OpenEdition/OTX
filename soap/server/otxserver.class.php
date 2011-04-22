@@ -756,22 +756,24 @@ EOD;
                         $value = "#td".$table[strlen($table)-1].$id;
                     }
                     // rend ?
+
                     if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
                         $rend = $this->automatic[$value];
                         $item->setAttribute("rend", $rend);
                     }
+
                     // rendition ?
-                    if ( isset($this->rendition[$value])) {
+                    if ( isset($this->rendition[$rend . $value])) {
                         // xml:lang ?
-                        if ($this->rendition[$value]['lang']!='') {
-                            $lang = $this->rendition[$value]['lang'];
+                        if ($this->rendition[$rend . $value]['lang']!='') {
+                            $lang = $this->rendition[$rend . $value]['lang'];
                             $item->setAttribute("xml:lang", $lang);
                         }
                         // css style
-                        if ($this->rendition[$value]['rendition']!='') {
-                            $rendition = $this->rendition[$value]['rendition'];
-                            $item->setAttribute("rendition", $value);
-                            $tagsdecl[$value] = $rendition;
+                        if ($this->rendition[$rend . $value]['rendition']!='') {
+                            $rendition = $this->rendition[$rend . $value]['rendition'];
+                            $item->setAttribute("rendition", "#$rend$value");
+                            $tagsdecl["#$rend$value"] = $rendition;
                         } else {
                             $item->removeAttribute("rendition");
                         }
@@ -849,7 +851,7 @@ EOD;
                 continue;
             }
         }
-        
+
 
         $header = $dom->getElementsByTagName('teiHeader')->item(0);
         $entries = $xpath->query("//tei:teiHeader/tei:encodingDesc");
@@ -1864,7 +1866,10 @@ EOD;
                         continue;
                     }
                 }
+
                 $bibl = $dom->createElement("bibl");
+                if($tag->hasAttribute('rendition')) $bibl->setAttribute('rendition', $tag->getAttribute('rendition'));
+
                 if ($tag->hasChildNodes()) {
                     foreach ($tag->childNodes as $child) {
                         $clone = $child->cloneNode(true);
