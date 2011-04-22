@@ -747,6 +747,7 @@ EOD;
         // $entries = $xpath->query("//tei:p[@rendition] or //tei:s[@rendition]");
         $entries = $xpath->query("//tei:*[@rendition]");
         foreach ($entries as $item) {
+            $rend = '';
             $nodename = $item->nodeName;
             if ($nodename=="p" or $nodename=="s" or $nodename=="cell") {
                 if ( $value=$item->getAttribute("rendition")) {
@@ -756,24 +757,23 @@ EOD;
                         $value = "#td".$table[strlen($table)-1].$id;
                     }
                     // rend ?
-
                     if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
                         $rend = $this->automatic[$value];
                         $item->setAttribute("rend", $rend);
                     }
 
                     // rendition ?
-                    if ( isset($this->rendition[$rend . $value])) {
+                    if ( isset($this->rendition["$rend$value"])) {
                         // xml:lang ?
-                        if ($this->rendition[$rend . $value]['lang']!='') {
+                        if ( !empty($this->rendition[$rend . $value]['lang']) ) {
                             $lang = $this->rendition[$rend . $value]['lang'];
                             $item->setAttribute("xml:lang", $lang);
                         }
                         // css style
-                        if ($this->rendition[$rend . $value]['rendition']!='') {
+                        if ( ! empty( $this->rendition[$rend . $value]['rendition'] ) ) {
                             $rendition = $this->rendition[$rend . $value]['rendition'];
-                            $item->setAttribute("rendition", "#$rend$value");
-                            $tagsdecl["#$rend$value"] = $rendition;
+                            $item->setAttribute("rendition", $rend . $value);
+                            $tagsdecl[$rend . $value] = $rendition;
                         } else {
                             $item->removeAttribute("rendition");
                         }
@@ -814,7 +814,7 @@ EOD;
             }
 
             $key = '';
-            if ($item->getAttribute("rendition")) {
+            if ($item->hasAttribute("rendition")) {
                 $key = $item->getAttribute("rendition");
             } else if ( isset($this->automatic[$rend])) {
                 $key = $this->automatic[$rend];
@@ -2323,16 +2323,17 @@ EOD;
 
         $entries = $xpath->query("//style:style");
         foreach ($entries as $item) {
-            $name = $family = $parent = '';
-            $properties=array(); $key='';
+            $key = $name = $family = $parent = '';
+            $properties = array();
+
             $attributes = $item->attributes;
             //style:family
-            if ($attrname=$attributes->getNamedItem("family")) {
+            if ($attrname = $attributes->getNamedItem("family")) {
                 $family = $attrname->nodeValue;
             }
 
             //style:name
-            if ($attrname=$attributes->getNamedItem("name")) {
+            if ($attrname = $attributes->getNamedItem("name")) {
                 $name = $attrname->nodeValue;
                 if (false !== strpos($name, "table")) {
                     $id = ''; list($table, $id) = explode(".", $name);
@@ -2345,7 +2346,8 @@ EOD;
                     }
                 }
             }
-            if ($attrparent=$attributes->getNamedItem("parent-style-name")) {
+
+            if ($attrparent = $attributes->getNamedItem("parent-style-name")) {
                 $parent = $attrparent->nodeValue;
                 if ( preg_match("/^P(\d+)$/", $name, $match) and $parent!="standard") {
                     $this->automatic["#".$name] = $parent;
@@ -2354,6 +2356,7 @@ EOD;
                     $key = $parent."#".$name;
                 }
             }
+
             if ($item->hasChildNodes()) {
                 foreach ($item->childNodes as $child) {
                     switch ($child->nodeName) {
@@ -2372,7 +2375,9 @@ EOD;
                             break;
                     }
                 }
+
                 list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
+
                 if ($lang == "") $lang = null;
                 $this->rendition[$key]['lang'] = $lang;
                 $this->rendition[$key]['rendition'] = $rendition;
