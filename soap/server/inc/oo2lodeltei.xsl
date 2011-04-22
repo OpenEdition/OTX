@@ -237,8 +237,9 @@
 		        </ab>
             </xsl:when>
             <xsl:otherwise>
-                <p rend="{$Style}">
-                <xsl:call-template name="copyxmlid"/>
+                <p>
+                    <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+                    <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:otherwise>
         </xsl:choose>
