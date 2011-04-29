@@ -1296,9 +1296,10 @@ EOD;
                         if ($rend==="author-description") {
                             $desc = $dom->createElement('affiliation');
                             $s = $dom->createElement('s');
-                            foreach($entry->childNodes as $child){
-                                $s->appendChild($next->cloneNode(true));
+                            foreach($next->childNodes as $child){
+                                $s->appendChild($child->cloneNode(true));
                             }
+                            
                             $desc->appendChild($s);
                             $author->appendChild($desc);
                             if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
