@@ -378,13 +378,14 @@ class OTXserver
         $entries = $xpath->query($query);
         foreach ($entries as $item) {
             if ($item->hasChildNodes()) {
+                $value = $otxkey = $otxvalue = "";
                 foreach ($item->childNodes as $child) {
-                    $value = $otxkey = $otxvalue = "";
                     if ($child->hasAttributes()) {
                         $attributes = $child->attributes;
                         $attribute = $attributes->getNamedItem("name");
                         $key = $attribute->value;
                         $value = $child->nodeValue;
+                        
                         switch ($key) {
                             case "style":
                                 break;
@@ -772,8 +773,10 @@ EOD;
                         // css style
                         if ( ! empty( $this->rendition[$rend . $value]['rendition'] ) ) {
                             $rendition = $this->rendition[$rend . $value]['rendition'];
+                            if(strpos( $rend, '#') !== 0 && !empty($rend)) $rend = "#$rend";
+
                             $item->setAttribute("rendition", $rend . $value);
-                            $tagsdecl[$rend . $value] = $rendition;
+                            $tagsdecl[ $rend . $value] = $rendition;
                         } else {
                             $item->removeAttribute("rendition");
                         }
@@ -787,6 +790,11 @@ EOD;
         $entries = $xpath->query("//tei:hi[@rend]");
         foreach ($entries as $item) {
             $value = $item->getAttribute("rend");
+            if($value == "footnotesymbol"){
+              $item->removeAttribute('rend');
+              continue;
+            } 
+            
             if ( isset($this->automatic[$value])) {
                 $key = $this->automatic[$value];
                 $rendition = $value.$key;
@@ -2070,7 +2078,6 @@ EOD;
                 }
                 if (! $parent->replaceChild($div, $item)) {
                     $this->_status="error replaceChild";
-                    error_log($this->_status);
                     throw new Exception($this->_status,E_ERROR);
                 }
             }
@@ -2406,12 +2413,16 @@ EOD;
 
         $entries = $xpath->query("//style:style[@style:name]");
         foreach ($entries as $item) {
-            $properties=array(); $key='';
+            $properties = array();
+            $key        = '';
+            
             $attributes = $item->attributes;
+            
             if ($attrname=$attributes->getNamedItem("name")) {
                 $name = $attrname->nodeValue;
                 $key = $name;
             }
+
             $family = '';
             if ($attrfamily=$attributes->getNamedItem("family")) {
                 $family = $attrfamily->nodeValue;
