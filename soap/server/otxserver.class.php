@@ -2344,6 +2344,7 @@ EOD;
             if ($attrname = $attributes->getNamedItem("name")) {
                 $name = $attrname->nodeValue;
                 if (false !== strpos($name, "table")) {
+
                     $id = ''; list($table, $id) = explode(".", $name);
                     $key = "#td".$table[strlen($table)-1].$id;
                     //$key = "#".$name;
@@ -2371,8 +2372,7 @@ EOD;
                         case 'style:paragraph-properties':
                         case 'style:text-properties':
                         case 'style:table-cell-properties':
-                            $childattributes = $child->attributes;
-                            foreach ($childattributes as $childattr) {
+                            foreach ($child->attributes as $childattr) {
                                 if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) { // black list
                                     $value = ''. "{$childattr->name}:{$childattr->value}";
                                     array_push($properties, $value);
@@ -2380,6 +2380,7 @@ EOD;
                             }
                             break;
                         default:
+                            error_log("Non used style : {$child->nodeName}");
                             break;
                     }
                 }
@@ -2496,7 +2497,7 @@ EOD;
 
     /** styles to css white list ! **/
     private function styles2csswhitelist(&$properties, $type="strict") {
-        $lang = ""; $rendition = "";
+        $lang = $rendition = "";
         $csswhitelist = array();
         // default : strict mode
         foreach ($properties as $prop) {
@@ -2514,6 +2515,8 @@ EOD;
                 $lang = $match[1];
                 continue;
             }
+            
+            
             switch ($prop) {
                 case 'font-style:italic':
                     // <tei:emph rend="italic"> => <xhtml:em>
@@ -2543,15 +2546,6 @@ EOD;
                 case 'writing-mode:rl-tb':
                     array_push($csswhitelist, "direction:rtl");
                     break;
-                // table no-border
-                case 'border:none';
-					$prop = "border-style:none";
-                case 'border-right:none':
-                case 'border-left:none':
-                case 'border-top:none':
-                case 'border-bottom:none':
-                    array_push($csswhitelist, $prop);
-                    break;
                 default:
                     break;
             }
@@ -2564,19 +2558,16 @@ EOD;
                 if ( preg_match("/^font-name:(.*)$/", $prop, $match)) {
                     array_push($csswhitelist, "font-family:'{$match[1]}'");
                 }
-                // table border
-                if ( preg_match("/^(border.+):.+solid\s+(#\d+)$/", $prop, $match)) {
-                    $border = $match[1].":1px solid ".$match[2];
-                    array_push($csswhitelist, $border);
-                    // TODO raw as cell !
-                    continue;
-                }
+
                 if ( preg_match("/^(color|background-color)\:/", $prop)) {
                 	array_push($csswhitelist, $prop);
                 	continue;
                 }
-                /* TODO ?
-                    line-height ?? */
+                
+                if( preg_match("/^border.*:/", $prop) ){
+                    array_push($csswhitelist, $prop);
+                }
+                
                 switch ($prop) {
                     case 'text-align:center':
                     case 'text-align:justify':
@@ -2590,6 +2581,18 @@ EOD;
                         break;
                     default:
                         break;
+                }
+            }else{
+                // table border
+                if ( preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
+                    if($match[2] == "none") {
+                        $border = "{$match[1]}:none";
+                    }else{
+                        $border = "{$match[1]}:1px solid {$match[2]}";
+                    }
+                    array_push($csswhitelist, $border);
+                    // TODO raw as cell !
+                    continue;
                 }
             }
         }
