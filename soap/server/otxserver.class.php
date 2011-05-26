@@ -2606,7 +2606,7 @@ EOD;
         $section = $surround = $key = $rend = null;
         $greedy = null; $status = true;
 
-        if ($rend=$node->getAttribute("rend")) {
+        if ( get_class($node) == "DOMDocument" && $rend = $node->getAttribute("rend")) {
             if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix-") !== false ) {
                 $section = "back";
             }
