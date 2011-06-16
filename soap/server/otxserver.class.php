@@ -918,7 +918,6 @@ EOD;
             // current
             $this->greedy($item, $current);
             if (isset($current)) {
-            	
                 if ( isset($current['surround']) ) {
                     $surround = $current['surround'];
                     switch($surround) {
@@ -2605,9 +2604,9 @@ EOD;
     private function greedy(&$node, &$greedy) {
         $section = $surround = $key = $rend = null;
         $greedy = null; $status = true;
+        if ( in_array(get_class($node), array("DOMDocument","DOMElement")) && $rend = $node->getAttribute("rend")) {
 
-        if ( get_class($node) == "DOMDocument" && $rend = $node->getAttribute("rend")) {
-            if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix-") !== false ) {
+            if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix") !== false ) {
                 $section = "back";
             }
 
