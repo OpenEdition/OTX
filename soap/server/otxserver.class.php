@@ -695,7 +695,7 @@ EOD;
         $domteifodt->encoding = "UTF-8";
         $domteifodt->resolveExternals = false;
         $domteifodt->preserveWhiteSpace = false;
-        $domteifodt->formatOutput = true;
+        $domteifodt->formatOutput = false;
         if (! $domteifodt->loadXML($teifodt)) {
             $this->_status="error load teifodt xml";
             throw new Exception($this->_status,E_ERROR);
@@ -1997,7 +1997,9 @@ EOD;
         $dom->save($this->_param['xmloutputpath']);
         $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
-        $dom->resolveExternals = false;
+        $dom->resolveExternals   = false;
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput       = false;
 /*
         $dom->validateOnParse = true;
         if (! $dom->validate()) {
@@ -2012,7 +2014,6 @@ EOD;
 */
         $otxml = $dom->saveXML();
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
-
         $dom->loadXML($otxml);
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
@@ -2501,8 +2502,17 @@ EOD;
         // default : strict mode
         foreach ($properties as $prop) {
             // xhtml:sup
-            if ( preg_match("/^text-position:super/", $prop)) {
-                array_push($csswhitelist, "vertical-align:super");
+            if ( preg_match("/^text-position:(-?\d+|super)%?/", $prop, $matches)) {
+                if(is_int((int)$matches[1])){
+                    if($matches[1] < 0)
+                        $type = "sub";
+                    else
+                        $type = "super";
+                }else{
+                    $type = $matches[1];
+                }
+
+                array_push($csswhitelist, "vertical-align:$type");
                 continue;
             }
             // xhtml:sub

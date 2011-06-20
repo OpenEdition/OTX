@@ -75,9 +75,8 @@
         doctype-system="http://www.tei-c.org/release/xml/tei/custom/schema/dtd/tei_all.dtd" 
         indent="yes"/>
  
-    <!-- <xsl:strip-space elements="text:span"/> -->
-    <xsl:preserve-space elements="*" />
-
+    <!--  <xsl:preserve-space elements="*" />-->
+    <xsl:strip-space elements="*"/>
 
     <xsl:template name="copyxmlid">
         <xsl:for-each select="@xml:id">
