@@ -28,7 +28,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-
+    <xsl:preserve-space elements="*" />
     <xsl:template match="office:text/text:p|office:text/text:h">
         <xsl:copy>
             <xsl:for-each select="@*">

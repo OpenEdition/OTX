@@ -73,10 +73,10 @@
         encoding="UTF-8" 
         omit-xml-declaration="no" 
         doctype-system="http://www.tei-c.org/release/xml/tei/custom/schema/dtd/tei_all.dtd" 
-        indent="yes"/>
+        indent="no"/>
  
-    <!--  <xsl:preserve-space elements="*" />-->
-    <xsl:strip-space elements="*"/>
+    <xsl:preserve-space elements="*" />
+    <!--  <xsl:strip-space elements="*"/>-->
 
     <xsl:template name="copyxmlid">
         <xsl:for-each select="@xml:id">

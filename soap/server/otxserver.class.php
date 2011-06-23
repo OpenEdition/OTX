@@ -230,8 +230,8 @@ class OTXserver
         $domxml->recover = true;
         $domxml->strictErrorChecking = false;
         $domxml->resolveExternals = false;
-        $domxml->preserveWhiteSpace = false;
-        $domxml->formatOutput = true;
+        $domxml->preserveWhiteSpace = true;
+        $domxml->formatOutput = false;
         if (! $domxml->load($this->_param['modelpath'])) {
             $this->_status="error load model.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -447,8 +447,8 @@ class OTXserver
         $dommeta = new DOMDocument;
         $dommeta->encoding = "UTF-8";
         $dommeta->resolveExternals = false;
-        $dommeta->preserveWhiteSpace = false;
-        $dommeta->formatOutput = true;
+        $domlodelsettings->preserveWhiteSpace = true;
+        $domlodelsettings->formatOutput = false;
         if (! $dommeta->loadXML($OOmeta)) {
             $this->_status="error load meta.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -460,8 +460,8 @@ class OTXserver
         $domlodelmeta = new DOMDocument;
         $domlodelmeta->encoding = "UTF-8";
         $domlodelmeta->resolveExternals = false;
-        $domlodelmeta->preserveWhiteSpace = false;
-        $domlodelmeta->formatOutput = true;
+        $domlodelsettings->preserveWhiteSpace = true;
+        $domlodelsettings->formatOutput = false;
         if (! $domlodelmeta->loadXML($lodelmeta)) {
             $this->_status="error load lodel-meta.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -476,8 +476,8 @@ class OTXserver
         $domsettings = new DOMDocument;
         $domsettings->encoding = "UTF-8";
         $domsettings->resolveExternals = false;
-        $domsettings->preserveWhiteSpace = false;
-        $domsettings->formatOutput = true;
+        $domlodelsettings->preserveWhiteSpace = true;
+        $domlodelsettings->formatOutput = false;
         if (! $domsettings->loadXML($OOsettings)) {
             $this->_status="error load settings.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -488,8 +488,8 @@ class OTXserver
         $domlodelsettings = new DOMDocument;
         $domlodelsettings->encoding = "UTF-8";
         $domlodelsettings->resolveExternals = false;
-        $domlodelsettings->preserveWhiteSpace = false;
-        $domlodelsettings->formatOutput = true;
+        $domlodelsettings->preserveWhiteSpace = true;
+        $domlodelsettings->formatOutput = false;
         if (! $domlodelsettings->loadXML($lodelsettings)) {
             $this->_status="error load lodel-settings.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -504,8 +504,8 @@ class OTXserver
         $domstyles = new DOMDocument;
         $domstyles->encoding = "UTF-8";
         $domstyles->resolveExternals = false;
-        $domstyles->preserveWhiteSpace = false;
-        $domstyles->formatOutput = true;
+        $domstyles->preserveWhiteSpace = true;
+        $domstyles->formatOutput = false;
         if (! $domstyles->loadXML($OOstyles)) {
             $this->_status="error load styles.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -516,8 +516,8 @@ class OTXserver
         $domlodelstyles = new DOMDocument;
         $domlodelstyles->encoding = "UTF-8";
         $domlodelstyles->resolveExternals = false;
-        $domlodelstyles->preserveWhiteSpace = false;
-        $domlodelstyles->formatOutput = true;
+        $domlodelstyles->preserveWhiteSpace = true;
+        $domlodelstyles->formatOutput = false;
         if (! $domlodelstyles->loadXML($lodelstyles)) {
             $this->_status="error load lodel-styles.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -531,27 +531,20 @@ class OTXserver
             $this->_status="error get content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $domcontent = new DOMDocument;
-        $domcontent->encoding = "UTF-8";
-        $domcontent->resolveExternals = false;
-        $domcontent->preserveWhiteSpace = false;
-        $domcontent->formatOutput = true;
-        if (! $domcontent->loadXML($OOcontent)) {
-            $this->_status="error load content.xml";
-            throw new Exception($this->_status,E_ERROR);
-        }
+
         # cleanup
         $lodelcontent = preg_replace($cleanup, "", _windobclean($OOcontent));
         # lodel
         $domlodelcontent = new DOMDocument;
         $domlodelcontent->encoding = "UTF-8";
         $domlodelcontent->resolveExternals = false;
-        $domlodelcontent->preserveWhiteSpace = false;
-        $domlodelcontent->formatOutput = true;
+        $domlodelcontent->preserveWhiteSpace = true;
+        $domlodelcontent->formatOutput = false;
         if (! $domlodelcontent->loadXML($lodelcontent)) {
             $this->_status="error load lodel-content.xml";
             throw new Exception($this->_status,E_ERROR);
         }
+
         // lodel-cleanup++
         $this->lodelcleanup($domlodelcontent);
         //
@@ -585,69 +578,74 @@ class OTXserver
         }
         $za->close();
 
-        # lodel fodt (Flat ODT)
-        $xmlfodt = <<<EOD
-<?xml version="1.0" encoding="UTF-8"?>
-<office:document 
-    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
-    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" 
-    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" 
-    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" 
-    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" 
-    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
-    xmlns:xlink="http://www.w3.org/1999/xlink" 
-    xmlns:dc="http://purl.org/dc/elements/1.1/" 
-    xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" 
-    xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" 
-    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" 
-    xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" 
-    xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" 
-    xmlns:math="http://www.w3.org/1998/Math/MathML" 
-    xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" 
-    xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" 
-    xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0" 
-    xmlns:ooo="http://openoffice.org/2004/office" 
-    xmlns:ooow="http://openoffice.org/2004/writer" 
-    xmlns:oooc="http://openoffice.org/2004/calc" 
-    xmlns:dom="http://www.w3.org/2001/xml-events" 
-    xmlns:xforms="http://www.w3.org/2002/xforms" 
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xmlns:field="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:field:1.0" 
-    office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
-EOD;
-        // fodt:meta
-        $xmlmeta = explode("\n", $domlodelmeta->saveXML());
-        array_shift($xmlmeta); array_shift($xmlmeta);
-        array_pop($xmlmeta); array_pop($xmlmeta);
-        // fodt:settings
-        $xmlsetttings = explode("\n", $domlodelsettings->saveXML());
-        array_shift($xmlsetttings); array_shift($xmlsetttings);
-        array_pop($xmlsetttings); array_pop($xmlsetttings);
-        // fodt:styles
-        $xmlstyles = explode("\n", $domlodelstyles->saveXML());
-        array_shift($xmlstyles); array_shift($xmlstyles);
-        array_pop($xmlstyles); array_pop($xmlstyles);
-        $fodtstyles = preg_replace("/<office:automatic-styles.+?office:automatic-styles>/s", "", implode("\n", $xmlstyles));
-        // fodt:content
-        $xmlcontent = explode("\n", $domlodelcontent->saveXML());
-        array_shift($xmlcontent); array_shift($xmlcontent);
-        array_pop($xmlcontent); array_pop($xmlcontent);
-        $fodtcontent = preg_replace("/<office:font-face-decls.*?office:font-face-decls>/s", "", implode("\n", $xmlcontent));
-        // fodt
-        $xmlfodt .= implode("\n", $xmlmeta) ."\n";
-        $xmlfodt .= implode("\n", $xmlsetttings) ."\n";
-        $xmlfodt .= $fodtstyles ."\n";
-        $xmlfodt .= $fodtcontent ."\n";
-        $xmlfodt .= "</office:document>";
-        $this->_param['xmlLodelODT'] = $xmlfodt;
+        $newdom = new DOMDocument('1.0', 'UTF-8');
+        $newdom->loadXML('<office:document
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+    xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0"
+    xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0"
+    xmlns:math="http://www.w3.org/1998/Math/MathML"
+    xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0"
+    xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0"
+    xmlns:config="urn:oasis:names:tc:opendocument:xmlns:config:1.0"
+    xmlns:ooo="http://openoffice.org/2004/office"
+    xmlns:ooow="http://openoffice.org/2004/writer"
+    xmlns:oooc="http://openoffice.org/2004/calc"
+    xmlns:dom="http://www.w3.org/2001/xml-events"
+    xmlns:xforms="http://www.w3.org/2002/xforms"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:field="urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:field:1.0"
+    office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text"></office:document>');
+
+        function insertNodesFromXpaths($xpaths, $sourcenode, &$destnode, &$destdoc){
+            $xpath = new DOMXpath($sourcenode);
+            foreach($xpaths as $path){
+                $item = $xpath->query($path)->item(0);
+                if(isset($item)){
+                    $node = $destdoc->importNode($item->cloneNode(true),true);
+                    $destnode->appendChild($node);
+                }
+            }
+        }
+
+        $newdomdocument = $newdom->getElementsByTagName('document')->item(0);
+        insertNodesFromXpaths(array(
+                                    '/office:document-content/office:body',
+                                    '/office:document-content/office:automatic-styles'
+                                    ),
+                             $domlodelcontent,
+                             $newdomdocument,
+                             $newdom
+                            );
+
+        insertNodesFromXpaths(array('/office:document-meta/office:meta'), $domlodelmeta, $newdomdocument, $newdom);
+        insertNodesFromXpaths(array('/office:document-settings/office:settings'), $domlodelsettings, $newdomdocument, $newdom);
+        insertNodesFromXpaths(array(
+                                    '/office:document-styles/office:master-styles',
+                                    '/office:document-styles/office:styles',
+                                    '/office:document-styles/office:font-face-decls',
+                                    ), $domlodelstyles, $newdomdocument, $newdom);
+
+
+        $this->_param['xmlLodelODT'] = $newdom->saveXML();
+
         // fodt xml
         $domfodt = new DOMDocument;
         $domfodt->encoding = "UTF-8";
         $domfodt->resolveExternals = false;
-        $domfodt->preserveWhiteSpace = false;
-        $domfodt->formatOutput = true;
-        if (! @$domfodt->loadXML($xmlfodt)) {
+        $domfodt->preserveWhiteSpace = true;
+        $domfodt->formatOutput = false;
+        if (! @$domfodt->loadXML($this->_param['xmlLodelODT'])) {
             $this->_status="error load fodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
@@ -669,12 +667,13 @@ EOD;
         $domidfodt = new DOMDocument;
         $domidfodt->encoding = "UTF-8";
         $domidfodt->resolveExternals = false;
-        $domidfodt->preserveWhiteSpace = false;
-        $domidfodt->formatOutput = true;
+        $domidfodt->preserveWhiteSpace = true;
+        $domidfodt->formatOutput = false;
         if (! $domidfodt->loadXML($idfodt)) {
             $this->_status="error load idfodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
+
         $domidfodt->normalizeDocument();
 
         # oo to lodeltei xslt [oo2lodeltei.xsl]
@@ -694,12 +693,13 @@ EOD;
         $domteifodt = new DOMDocument;
         $domteifodt->encoding = "UTF-8";
         $domteifodt->resolveExternals = false;
-        $domteifodt->preserveWhiteSpace = false;
+        $domteifodt->preserveWhiteSpace = true;
         $domteifodt->formatOutput = false;
         if (! $domteifodt->loadXML($teifodt)) {
             $this->_status="error load teifodt xml";
             throw new Exception($this->_status,E_ERROR);
         }
+
         $domteifodt->normalizeDocument();
 
         $this->dom['teifodt'] = $domteifodt;
@@ -1036,8 +1036,8 @@ EOD;
 
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = true;
+        $dom->preserveWhiteSpace = true;
+        $dom->formatOutput = false;
         $dom->loadXML($lodeltei);
         $dom->normalizeDocument();
         $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
@@ -1143,8 +1143,8 @@ EOD;
         $dom = new DOMDocument;
         $dom->encoding = "UTF-8";
         $dom->resolveExternals = false;
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = true;
+        $dom->preserveWhiteSpace = true;
+        $dom->formatOutput = false;
         if (! $dom->loadXML($this->_param['lodelTEI'])) {
             $this->_status="error load lodel.tei.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -1998,20 +1998,9 @@ EOD;
         $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
         $dom->resolveExternals   = false;
-        $dom->preserveWhiteSpace = false;
+        $dom->preserveWhiteSpace = true;
         $dom->formatOutput       = false;
-/*
-        $dom->validateOnParse = true;
-        if (! $dom->validate()) {
-            $this->_status = "Warning: OTX TEI-P5 is not valid !";
-            array_push($this->log['warning'], $this->_status);
-            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        } else {
-            $this->_status = "OTX TEI-P5 is valid.";
-            error_log("<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        }
-        $this->log['status']['otxtei'] = $this->_status;
-*/
+
         $otxml = $dom->saveXML();
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
         $dom->loadXML($otxml);
@@ -2873,8 +2862,8 @@ EOD;
                 $dommeta = new DOMDocument;
                 $dommeta->encoding = "UTF-8";
                 $dommeta->resolveExternals = false;
-                $dommeta->preserveWhiteSpace = false;
-                $dommeta->formatOutput = true;
+                $dommeta->preserveWhiteSpace = true;
+                $dommeta->formatOutput = false;
                 if (! $dommeta->loadXML($meta)) {
                     $this->_status="error load meta.xml";
                     throw new Exception($this->_status,E_ERROR);
