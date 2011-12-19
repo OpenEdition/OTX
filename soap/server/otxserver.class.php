@@ -149,16 +149,16 @@ class OTXserver
     public function run() {
         $suffix = "odt";
         if (false !== strpos($this->_param['mode'], ":")) {
-            list($action, $tmp, $tmp2) = explode(":", $this->_param['mode']);
-            switch($action) {
+            $action = explode(":", $this->_param['mode']);
+            switch($action[0]) {
                 case 'soffice':
-                    $suffix = $tmp;
+                    $suffix = $action[1];
                     break;
                 case 'lodel':
-                    $this->_param['type'] = $tmp;
+                    $this->_param['type'] = $action[1];
                     break;
 		        case 'plugin':
-		            $this->_param['type'] = $tmp2;
+		            $this->_param['type'] = $action[2];
 		            break;
             }
         }
@@ -170,9 +170,9 @@ class OTXserver
         if ($action !== "hello") {
             $this->params();
         }
-        $this->_status = "todo: $action";
+        $this->_status = "todo: {$action[0]}";
 
-        switch ($action) {
+        switch ($action[0]) {
             case 'soffice':
                 $this->soffice($suffix);
                 $this->output['contentpath'] = $this->_param['outputpath'];
@@ -191,15 +191,14 @@ class OTXserver
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
                 $this->loodxml2xml();
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
-                $jsonreport = json_encode($this->report);
-                $this->output['report'] = $jsonreport;
+                $this->output['report'] = json_encode($this->report);
                 break;
             case 'partners':
             case 'cairn':
                 $this->_status = "todo: partners/cairn";
                 break;
             case 'plugin':
-                $this->plugin($tmp);
+                $this->plugin($action[1]);
                 break;
             case 'hello':
                 $this->hello();
@@ -447,8 +446,8 @@ class OTXserver
         $dommeta = new DOMDocument;
         $dommeta->encoding = "UTF-8";
         $dommeta->resolveExternals = false;
-        $domlodelsettings->preserveWhiteSpace = true;
-        $domlodelsettings->formatOutput = false;
+        $dommeta->preserveWhiteSpace = true;
+        $dommeta->formatOutput = false;
         if (! $dommeta->loadXML($OOmeta)) {
             $this->_status="error load meta.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -460,8 +459,8 @@ class OTXserver
         $domlodelmeta = new DOMDocument;
         $domlodelmeta->encoding = "UTF-8";
         $domlodelmeta->resolveExternals = false;
-        $domlodelsettings->preserveWhiteSpace = true;
-        $domlodelsettings->formatOutput = false;
+        $domlodelmeta->preserveWhiteSpace = true;
+        $domlodelmeta->formatOutput = false;
         if (! $domlodelmeta->loadXML($lodelmeta)) {
             $this->_status="error load lodel-meta.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -476,8 +475,8 @@ class OTXserver
         $domsettings = new DOMDocument;
         $domsettings->encoding = "UTF-8";
         $domsettings->resolveExternals = false;
-        $domlodelsettings->preserveWhiteSpace = true;
-        $domlodelsettings->formatOutput = false;
+        $domsettings->preserveWhiteSpace = true;
+        $domsettings->formatOutput = false;
         if (! $domsettings->loadXML($OOsettings)) {
             $this->_status="error load settings.xml";
             throw new Exception($this->_status,E_ERROR);
@@ -915,18 +914,16 @@ class OTXserver
         $section = $newsection = "";
         $newbacksection = $backsection = "";
         foreach ($entries as $item) {
-
             // current
             $this->greedy($item, $current);
-
             if (isset($current)) {
                 if ( isset($current['surround']) ) {
                     $surround = $current['surround'];
                     switch($surround) {
                         case "-*":
                             // prev
-                            $prev = $item;
-                            $prev = $prev->previousSibling;
+                            if(!isset($prev)) $prev = $item->previousSibling;
+
                             if ($prev)
                                 $this->greedy($prev, $previtem);
 
@@ -1025,10 +1022,10 @@ class OTXserver
             if ($backsection and $backsection!=$current['rend']) {
                 $item->setAttribute('rend', "$backsection-{$current['rend']}");
             }
-
+            $prev = $item;
             if(isset($div)) $div->appendChild($item);
         }
-
+        
         # <hi> cleanup (tag hi with no attribute)
         $this->hicleanup($dom, $xpath); // <hi> to <nop> ...
         $search = array("<nop>", "</nop>");
@@ -1144,6 +1141,7 @@ class OTXserver
             $this->_status="error load lodel.tei.xml";
             throw new Exception($this->_status,E_ERROR);
         }
+        
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('tei', 'http://www.tei-c.org/ns/1.0');
         # /tei/teiHeader
@@ -1828,35 +1826,37 @@ class OTXserver
         # Bibliography
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
         if ($entries->length) {
-
-            $lodel = $entries->item(0);
-            $parent = $lodel->parentNode;
             $bibliography = $dom->createElement("div");
             $bibliography->setAttribute('type', "bibliography");
             $back->appendChild($bibliography);
             $listbibl = $dom->createElement("listBibl");
             $bibliography->appendChild($listbibl);
-            $tags = $lodel->childNodes;
-            foreach ($tags as $tag) {
-                if ( preg_match("/^bibliograph.+\-(.+)/", $tag->getAttribute("rend"), $matches)) {
-                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                        $bibl = $dom->createElement("bibl");
-                        $this->copyNode($tag, $bibl);
-                        $bibl->setAttribute('type', "head");
-                        $bibl->setAttribute('subtype', "level".$match[1]);
-                        $listbibl->appendChild($bibl);
-                        continue;
+            foreach($entries as $entry){
+                foreach ($entry->childNodes as $tag) {
+                    if ( preg_match("/^bibliograph.+\-(.+)/", $tag->getAttribute("rend"), $matches)) {
+                        if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                            $bibl = $dom->createElement("bibl");
+                            $this->copyNode($tag, $bibl);
+                            $bibl->setAttribute('type', "head");
+                            $bibl->setAttribute('subtype', "level".$match[1]);
+                            $listbibl->appendChild($bibl);
+                            continue;
+                        }
                     }
+                    
+                    $bibl = $dom->createElement("bibl");
+                    if($tag->hasAttribute('rendition')) $bibl->setAttribute('rendition', $tag->getAttribute('rendition'));
+
+                    if($tag->nodeName == "list"){
+                        $bibl->appendChild(clone($tag));
+                    }else{
+                        $this->copyNode($tag, $bibl);
+                    }
+                   	$listbibl->appendChild($bibl);
                 }
 
-                $bibl = $dom->createElement("bibl");
-                if($tag->hasAttribute('rendition')) $bibl->setAttribute('rendition', $tag->getAttribute('rendition'));
-
-               	$this->copyNode($tag, $bibl);
-
-               	$listbibl->appendChild($bibl);
+                $entry->parentNode->removeChild($entry);
             }
-            $parent->removeChild($lodel);
         }
 
         # Appendix
@@ -1867,19 +1867,20 @@ class OTXserver
             $appendix = $dom->createElement("div");
             $appendix->setAttribute('type', "appendix");
             $back->appendChild($appendix);
-            $tags = $lodel->childNodes;
-            foreach ($tags as $tag) {
-                $clone = $tag->cloneNode(true);
-                if ( preg_match("/^appendix-(.+)$/", $clone->getAttribute("rend"), $matches)) {
-                    if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                        $clone->setAttribute('type', "head");
-                        $clone->setAttribute('subtype', "level".$match[1]);
-                        $clone->setAttribute('rend', "appendix");
+            foreach($entries as $entry){
+                foreach ($entry->childNodes as $tag) {
+                    $clone = $tag->cloneNode(true);
+                    if ( preg_match("/^appendix-(.+)$/", $clone->getAttribute("rend"), $matches)) {
+                        if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                            $clone->setAttribute('type', "head");
+                            $clone->setAttribute('subtype', "level".$match[1]);
+                            $clone->setAttribute('rend', "appendix");
+                        }
                     }
+                    $appendix->appendChild($clone);
                 }
-                $appendix->appendChild($clone);
+                $parent->removeChild($entry);
             }
-            $parent->removeChild($lodel);
         }
 
         // clean Lodel sections
@@ -1906,6 +1907,7 @@ class OTXserver
                 array_push($this->log['warning'], $this->_status);
             }
         }
+
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
         if ($entries->length) {
             $lodelappdx = $entries->item(0);
@@ -2563,8 +2565,8 @@ class OTXserver
     private function greedy(&$node, &$greedy) {
         $section = $surround = $key = $rend = null;
         $greedy = null; $status = true;
-
-        if ( in_array(get_class($node), array("DOMDocument","DOMElement")) && $rend = $node->getAttribute("rend")) {
+        $rend = $node->getAttribute("rend");
+        if ( in_array(get_class($node), array("DOMDocument","DOMElement"))) {
 
             if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix") !== false ) {
                 $section = "back";
@@ -2573,7 +2575,7 @@ class OTXserver
             if ( isset($this->EMotx[$rend]['surround'])) {
                 $surround = $this->EMotx[$rend]['surround'];
             }
-            elseif ($node->nodeName=="ab") { 
+            elseif (in_array($node->nodeName, array("ab", "list"))) { 
                 $surround = "*-"; // heading > 6 !
             }
 
@@ -2604,9 +2606,9 @@ class OTXserver
             }
 
         }
-        else {
+        
+        if (empty($section)) {
             $section = "body"; // heading > 6 !
-            return $status;
         }
 
         $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
