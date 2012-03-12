@@ -17,7 +17,6 @@ set_time_limit(3600);
 */
 ini_set("session.auto_start", 0);
 
-include_once('otxconfig.inc.php');
 include_once('soap/otx.soapserver.inc.php');
 require_once('otx.class.php');
 require_once('soap/otx.soapserver.class.php');
