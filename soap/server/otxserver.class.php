@@ -1295,6 +1295,7 @@ class OTXserver
                                                     break;
                                                 case 'function':
                                                     $element = $dom->createElement('roleName');
+                                                    $element->setAttribute('type', "function");
                                                     $s = $dom->createElement('s', $child->nodeValue);
                                                     $element->appendChild($s);
                                                     $author->appendChild($element);
