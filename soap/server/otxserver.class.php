@@ -1160,6 +1160,7 @@ class OTXserver
             $new->setAttribute('type', "sup");
             if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
             if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
+            if ($rendition=$entry->getAttribute('rendition')) { $new->setAttribute('rendition', $rendition); }
 
             $this->copyNode($entry, $new);
 
@@ -1176,6 +1177,7 @@ class OTXserver
                 $new->setAttribute('type', "main");
                 if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
                 if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
+                if ($rendition=$entry->getAttribute('rendition')) { $new->setAttribute('rendition', $rendition); }
 
                 $this->copyNode($entry, $new);
 
@@ -1199,6 +1201,7 @@ class OTXserver
                 $new->setAttribute('type', "sub");
                 if ( $lang=$entry->getAttribute('xml:lang')) { $new->setAttribute('xml:lang', $lang); }
                 if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
+                if ($rendition=$entry->getAttribute('rendition')) { $new->setAttribute('rendition', $rendition); }
 
                 $this->copyNode($entry, $new);
 
@@ -1216,6 +1219,7 @@ class OTXserver
             list($alter, $lang) = explode("-", $rend);
             $new->setAttribute('xml:lang', $lang);
             if ($id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id);}
+            if ($rendition=$entry->getAttribute('rendition')) { $new->setAttribute('rendition', $rendition); }
 
             $this->copyNode($entry, $new);
 
@@ -1259,6 +1263,7 @@ class OTXserver
                 $titlestmt->appendChild($author);
                 $name = $dom->createElement('name', $item);
                 if ($lang=$entry->getAttribute('xml:lang')) { $name->setAttribute('xml:lang', $lang); }
+                if ($rendition=$entry->getAttribute('rendition')) { $name->setAttribute('rendition', $rendition); }
                 if ($id=$entry->getAttribute('xml:id')) { 
                     if ($uid) $id .= ".".$uid++;
                     $name->setAttribute('xml:id', $id); 
@@ -1280,6 +1285,7 @@ class OTXserver
                             $author->appendChild($desc);
                             if ($lang=$next->getAttribute('xml:lang')) { $desc->setAttribute('xml:lang', $lang); }
                             if ($id=$next->getAttribute('xml:id')) { $desc->setAttribute('xml:id', $id); }
+                            if ( $rendition=$next->getAttribute('rendition')) { $desc->setAttribute('rendition', $rendition); }
 
                             if ($next->hasChildNodes()) {
                                 foreach ($next->childNodes as $child) {
