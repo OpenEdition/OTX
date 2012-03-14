@@ -2334,6 +2334,8 @@ class OTXserver
                                 if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) { // black list
                                     $value = ''. "{$childattr->name}:{$childattr->value}";
                                     array_push($properties, $value);
+                                } else if ($childattr->name == 'language-complex') {
+                                    array_push($properties,"language:{$childattr->value}");
                                 }
                             }
                             break;
