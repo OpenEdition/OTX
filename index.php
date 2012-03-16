@@ -23,11 +23,10 @@ require_once('soap/otx.soapserver.class.php');
 require_once('OTXConfig.class.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
     if (! otx_auth()) {
         header('WWW-Authenticate: Basic realm="OTX Realm"');
         header('HTTP/1.0 401 Unauthorized');
-    exit(1);
+        exit(1);
     }
 
     // for persistent session
@@ -42,12 +41,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $options['trace'] = TRUE;
         $options['soap_version'] = SOAP_1_2;
         $options['exceptions'] = TRUE;
-        $options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
+        //$options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
         $options['encoding'] = SOAP_LITERAL;
         // service
         $SoapServer = new SoapServer($config->wsdl, $options);
         $SoapServer->setClass('OTXSoapServer');
-        // 
+
         $SoapServer->setPersistence(SOAP_PERSISTENCE_SESSION);
         $SoapServer->handle();
     } 
