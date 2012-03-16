@@ -65,39 +65,6 @@ class OTXSoapServer
     **/
     public final function otxAuth($input)
     {
-/*
-	if ($this->_isLogged) {
-            // simple check
-            return ($input->password === $this->_user['passwd'] ? $this->otxAuthResponse(true) : $this->otxAuthResponse(false));
-	}
-
-	if (is_null($this->_db)) {
-	   $this->_db = new MySQLi('localhost', 'servoo', 'servoo', 'servoo');
-	   if($this->_db->connect_error)
-	       return $this->otxAuthResponse(false);
-	}
-
-	if ($stmt = $this->_db->Prepare('SELECT id, passwd FROM users WHERE username=? AND status>0 LIMIT 1')) {
-           $user = array();
-	   $stmt->bind_param('s', $input->login);
-	   $stmt->bind_result($id, $passwd);
-
-           if (!$stmt->execute())
-	       return $this->otxAuthResponse(false);
-	   $stmt->fetch();
-	}
-	else {
-            return $this->otxAuthResponse(false);
-        }
-
-	if (!$id) {
-            return $this->otxAuthResponse(false);
-        }
-
-	if (($this->_passwd = md5($passwd.$this->_sessionToken)) !== $input->password) {
-            return $this->otxAuthResponse(false);
-        }
-*/
         $this->_user['login'] 		= $input->login;
 		$this->_user['lodel_user'] 	= $input->lodel_user;
 		$this->_user['lodel_site'] 	= $input->lodel_site;
@@ -120,7 +87,7 @@ class OTXSoapServer
 	            $this->_isLogged = false;
 		}
         else {
-            error_log(date("Y-m-d H:i:s")." authentication TRUE (id={$this->_user['login']})\n");
+            error_log("authentication TRUE (id={$this->_user['login']})\n");
         }
 
 		return new SoapVar( array('AuthStatus'=>$result), SOAP_ENC_OBJECT);
@@ -146,7 +113,7 @@ class OTXSoapServer
         $tmppath 				= $this->_config->cachepath . "/tmp/";
 		$this->schemapath 		= $tmppath . uniqid("schema");
 		$this->attachmentpath	= $tmppath . uniqid("attachment");
-
+        error_log('otxRequest: ' . $input->mode);
         // XML schema (lodel EM)
         if ($input->schema != '') {
             if (! file_put_contents($this->schemapath, $input->schema)) {
