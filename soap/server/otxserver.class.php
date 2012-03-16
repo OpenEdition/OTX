@@ -917,6 +917,7 @@ class OTXserver
             // current
             $this->greedy($item, $current);
             if (isset($current)) {
+
                 if ( isset($current['surround']) ) {
                     $surround = $current['surround'];
                     switch($surround) {
@@ -946,7 +947,8 @@ class OTXserver
                         		$next = $next->nextSibling;
 	                            if ($next)
 	                                $this->greedy($next, $nextitem);
-                        	}while( strpos($nextitem['rend'], 'heading') !== false );
+	                            error_log($nextitem['rend']);
+                        	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
 
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
@@ -1062,19 +1064,7 @@ class OTXserver
             }
         }
         $this->report['warning'] = $mandatory;
-/*
-        $dom->resolveExternals = false;
-        //$dom->validateOnParse = true;
-        if (! $dom->validate()) {
-            $this->_status = "Warning: Lodel TEI-Lite is not valid !";
-            array_push($this->log['warning'], $this->_status);
-            error_log("\n<li>? {$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        } else {
-            $this->_status = "Lodel TEI-Lite is valid.";
-            error_log("\n<li>{$this->_status}</li>\n",3,self::_DEBUGFILE_);
-        }
-        $this->log['status']['lodeltei'] = $this->_status;
-*/
+
         $this->_param['lodelTEI'] = "". $dom->saveXML();
         return true;
     }
@@ -2585,7 +2575,9 @@ class OTXserver
                 $surround = $this->EMotx[$rend]['surround'];
             }
             elseif (in_array($node->nodeName, array("ab", "list"))) { 
-                $surround = "*-"; // heading > 6 !
+                $surround = "-*";
+            }elseif(in_array($node->nodeName, array("table"))) {
+                $surround = "*-";
             }
 
             if ($surround=="*-" or $surround=="-*") {
