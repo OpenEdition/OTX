@@ -749,7 +749,7 @@ class OTXserver
         foreach ($entries as $item) {
             $rend = '';
             $nodename = $item->nodeName;
-            if ($nodename=="p" or $nodename=="s" or $nodename=="cell") {
+            if ($nodename=="p" or $nodename=="s" or $nodename=="cell" or $nodename=="ab") {
                 if ( $value=$item->getAttribute("rendition")) {
                     if ($nodename=="cell") {
                         $name = $value;
@@ -2006,8 +2006,9 @@ class OTXserver
                 $div->setAttribute("type", "div$level");
                 $head = $dom->createElement("head");
                 $head->setAttribute("subtype", "level$level");
-                if ($id=$item->getAttribute('xml:id')) {
-                    $head->setAttribute('xml:id', $id);
+                foreach (array('xml:id','rendition') as $attribut) {
+                    if ($valeur = $item->getAttribute($attribut))
+                        $head->setAttribute($attribut, $valeur);
                 }
                 $this->copyNode($item, $head);
 

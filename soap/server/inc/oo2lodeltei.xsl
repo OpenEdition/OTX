@@ -272,7 +272,11 @@
         <xsl:variable name="heading">
             <xsl:value-of select="concat('heading',@text:outline-level)"/>
         </xsl:variable>
+        <xsl:variable name="Style">
+            <xsl:value-of select="@text:style-name"/>
+        </xsl:variable>
         <ab type="head" rend="{$heading}">
+	          <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$Style)"/></xsl:attribute>
             <xsl:call-template name="copyxmlid"/>
         </ab>
     </xsl:template>
