@@ -749,9 +749,9 @@ class OTXserver
         foreach ($entries as $item) {
             $rend = '';
             $nodename = $item->nodeName;
-            if ($nodename=="p" or $nodename=="s" or $nodename=="cell" or $nodename=="ab") {
+            if ($nodename=="p" or $nodename=="s" or $nodename=="cell" or $nodename=="ab" or $nodename=="table") {
                 if ( $value=$item->getAttribute("rendition")) {
-                    if ($nodename=="cell") {
+                    if ($nodename=="cell" or $nodename=="table") {
                         $name = $value;
                         $id = ''; list($table, $id) = explode(".", $name);
                         $value = "#td".$table[strlen($table)-1].$id;
@@ -2323,6 +2323,7 @@ class OTXserver
                     switch ($child->nodeName) {
                         case 'style:paragraph-properties':
                         case 'style:text-properties':
+                        case 'style:table-properties':
                         case 'style:table-cell-properties':
                             foreach ($child->attributes as $childattr) {
                                 if (! (strstr($childattr->name, '-asian') or strstr($childattr->name, '-complex'))) { // black list

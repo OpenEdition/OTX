@@ -383,6 +383,11 @@
     <!-- tables -->
     <xsl:template match="table:table">
         <table rend="frame">
+        <xsl:if test="@table:style-name">
+            <xsl:attribute name="rendition">
+            <xsl:value-of select="@table:style-name"/>
+            </xsl:attribute>
+        </xsl:if>
         <xsl:if test="@table:name and not(@table:name='local-table')">
             <xsl:attribute name="xml:id">
                 <xsl:value-of select="@table:name"/>
