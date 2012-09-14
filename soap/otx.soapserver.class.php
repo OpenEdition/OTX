@@ -114,7 +114,7 @@ class OTXSoapServer
 	$this->schemapath 		= $tmppath . uniqid("schema");
 	$this->attachmentpath		= $tmppath . uniqid("attachment");
 
-	mkdir($tmppath, 0755, true);
+	if(!file_exists($tmppath)) mkdir($tmppath, 0755, true);
         error_log('otxRequest: ' . $input->mode);
         // XML schema (lodel EM)
         if ($input->schema != '') {
