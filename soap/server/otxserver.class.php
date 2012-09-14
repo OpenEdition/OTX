@@ -2248,8 +2248,6 @@ class OTXserver
                                 $this->_status="error rename files in ziparchive ($currentname => $newname)";
                                 throw new Exception($this->_status,E_ERROR);
                             }
-                        } else {
-                            $imgindex = $this->LodelImg[$imgname.$imgext];
                         }
 
                         $attribute->nodeValue = $newname;
