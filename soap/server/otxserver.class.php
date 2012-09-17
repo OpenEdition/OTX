@@ -58,8 +58,8 @@ class OTXserver
 
     /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
-    	$this->_config = OTXConfig::singleton();
-    	
+        $this->_config = OTXConfig::singleton();
+
         $this->input['request'] 	= $request;
         $this->input['mode'] 		= $mode;
         $this->input['modelpath'] 	= $modelpath;
@@ -843,8 +843,9 @@ class OTXserver
             }
         }
 
-        $this->tagsDecl = $tagsdecl;
-        foreach ($tagsdecl as $key=>$value) {
+        
+        $this->tagsDecl = array_merge($this->tagsDecl ,$tagsdecl);
+        foreach ($this->tagsDecl as $key=>$value) {
             if ( preg_match("/^#P(\d+)$/", $key, $match)) {
                 $Pdecl[$match[1]] = $value;
                 continue;
@@ -895,7 +896,7 @@ class OTXserver
    		
 	   	if(isset($decl)){
         	ksort($decl);
-   		
+
 	        foreach ($decl as $key=>$value) {
 	            $newnode = $dom->createElement("rendition", $value);
 	            $rendition = $tagsDecl->appendChild($newnode);
@@ -1078,6 +1079,11 @@ class OTXserver
 		if(isset($rendition['levels']))
 			$list->setAttribute('type', $rendition['levels'][$level]);
 
+		if(isset($rendition['type'][$level]) && !empty($rendition['type'][$level])){
+		    $this->tagsDecl[$rendname] = "list-style-type: {$rendition['type'][$level]};";
+		    $list->setAttribute('rend', $rendname);
+		}
+
 		/* Items parsing */
 		foreach($list->childNodes as $childitem){
 			$newlevel = $level + 1;
@@ -1087,10 +1093,9 @@ class OTXserver
 				if($childlist->nodeName == "list")
 					$this->liststyles($childlist, $newlevel, $rendition);
 			}
-			
 		}
 		
-		$list->removeAttribute('rendition');
+		//$list->removeAttribute('rendition');
 		
 	}
 
@@ -2276,6 +2281,11 @@ class OTXserver
        			$level = $style->getAttribute('text:level');
        			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
        			$this->rendition[$listkey]['levels'][$level] = $order;
+       			
+       			if($order == "ordered"){
+       				$type  = $style->hasAttribute("style:num-format") ? $style->getAttribute('style:num-format') : "1" ;
+       				$this->rendition[$listkey]['type'][$level] = $this->get_list_order_style($type);
+       			}
        		}
         }
 
@@ -2350,6 +2360,23 @@ class OTXserver
         return true;
     }
 
+    private function get_list_order_style( $style ){
+        $styles = array(
+                ""  => "none",
+                "1" => "decimal",
+                "i" => "lower-roman",
+                "I" => "upper-roman",
+                "a" => "lower-alpha",
+                "A" => "upper-alpha",
+        );
+
+        if(isset($styles[$style])){
+            return $styles[$style];
+        }else{
+            return "1";
+        }
+    }
+
     private function oostyles(&$dom) {
         $xpath = new DOMXPath($dom);
 
@@ -2362,6 +2389,11 @@ class OTXserver
        			$level = $style->getAttribute('text:level');
        			$order = ($style->nodeName == "text:list-level-style-number") ? "ordered" : "unordered";
        			$this->rendition[$listkey]['levels'][$level] = $order;
+       			
+       			if($order == "ordered"){
+           			$type  = $style->hasAttribute("style:num-format") ? $style->getAttribute('style:num-format') : "1" ;
+           			$this->rendition[$listkey]['type'][$level] = $this->get_list_order_style($type);
+       			}
        		}
         }
 
