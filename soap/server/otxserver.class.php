@@ -1080,8 +1080,8 @@ class OTXserver
 			$list->setAttribute('type', $rendition['levels'][$level]);
 
 		if(isset($rendition['type'][$level]) && !empty($rendition['type'][$level])){
-		    $this->tagsDecl[$rendname] = "list-style-type: {$rendition['type'][$level]};";
-		    $list->setAttribute('rend', $rendname);
+            $this->tagsDecl[$rendname] = "list-style-type: {$rendition['type'][$level]};";
+            $list->setAttribute('rend', $rendname);
 		}
 
 		/* Items parsing */
@@ -2373,7 +2373,7 @@ class OTXserver
         if(isset($styles[$style])){
             return $styles[$style];
         }else{
-            return "1";
+            return "decimal";
         }
     }
 
