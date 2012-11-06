@@ -54,6 +54,8 @@ class OTXserver
     private $_db; 		// adodb instance
     private $_config;
     
+    private $_keywords = array();
+    
     private $_usedfiles = array();
 
     /** A private constructor; prevents direct creation of object (singleton because) **/
@@ -222,8 +224,8 @@ class OTXserver
  * dynamic mapping of Lodel EM
 **/
     protected function Schema2OO() {
-        $this->EMTEI = _em2tei();
 
+        $this->EMTEI = _em2tei();
         $domxml = new DOMDocument;
         $domxml->encoding = "UTF-8";
         $domxml->recover = true;
@@ -243,9 +245,124 @@ class OTXserver
             throw new Exception($this->_status,E_USER_ERROR);
         }
 
+        $domxpath = new DOMXPath($domxml);
+
         $Model = array();
         $OOTX = array();
         $nbEmStyle = $nbOtxStyle = 0;
+
+        foreach($domxpath->query('//row') as $node){
+            $value = $keys = $g_otx = $lang = '';
+            $row      = array();
+            $otxvalue = null;
+            $bstyle   = false;
+            foreach($domxpath->query('./col', $node) as $col){
+                if($col->hasAttribute('name')){
+                    $attr = $col->getAttribute('name');
+                    switch($attr){
+                        case "classtype":
+                            $row['classtype'] = $col->nodeValue;
+                            break;
+                        case "type":
+                            if($col->nodeValue == "entries"){
+                                $entrytype = $domxpath->query("//row[col[@name='type' and text() = '{$row['name']}']]")->item(0);
+                                if($entrytype){
+                                    $lang   = $domxpath->query("./col[@name='lang']",$entrytype)->item(0);
+                                    $styles = $domxpath->query("./col[@name='style']",$entrytype)->item(0);
+                                    $xpath  = $domxpath->query("./col[@name='otx']",$entrytype)->item(0);
+                                    $styles = preg_split("/[ ,]+/", $styles->nodeValue);
+                                    
+                                    $this->_keywords[$row['name']] = array(
+                                                                        "lang"   => $lang->nodeValue,
+                                                                        "scheme"  => $this->parse_scheme($xpath->nodeValue, $row['name']),
+                                                                        "styles" => $styles,
+                                                                    );
+                                }
+                            }
+                            break;
+                        case "name":
+                            if (! isset($row['name'])) $row['name'] = trim($col->nodeValue);
+                            break;
+                        case "style":
+                            $row[$attr] = trim($col->nodeValue);
+                            $style = trim($col->nodeValue);
+                            if ($style == '') { // empty : no style defined !
+                                //continue 3;
+                            }
+                            $bstyle = true;
+                            break;
+                        case "g_type":
+                        case "g_name":
+                            $gvalue = trim($col->nodeValue);
+                            $row['gname'] = trim($col->nodeValue);
+                            break;
+                        case 'surrounding':
+                            $row[$attr] = trim($col->nodeValue);
+                            break;
+                        case "lang":
+                            $lang = trim($col->nodeValue);
+                            $row[$attr] = trim($col->nodeValue);
+                            break;
+                        case "otx":
+                            $nodevalue = trim($col->nodeValue);
+                            if ($nodevalue == '') {
+                                //continue 3;
+                            }
+                            $row[$attr] = trim($col->nodeValue);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // EM otx style definition
+            if ( isset($row['otx'])) {
+                if (! isset($row['style'])) {
+                    continue;
+                }
+
+                $emotx = $row['otx'];
+                if (! isset($this->EMTEI[$emotx])) {
+                    // TODO ?
+                    continue;
+                }else {
+                    $nbOtxStyle++;
+                    $otxkey = $otxvalue = '';
+                    $emotx = $this->EMTEI[$emotx];
+
+                    if ( isset($row['lang']) ) {
+                        $emotx .= "-".$row['lang'];
+                    }
+
+                    if ( strstr($emotx, ":")) {
+                        list($otxkey, $otxvalue) = explode(":", $emotx);
+                        $this->EMotx[$otxvalue]['key'] = $otxkey;
+                    } else {
+                        $otxvalue = $emotx;
+                        continue;
+                    }
+                }
+
+                $style = $row['style']; $nbEmStyle++;
+                if (! strstr($style, ",")) {
+                    $OOTX[$style] = $otxvalue;
+                    isset($row['name']) ? $Model[$style]=$row['name'] : $Model[$style]=$style;
+                } else {
+                    foreach ( explode(",", $style) as $stl) {
+                        $stl = trim($stl);
+                        $OOTX[$stl] = $otxvalue;
+                        isset($row['name']) ? $Model[$stl]=$row['name'] : $Model[$stl]=$style;
+                    }
+                }
+
+                if ( isset($row['gname']) and $emotx!='') {
+                    $gvalue = $row['gname'];
+                    $this->EMandatory[$gvalue] = $otxvalue;
+                }
+            }
+        }
+/*
         foreach ($domxml->getElementsByTagName('row') as $node) {
             $value = $keys = $g_otx = $lang = '';
             if ($node->hasChildNodes()) {
@@ -253,41 +370,45 @@ class OTXserver
                 foreach ($node->childNodes as $tag) {
                     if ($tag->hasAttributes()) {
                         foreach ($tag->attributes as $attr) {
-                            if ($attr->name === "name") {
-                                switch ($attr->value) {
-                                    case "name":
-                                    case "type":
-                                        if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
-                                      break;
-                                    case "style":
-                                        $row[$attr->value] = trim($tag->nodeValue);
-                                        $style = trim($tag->nodeValue);
-                                        if ($style == '') { // empty : no style defined !
-                                            continue 4;
-                                        }
-                                        $bstyle = true; 
-                                        break;
-                                    case "g_type":
-                                    case "g_name":
-                                        $gvalue = trim($tag->nodeValue);
-                                        $row['gname'] = trim($tag->nodeValue);
-                                        break;
-                                    case 'surrounding':
-                                        $row[$attr->value] = trim($tag->nodeValue);
-                                        break;
-                                    case "lang":
-                                        $lang = trim($tag->nodeValue);
-                                        $row[$attr->value] = trim($tag->nodeValue);
-                                        break;
-                                    case "otx":
-                                        $nodevalue = trim($tag->nodeValue);
-                                        if ($nodevalue == '') {
-                                            continue 4;
-                                        }
-                                        $row[$attr->value] = trim($tag->nodeValue);
-                                        break;
-                                    default:
-                                        break;
+                            if ($attr->name == "name") {
+                                    switch ($attr->value) {
+                                        case "classtype":
+                                            $row['classtype'] = $tag->nodeValue;
+                                            break;
+                                        case "type":
+                                            break;
+                                        case "name":
+                                            if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
+                                          break;
+                                        case "style":
+                                            $row[$attr->value] = trim($tag->nodeValue);
+                                            $style = trim($tag->nodeValue);
+                                            if ($style == '') { // empty : no style defined !
+                                                continue 4;
+                                            }
+                                            $bstyle = true; 
+                                            break;
+                                        case "g_type":
+                                        case "g_name":
+                                            $gvalue = trim($tag->nodeValue);
+                                            $row['gname'] = trim($tag->nodeValue);
+                                            break;
+                                        case 'surrounding':
+                                            $row[$attr->value] = trim($tag->nodeValue);
+                                            break;
+                                        case "lang":
+                                            $lang = trim($tag->nodeValue);
+                                            $row[$attr->value] = trim($tag->nodeValue);
+                                            break;
+                                        case "otx":
+                                            $nodevalue = trim($tag->nodeValue);
+                                            if ($nodevalue == '') {
+                                                continue 4;
+                                            }
+                                            $row[$attr->value] = trim($tag->nodeValue);
+                                            break;
+                                        default:
+                                            break;
                                 }
                             }
                         }
@@ -309,9 +430,13 @@ class OTXserver
                         $nbOtxStyle++;
                         $otxkey = $otxvalue = '';
                         $emotx = $this->EMTEI[$emotx];
-                        if ( isset($row['lang']) and $emotx==="header:keywords") {  // TODO !?!
+
+                        if(isset($row['lang'])) error_log("{$emotx} : {$row['lang']}");
+
+                        if ( isset($row['lang']) ) {
                             $emotx .= "-".$row['lang'];
                         }
+
                         if ( strstr($emotx, ":")) {
                             list($otxkey, $otxvalue) = explode(":", $emotx);
                             $this->EMotx[$otxvalue]['key'] = $otxkey;
@@ -341,7 +466,7 @@ class OTXserver
 
             }
         }
-
+*/
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
 
@@ -416,6 +541,15 @@ class OTXserver
     }
 
 
+    private function parse_scheme($xpath, $default)
+    {
+        if(preg_match("/@scheme=[\'\"](?P<scheme>\w+)[\'\"]/", $xpath, $matches)){
+            return $matches['scheme'];
+        }else{
+            return $default;
+        }
+        
+    }
 
 /**
  * transformation d'un odt en lodel-odt : format pivot de travail
@@ -500,15 +634,7 @@ class OTXserver
             $this->_status="error get styles.xml";
             throw new Exception($this->_status,E_ERROR);
         }
-        $domstyles = new DOMDocument;
-        $domstyles->encoding = "UTF-8";
-        $domstyles->resolveExternals = false;
-        $domstyles->preserveWhiteSpace = true;
-        $domstyles->formatOutput = false;
-        if (! $domstyles->loadXML($OOstyles)) {
-            $this->_status="error load styles.xml";
-            throw new Exception($this->_status,E_ERROR);
-        }
+
         # cleanup
         $lodelstyles = preg_replace($cleanup, "", _windobclean($OOstyles));
         # lodel
@@ -546,9 +672,10 @@ class OTXserver
 
         // lodel-cleanup++
         $this->lodelcleanup($domlodelcontent);
-        //
+
         $this->lodelpictures($domlodelcontent, $za);
         $domlodelcontent->normalizeDocument();
+
 
         // 1. office:automatic-styles
         $this->ooautomaticstyles($domlodelcontent);
@@ -948,7 +1075,6 @@ class OTXserver
                         		$next = $next->nextSibling;
 	                            if ($next)
 	                                $this->greedy($next, $nextitem);
-	                            error_log($nextitem['rend']);
                         	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
 
                             if ( isset($nextitem['section'])) {
@@ -1537,8 +1663,33 @@ class OTXserver
         }
 
         # /tei/teiHeader/profileDesc/textClass
-        $entries = $xpath->query("//tei:textClass"); $textclass = $entries->item(0);
-        # [lodel:keyword] /tei/teiHeader/profileDesc/textClass/keywords...
+        $textclass = $xpath->query("//tei:textClass")->item(0);
+        foreach($this->_keywords as $keyword => $attributes){
+            foreach($attributes['styles'] as $style){
+                $entries = $xpath->query("//tei:p[@rend='{$style}']");
+                foreach($entries as $entry){
+                    $keyword_node = $dom->createElement('keywords');
+                    $keyword_node->setAttribute('scheme', $attributes['scheme']);
+
+                    if(isset($attributes['lang']))
+                        $keyword_node->setAttribute('xml:lang', $attributes['lang']);
+
+                    $keyword_node->setAttribute('xml:id', $entry->getAttribute('xml:id'));
+                    $textclass->appendChild($keyword_node);
+                    
+                    $keyword_list = $dom->createElement('list');
+                    $keyword_node->appendChild($keyword_list);
+
+                    foreach(explode(',', $entry->nodeValue) as $word)
+                    {
+                        $word_node = $dom->createElement('item', trim($word));
+                        $keyword_list->appendChild($word_node);
+                    }
+                    $entry->parentNode->removeChild($entry);
+                }
+            }
+        }
+/*
         $entries = $xpath->query("//tei:p[starts-with(@rend,'keywords-')]");
         foreach ($entries as $item) {
             $parent = $item->parentNode;
@@ -1574,6 +1725,7 @@ class OTXserver
         # LodelME : Index thématique
         $entries = $xpath->query("//tei:p[@rend='subject']");
         foreach ($entries as $item) {
+
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
             $newnode = $dom->createElement("keywords");
@@ -1647,6 +1799,7 @@ class OTXserver
             }
             $parent->removeChild($item);
         }
+*/
 
         # /tei/text/front
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
@@ -1985,6 +2138,39 @@ class OTXserver
         return true;
     }
 
+    private function entries( $xpath, $entrytype )
+    {
+        $entries = $xpath->query("//tei:p[starts-with(@rend, '{$entrytype}-')]");
+        foreach ($entries as $item) {
+            $parent = $item->parentNode;
+            $rend = $item->getAttribute("rend");
+            if ( preg_match("/$entrytype-(.+)/", $rend, $match)) {
+                $lang = $match[1];
+            } else {
+               $lang = null;
+            }
+            $newnode = $dom->createElement("keywords");
+            $newnode->setAttribute('scheme', $entrytype);
+            if ( isset($lang)) {
+                $newnode->setAttribute('xml:lang', $lang);
+            }
+            if ($id = $item->getAttribute('xml:id')) {
+                $newnode->setAttribute('xml:id', $id);
+            }
+            $textclass->appendChild($newnode);
+            $newlist = $dom->createElement("list");
+            $newnode->appendChild($newlist);
+
+            $index = explode(",", $item->nodeValue);
+            foreach ($index as $ndx) {
+                $ndx = trim($ndx);
+                $newitem = $dom->createElement("item", $ndx);
+                $newlist->appendChild($newitem);
+            }
+            $parent->removeChild($item);
+        }
+        
+    }
 
         private function summary(&$dom, &$xpath) {
             $max = 0;
@@ -2207,9 +2393,11 @@ class OTXserver
                 case 'text:note-class':
                 case 'text:style-name':
                 case 'table:style-name':
+                    
                     if (! preg_match("/^[TP]\d+$/", $entry->nodeValue)) {
                         $nodevalue = _makeSortKey( preg_replace($patterns, "", $entry->nodeValue));
-                        if ( isset( $this->EModel[$nodevalue])) {
+                        if ( isset( $this->EModel[$nodevalue]) 
+                             && !$this->is_keyword($nodevalue ) ) {
                             $nodevalue = $this->EModel[$nodevalue];
                             $entry->nodeValue = $nodevalue;
                         }
@@ -2226,6 +2414,17 @@ class OTXserver
                     break;
             }
         }
+    }
+
+    private function is_keyword($style)
+    {
+        foreach( $this->_keywords as $keyword)
+        {
+            foreach($keyword['styles'] as $kstyle){
+                if($kstyle == $style) return true;
+            }
+        }
+        return false;
     }
 
     private function lodelpictures(&$dom, &$za) {
