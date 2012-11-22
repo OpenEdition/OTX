@@ -2169,7 +2169,7 @@ class OTXserver
             }
             $parent->removeChild($item);
         }
-        
+
     }
 
         private function summary(&$dom, &$xpath) {
@@ -2251,11 +2251,12 @@ class OTXserver
             $returnvar = 0;
             $result    = '';
 
-            ob_start();
-            passthru($command, $returnvar); sleep(1);
-            $result = ob_get_contents();
-            ob_end_clean();
+            $output = exec($command, $result, $returnvar);
 
+            error_log(var_export($result,true));
+            error_log(var_export($output,true));
+            error_log(var_export($returnvar,true));
+            
             if ($returnvar) {
                 @copy($sourcepath, $sourcepath.".error");
                 @unlink($sourcepath);
