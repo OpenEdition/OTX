@@ -2237,140 +2237,49 @@ class OTXserver
         # get the mime type
         $this->getmime();
         $sourcepath = $this->_param['sourcepath'];
-        $extension = $this->_param['extension'];
 
-        switch(strtolower($suffix)) {
-            case 'docx': //$suffix = 'doc'; break;
-            case 'odt':
-            case 'pdf':
-            case 'doc':
-            case 'rtf':
-            case 'txt':
-            //case 'html': //TODO ?
-            case "xhtml":
-            case "teixml":
-            case "tei.xml":
-            case "tei":
-                break;
-            default:
-                $this->_status = "error mime type: unknown output file type";
-                throw new Exception($this->_status,E_USER_ERROR);
-        }
-        //$odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".$suffix";
-        $targetpath = $this->_param['sourcepath'];
-        if ($this->_param['mime'] !== "OpenDocument Text" OR $suffix !== 'odt') {
-            $targetpath .= ".$suffix";
+        $targetpath = dirname($sourcepath);
 
+        if ( $this->_param['mime'] !== "application/vnd.oasis.opendocument.text" ) {
             $in = escapeshellarg($sourcepath);
             $out = escapeshellarg($targetpath);
-            $command = $this->_config->soffice['pythonpath'] . " {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
-            /*  //TODO : tetster la presence du lien symbolique jodconverter-cli.jar !!
-                //$command = "java -jar ". $this->_param['LIBPATH'] ."jodconverter3.jar -f odt ". $sourcepath;  */
-            /*
-            $output = array(); $returnvar=0;
-            $result = ''. exec($command, $output, $returnvar);
-            */
-            $returnvar=0;$result='';
+
+            $command = "{$this->_config->soffice['officepath']} --headless --convert-to odt:writer8 -outdir {$out} {$in}";
+
+            $fileinfos = pathinfo($sourcepath);
+
+            $returnvar = 0;
+            $result    = '';
+
             ob_start();
             passthru($command, $returnvar); sleep(1);
             $result = ob_get_contents();
             ob_end_clean();
+
             if ($returnvar) {
                 @copy($sourcepath, $sourcepath.".error");
                 @unlink($sourcepath);
                 $this->_status = "error soffice";
                 error_log("$command returned " . var_export($returnvar,true));
                 throw new Exception($this->_status,E_USER_ERROR);
+            }else{
+                $this->_param['outputpath'] = $targetpath . DIRECTORY_SEPARATOR . $fileinfos['filename'] . ".odt" ;
             }
+        }else{
+            $this->_param['outputpath'] = $sourcepath;
         }
-        $odtpath = $this->_param['odtpath'] = $this->_usedfiles[] = $targetpath;
+        $this->_param['odtpath'] = $this->_usedfiles[] = $this->_param['outputpath'];
 
-        $this->_param['outputpath'] = $targetpath;
         return true;
     }
 
     private function getmime() {
         $sourcepath = $this->_param['sourcepath'];
 
-        $mime = mime_content_type($sourcepath);
+        $this->_param['mime'] = mime_content_type($sourcepath);
 
-        if ($mime === "application/x-zip" OR $mime === "application/zip") {
-            $file = escapeshellarg($sourcepath);
-            list($mime, $tmp) = explode(",", system("file -b $file"));
-        }
-
-        $extension = ".odt";
-        if ( trim($mime) != "OpenDocument Text") {
-            switch ($mime) {
-                case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
-                case "Rich Text Format data, version 1,":
-                case "Rich Text Format data, version 1, ANSI":
-                case 'application/rtf':
-                case 'application/x-rtf':
-                case 'text/rtf':
-                case 'text/richtext':
-                    $extension = ".rtf";
-                    break;
-                case "Microsoft Office Document":
-                case 'application/msword':
-                case 'application/doc':
-                case 'appl/text':
-                case 'application/vnd.msword':
-                case 'application/vnd.ms-word':
-                case 'application/winword':
-                case 'application/word':
-                case 'application/x-msw6':
-                case 'application/x-msword':
-                    $extension = ".doc";
-                    break;
-                case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                    $extension = ".docx";
-                    break;
-                case "OpenOffice.org 1.x Writer document":
-                case 'application/x-soffice':
-                case 'application/vnd.sun.xml.writer':
-                case 'application/x-vnd.oasis.opendocument.text':
-                case 'application/vnd.oasis.opendocument.text':
-                case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                    $extension = ".sxw";
-                    break;
-                default:
-                    # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
-                    $temp = explode(".", $sourcepath);
-                    $ext = trim( array_pop($temp));
-                    $this->_status = "Warning : mime detection based on document extension (.$ext)";
-                    array_push($this->log['warning'], $this->_status);
-                    switch (strtolower($ext)) {
-                        case "rtf":
-                            $extension = ".rtf";
-                            break;
-                        case "sxw":
-                            $extension = ".sxw";
-                            break;
-                        case "doc":
-                            $extension = ".doc";
-                            break;
-                        case "docx":
-                            $extension = ".docx";
-                            break;
-                        default:
-                            $this->_status="error: unknown mime type: $mime ($sourcepath)";$this->_iserror=true;
-                            throw new Exception($this->_status,E_USER_ERROR);
-                            break;
-                    }
-                break;
-            }
-
-            if (! rename($sourcepath, $sourcepath.$extension)) {
-                $this->_status="error: rename [$sourcepath]";
-                throw new Exception($this->_status,E_ERROR);
-            }
-            $this->_param['sourcepath'] = $sourcepath.$extension;
-            $this->_usedfiles[] = $this->_param['sourcepath']; 
-        }
-
-        $this->_param['extension'] = $extension;
-        $this->_param['mime'] = $mime;
+        $this->_param['sourcepath'] = $sourcepath;
+        $this->_usedfiles[]         = $this->_param['sourcepath']; 
 
         return true;
     }
@@ -2439,6 +2348,7 @@ class OTXserver
                 if ($anchortype=="as-char") {
                     $attributes = $item->attributes;
                     $attribute = $attributes->getNamedItem("href");
+                    error_log($attribute->nodeValue);
                     if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
                         $match = $attribute->nodeValue;
                         list($imgpre, $imgext) = explode(".", trim($match));

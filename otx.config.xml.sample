@@ -5,7 +5,7 @@
     <cachepath></cachepath>
     <wsdl>http://otx.url/?wsdl</wsdl>
     <soffice>
-        <pythonpath></pythonpath>
+        <officepath></officepath>
         <host>127.0.0.1</host>
         <port>8100</port>
     </soffice>
