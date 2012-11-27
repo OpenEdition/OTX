@@ -2244,15 +2244,19 @@ class OTXserver
             $in = escapeshellarg($sourcepath);
             $out = escapeshellarg($targetpath);
 
-            $command = "{$this->_config->soffice['officepath']} --headless --convert-to odt:writer8 -outdir {$out} {$in}";
+            /* Création de répertoire temporaire pour le profile */
+            $temp_profile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('OTX');
+            mkdir($temp_profile, 0755, true);
 
-            $fileinfos = pathinfo($sourcepath);
+            $command = "{$this->_config->soffice['officepath']} --norestore --invisible --headless -env:UserInstallation=file://{$temp_profile} --convert-to odt:writer8 -outdir {$out} {$in}";
 
             $returnvar = 0;
             $result    = '';
 
             $output = exec($command, $result, $returnvar);
 
+            /* Suppression du profile temporaire */
+            $this->rmdir($temp_profile);
             error_log(var_export($result,true));
             error_log(var_export($output,true));
             error_log(var_export($returnvar,true));
@@ -2264,6 +2268,7 @@ class OTXserver
                 error_log("$command returned " . var_export($returnvar,true));
                 throw new Exception($this->_status,E_USER_ERROR);
             }else{
+                $fileinfos = pathinfo($sourcepath);
                 $this->_param['outputpath'] = $targetpath . DIRECTORY_SEPARATOR . $fileinfos['filename'] . ".odt" ;
             }
         }else{
@@ -2272,6 +2277,18 @@ class OTXserver
         $this->_param['odtpath'] = $this->_usedfiles[] = $this->_param['outputpath'];
 
         return true;
+    }
+
+    private function rmdir( $path )
+    {
+        $files = glob( $path . '*', GLOB_MARK );
+        foreach( $files as $file ){
+            if( substr( $file, -1 ) == '/' )
+                $this->rmdir( $file );
+        	else
+        		unlink( $file );
+        }
+        rmdir( $path );
     }
 
     private function getmime() {
