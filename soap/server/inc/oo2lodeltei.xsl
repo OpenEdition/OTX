@@ -262,11 +262,13 @@
         </xsl:if>
     </xsl:template>
 
-    <xsl:template match="text:list[@text:continue-numbering]">
+<!--Gestion de la continuité de la numérotation des listes. Donc: TODO
+    Pas géré ici, et commenter pour ne pas faire disparaitre ces listes du document-->
+<!--    <xsl:template match="text:list[@text:continue-numbering]">
         <xsl:if test="descendant::text:h[@text:outline-level]">
             <xsl:call-template name="copyxmlid"/>
         </xsl:if>
-    </xsl:template>
+    </xsl:template>-->
 
     <xsl:template match="text:h[@text:outline-level]">
         <xsl:variable name="heading">
