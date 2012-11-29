@@ -2366,7 +2366,6 @@ class OTXserver
                 if ($anchortype=="as-char") {
                     $attributes = $item->attributes;
                     $attribute = $attributes->getNamedItem("href");
-                    error_log($attribute->nodeValue);
                     if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
                         $match = $attribute->nodeValue;
                         list($imgpre, $imgext) = explode(".", trim($match));
