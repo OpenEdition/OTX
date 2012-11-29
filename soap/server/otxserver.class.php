@@ -1651,8 +1651,8 @@ class OTXserver
             if ($tmp->length) {
                 $langUsage->removeChild($tmp->item(0));
             }
-            $newnode = $dom->createElement('language', $entry->nodeValue);
-            $newnode->setAttribute('ident', $entry->nodeValue);
+            $newnode = $dom->createElement('language', mb_strtolower($entry->nodeValue)); // Le code de langue doit être en minuscule
+            $newnode->setAttribute('ident', mb_strtolower($entry->nodeValue));
             if ( $id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
             $langUsage->appendChild($newnode);
             $parent->removeChild($entry);
