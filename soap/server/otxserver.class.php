@@ -1933,6 +1933,9 @@ class OTXserver
                     $clone->removeAttribute($attr->name);
                 }
             }
+            if ($item->hasAttribute('rendition')) {
+              $clone->setAttribute('rendition', $item->getAttribute("rendition"));
+            }
             $div->appendChild($clone);
             $front->appendChild($div);
             $parent->removeChild($item);
@@ -1953,6 +1956,9 @@ class OTXserver
                 foreach ($clone->attributes as $attr) {
                     $clone->removeAttribute($attr->name);
                 }
+            }
+            if ($item->hasAttribute('rendition')) {
+              $clone->setAttribute('rendition', $item->getAttribute("rendition"));
             }
             $div->appendChild($clone);
             $front->appendChild($div);
