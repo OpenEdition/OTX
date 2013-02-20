@@ -811,7 +811,7 @@ class OTXserver
         }
         $proc = new XSLTProcessor;
         $proc->importStyleSheet($xsl);
-        if (! $teifodt=$proc->transformToXML($domidfodt)) {
+        if (! $teifodt = $proc->transformToXML($domidfodt)) {
             $this->_status="error transform xslt ($xslfilter)";
             throw new Exception($this->_status,E_ERROR);
         }
@@ -1051,7 +1051,11 @@ class OTXserver
                     switch($surround) {
                         case "-*":
                             // prev
-                            if(!isset($prev)) $prev = $item->previousSibling;
+                            if(!isset($prev)){
+                                do {
+                                    $prev = $item->previousSibling;
+                                } while ( get_class($prev) !== "DOMElement" );
+                            }
 
                             if ($prev)
                                 $this->greedy($prev, $previtem);
@@ -1071,8 +1075,11 @@ class OTXserver
                             // next
                             $next = $item;
                             
-                        	do{
-                        		$next = $next->nextSibling;
+                            do{
+                                do{
+                                    $next = $next->nextSibling;
+                                }while( get_class($next) !== "DOMElement" );
+
 	                            if ($next)
 	                                $this->greedy($next, $nextitem);
                         	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
