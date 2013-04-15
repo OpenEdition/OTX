@@ -299,6 +299,12 @@ class OTXserver
                         case 'surrounding':
                             $row[$attr] = trim($col->nodeValue);
                             break;
+                        case 'allowedtags': // hack of allowedtags to create csswhitelist
+                            $allowedstyles = $this->list_allowedstyles(trim($col->nodeValue));
+                            if ($allowedstyles) {
+                                $row['allowedstyles'] = $allowedstyles;
+                            }
+                            break;
                         case "lang":
                             $lang = trim($col->nodeValue);
                             $row[$attr] = trim($col->nodeValue);
@@ -338,6 +344,8 @@ class OTXserver
                     if ( strstr($emotx, ":")) {
                         list($otxkey, $otxvalue) = explode(":", $emotx);
                         $this->EMotx[$otxvalue]['key'] = $otxkey;
+                        if (isset($row['allowedstyles']))
+                            $this->EMotx[$otxvalue]['allowedstyles'] = $row['allowedstyles'];
                     } else {
                         $otxvalue = $emotx;
                         continue;
@@ -549,6 +557,16 @@ class OTXserver
             return $default;
         }
         
+    }
+
+    // Construct csswhitelist for a given field in the document
+    private function list_allowedstyles($allowedtags) {
+        $allowedstyles = array();
+        if ($allowedtags) {
+            if (strpos($allowedtags, 'style:strict') !== false)
+                $allowedstyles['strict'] = true;
+        }
+        return empty($allowedstyles) ? false :  $allowedstyles;
     }
 
 /**
@@ -2596,7 +2614,7 @@ class OTXserver
                         }
                     }
                 }
-                list($lang, $rendition) = $this->styles2csswhitelist($properties);
+                list($lang, $rendition) = $this->styles2csswhitelist($properties, $name);
 
                 if ( isset($this->rendition[$key])) { // from automaticstyle
                     // TODO : merge ?
@@ -2620,7 +2638,8 @@ class OTXserver
     }
 
     /** styles to css white list ! **/
-    private function styles2csswhitelist(&$properties, $type="strict") {
+    private function styles2csswhitelist(&$properties, $name=false) {
+
         $lang = $rendition = "";
         $csswhitelist = array();
         // default : strict mode
@@ -2684,6 +2703,10 @@ class OTXserver
             }
             $type = $this->_param['type'];
             if ($type==="extended") {
+                // no extended for fields that have allowedstyles set to strict
+                if ($name && isset($this->EMotx[$name]['allowedstyles']) && isset($this->EMotx[$name]['allowedstyles']['strict'])) {
+                    continue;
+                }
                 if ( preg_match("/^font-size:/", $prop)) {
                     array_push($csswhitelist, $prop);
                     continue;
