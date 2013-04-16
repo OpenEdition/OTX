@@ -897,9 +897,7 @@ class OTXserver
             if ($nodename=="p" or $nodename=="s" or $nodename=="cell" or $nodename=="ab" or $nodename=="table") {
                 if ( $value=$item->getAttribute("rendition")) {
                     if ($nodename=="cell" or $nodename=="table") {
-                        $name = $value;
-                        $id = ''; list($table, $id) = explode(".", $name);
-                        $value = "#td".$table[strlen($table)-1].$id;
+                        $value = "#".str_replace('.','_',$value);
                     }
                     // rend ?
                     if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
@@ -2461,10 +2459,7 @@ class OTXserver
             if ($attrname = $attributes->getNamedItem("name")) {
                 $name = $attrname->nodeValue;
                 if (false !== strpos($name, "table")) {
-
-                    $id = ''; list($table, $id) = explode(".", $name);
-                    $key = "#td".$table[strlen($table)-1].$id;
-                    //$key = "#".$name;
+                    $key = "#".str_replace('.','_',$name);
                 } else {
                     $key = "#".$name;
                     if ( preg_match("/^T(\d+)$/", $name, $match)) {
