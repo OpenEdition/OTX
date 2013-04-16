@@ -2744,7 +2744,7 @@ class OTXserver
                     if($match[2] == "none") {
                         $border = "{$match[1]}:none";
                     }else{
-                        $border = "{$match[1]}:1px solid {$match[2]}";
+                        $border = "{$match[1]}:1px solid {$match[5]}";
                     }
                     array_push($csswhitelist, $border);
                     // TODO raw as cell !
