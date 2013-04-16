@@ -2500,7 +2500,7 @@ class OTXserver
                     }
                 }
 
-                list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
+                list($lang, $rendition) = $this->styles2csswhitelist($properties, $name); // white list
 
                 if ($lang == "") $lang = null;
                 $this->rendition[$key]['lang'] = $lang;
@@ -2735,7 +2735,7 @@ class OTXserver
                 }
             }else{
                 // table border
-                if ( preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
+                if (strpos('table', $name) === 0 && preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
                     if($match[2] == "none") {
                         $border = "{$match[1]}:none";
                     }else{
