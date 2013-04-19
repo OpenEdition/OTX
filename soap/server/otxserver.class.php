@@ -944,135 +944,20 @@ class OTXserver
 	        }
 	   	}
 
-        # surrounding internalstyles
-        $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
-        $entries = $xpath->query("//tei:body"); $body = $entries->item(0);
-        $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
-
-        $entries = $xpath->query("//tei:body/tei:*");
-        $current = $previtem = $nextitem = array();
-        $section = $newsection = "";
-        $newbacksection = $backsection = "";
-        foreach ($entries as $item) {
-            // current
-            $this->greedy($item, $current);
-            if (isset($current)) {
-
-                if ( isset($current['surround']) ) {
-                    $surround = $current['surround'];
-                    switch($surround) {
-                        case "-*":
-                            // prev
-                            if(!isset($prev)){
-                                do {
-                                    $prev = $item->previousSibling;
-                                } while ( get_class($prev) !== "DOMElement" );
-                            }
-
-                            if ($prev)
-                                $this->greedy($prev, $previtem);
-
-                            if ( isset($previtem['section'])) {
-                                $newsection = $previtem['section'];
-                                if ($newsection=="back" and isset($previtem['rend'])) {
-                                    $newbacksection = $previtem['rend'];
-                                }
-                            } else {
-                                if ( isset($current['section'])) {
-                                    $newsection = $current['section'];
-                                }
-                            }
-                            break;
-                        case "*-":
-                            // next
-                            $next = $item;
-                            
-                            do{
-                                do{
-                                    $next = $next->nextSibling;
-                                }while( get_class($next) !== "DOMElement" );
-
-	                            if ($next)
-	                                $this->greedy($next, $nextitem);
-                        	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
-
-                            if ( isset($nextitem['section'])) {
-                                $newsection = $nextitem['section'];
-                                if ($newsection=="back" and isset($nextitem['rend'])) {
-                                    $newbacksection = $nextitem['rend'];
-                                }
-                            } else {
-                                if ( isset($current['section'])) {
-                                    $newsection = $current['section'];
-                                }
-                            }
-                            break;
-                        default:
-                            break;
-                    }
-                } else {
-                    if ( isset($current['section']) ) {
-                        $newsection = $current['section'];
-                        if ($newsection == "back") {
-                            if ( isset($current['rend']) ) {
-                                $newbacksection = $current['rend'];
-                            }
-                        }
-                    } else {
-                        $newsection = $section;
-                    }
-                }
-            } else {
-                $newsection = "body";
-            }
-
-            if ( $section!==$newsection or $backsection!==$newbacksection ) { // new section
-                if ($section!==$newsection) {
-                    $section = $newsection;
-                } 
-                elseif ($backsection!==$newbacksection) {
-                    $section = "back";
-                }
-
-                switch ($section) {
-                    case 'head';
-                        $div = $dom->createElement("div");
-                        $div->setAttribute('rend', "LodelMeta");
-                        $front->appendChild($div);
-                        break;
-                    case 'body';
-                        $div = $body;
-                        break;
-                    case 'back';
-                        if ($backsection !== $newbacksection) {
-                            $backsection = $newbacksection;
-                        }
-                        switch($backsection) {
-                            case 'appendix':
-                                $div = $dom->createElement("div");
-                                $div->setAttribute('rend', "LodelAppendix");
-                                $back->appendChild($div);
-                                break;
-                            case 'bibliographie':
-                                $div = $dom->createElement("div");
-                                $div->setAttribute('rend', "LodelBibliography");
-                                $back->appendChild($div);
-                                break;
-                            default:
-                                break;
-                            
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-            if ($backsection and $backsection!=$current['rend']) {
-                $item->setAttribute('rend', "$backsection-{$current['rend']}");
-            }
-            $prev = $item;
-            if(isset($div)) $div->appendChild($item);
-        }
+        # Traiter Bibliography et Appendix
+		// Afin que la fonction ait la même sortie, ceci est placé ici. Mais devrait être dans loodxml2xml()
+		// TODO: à bouger
+		$back = $xpath->query("//tei:back")->item(0);
+		foreach (array('bibliographie'=>"LodelBibliography", 'appendix'=>"LodelAppendix") as $from=>$to) {
+			$items = $xpath->query("//tei:p[@rend='$from']");
+			if ($items->length) {
+				$div = $dom->createElement("div");
+				$div->setAttribute('rend', $to);
+				$back->appendChild($div);
+				foreach ($items as $item)
+					$div->appendChild($item);
+			}
+		}
         
         # <hi> cleanup (tag hi with no attribute)
         $this->hicleanup($dom, $xpath); // <hi> to <nop> ...
@@ -1795,7 +1680,18 @@ class OTXserver
         # /tei/text/back
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
-        # Bibliography
+//                             case 'appendix':
+//                                 $div = $dom->createElement("div");
+//                                 $div->setAttribute('rend', "LodelAppendix");
+//                                 $back->appendChild($div);
+//                                 break;
+//                             case 'bibliographie':
+//                                 $div = $dom->createElement("div");
+//                                 $div->setAttribute('rend', "LodelBibliography");
+//                                 $back->appendChild($div);
+//                                 break;
+//                             default:
+
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
         if ($entries->length) {
             $bibliography = $dom->createElement("div");
@@ -2501,62 +2397,6 @@ class OTXserver
         $rendition = implode(";", $csswhitelist);
 
         return array($lang, $rendition);
-    }
-
-    /** array('rend'=>, 'key'=>, 'surround'=>, 'section'=>) **/
-    private function greedy(&$node, &$greedy) {
-        $section = $surround = $key = $rend = null;
-        $greedy = null; $status = true;
-        $rend = $node->getAttribute("rend");
-        if ( in_array(get_class($node), array("DOMDocument","DOMElement"))) {
-
-            if (strpos($rend, "bibliograph") !== false || strpos($rend, "appendix") !== false ) {
-                $section = "back";
-            }
-
-            if ( isset($this->EMotx[$rend]['surround'])) {
-                $surround = $this->EMotx[$rend]['surround'];
-            }
-            elseif (in_array($node->nodeName, array("ab", "list"))) { 
-                $surround = "-*";
-            }elseif(in_array($node->nodeName, array("table"))) {
-                $surround = "*-";
-            }
-
-            if ($surround=="*-" or $surround=="-*") {
-                $status = false;
-            }
-
-            if ( isset($this->EMotx[$rend]['key'])) {
-                $key = $this->EMotx[$rend]['key'];
-                switch ($key) {
-                    case 'header':
-                    case 'front':
-                        $section = "head";
-                        break;
-                    case 'back':
-                        $section = "back";
-                        break;
-                    case 'text':
-                        $section = "body";
-                        break;
-                    default:
-                        $section = "body";
-                        break;
-                }
-            }
-            elseif ($node->nodeName=="ab") {
-                $section = "body"; // heading > 6 !
-            }
-
-        }
-        
-        if (empty($section)) {
-            $section = "body"; // heading > 6 !
-        }
-
-        $greedy = array('rend'=>$rend, 'key'=>$key, 'surround'=>$surround, 'section'=>$section);
-        return $status;
     }
 
     /** css tagsDecl to tei:hi rendition ! **/
