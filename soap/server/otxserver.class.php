@@ -1680,18 +1680,6 @@ class OTXserver
         # /tei/text/back
         $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
 
-//                             case 'appendix':
-//                                 $div = $dom->createElement("div");
-//                                 $div->setAttribute('rend', "LodelAppendix");
-//                                 $back->appendChild($div);
-//                                 break;
-//                             case 'bibliographie':
-//                                 $div = $dom->createElement("div");
-//                                 $div->setAttribute('rend', "LodelBibliography");
-//                                 $back->appendChild($div);
-//                                 break;
-//                             default:
-
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
         if ($entries->length) {
             $bibliography = $dom->createElement("div");
