@@ -74,26 +74,6 @@ if (! empty($_GET)) {
     return true;
 }
 
-
-$_status = ""; $oo = _soffice($_status);
-$load = $oo['load'];
-/*
-header("content-type: application/xml; charset=UTF-8");
-echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
-echo "\n<otx type=\"welcome\">\n";
-echo "\n<soffice>";
-echo "\n<status>" .$_status ."</status>";
-echo "\n<loadaverage>";
-//Returns three samples representing the average system load (the number of processes in the system run queue) over the last 1, 5 and 15 minutes, respectively. 
-echo "\n<last minutes='1'>" .$load[0] ."</last>";
-echo "\n<last minutes='5'>" .$load[1] ."</last>";
-echo "\n<last minutes='15'>" .$load[2]. "</last>";
-echo "\n</loadaverage>";
-echo "\n<pid>" .$oo['pid']. "</pid>";
-echo "\n<mem>" .$oo['mem']. "</mem>";
-echo "\n</soffice>";
-echo "\n</otx>";
-*/
 include('soap/tpl/otx.html');
 return true;
 
