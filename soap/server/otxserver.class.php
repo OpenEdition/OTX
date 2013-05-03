@@ -471,8 +471,9 @@ class OTXserver
     private function list_allowedstyles($allowedtags) {
         $allowedstyles = array();
         if ($allowedtags) {
-            if (strpos($allowedtags, 'style:strict') !== false)
-                $allowedstyles['strict'] = true;
+            if (preg_match('/style:(.*)(;|$)/', $allowedtags, $m)) {
+                $allowedstyles[$m[1]] = true;
+            }
         }
         return empty($allowedstyles) ? false :  $allowedstyles;
     }
@@ -2399,9 +2400,9 @@ class OTXserver
     /** styles to css white list ! **/
     // Transforme les style ODT en CSS
     private function styles2csswhitelist(&$properties, $name=false) {
-
         $lang = $rendition = "";
         $csswhitelist = array();
+
         // default : strict mode
         foreach ($properties as $prop) {
             // xhtml:sup
@@ -2513,6 +2514,11 @@ class OTXserver
             }
         }
         $rendition = implode(";", $csswhitelist);
+
+        // no style for fields that have allowedstyles set to none (at the end because of $lang)
+        if ($name && isset($this->EMotx[$name]['allowedstyles']) && isset($this->EMotx[$name]['allowedstyles']['none'])) {
+            $rendition = "";
+        }
 
         return array($lang, $rendition);
     }
