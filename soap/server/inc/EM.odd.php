@@ -161,10 +161,6 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:*/tei:figure/tei:note[@type='license']"
     => 'text:figure-license',
 
-// remerciements,acknowledgment !!! TODO - ? EM-BUG ? - TODO !!! 
-"/tei:TEI/tei:text/tei:front/tei:div[@type='ack']"
-    => 'back:acknowledgment',
-
 // bibliographiereference
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:notesStmt/tei:note[@type='bibl']"
     => 'header:bibl',
@@ -208,8 +204,8 @@ function _em2tei($schema="revorg") {
 //creditillustration,crditillustration,creditsillustration,crditsillustration
 "//*[@rend='figure-license']"           => 'text:figure-license',
 
-//remerciements,acknowledgment  => TODO !!!
-"/tei:TEI/tei:text/tei:back/tei:div[@type='ack']"  => 'back:acknowledgment',
+//remerciements,acknowledgment
+"//*[@rend='acknowledgment']"  => 'body:acknowledgment',
 
 //sections
 "//tei:head[@subtype='level1']" =>  'text:heading1',
