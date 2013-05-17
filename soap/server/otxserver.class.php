@@ -994,7 +994,11 @@ class OTXserver
                     switch($surround) {
                         case "-*":
                             // prev
-                            if(!isset($prev)) $prev = $item->previousSibling;
+                            if(!isset($prev)){
+                                do {
+                                    $prev = $item->previousSibling;
+                                } while ( get_class($prev) !== "DOMElement" );
+                            }
 
                             if ($prev)
                                 $this->greedy($prev, $previtem);
@@ -1013,12 +1017,14 @@ class OTXserver
                         case "*-":
                             // next
                             $next = $item;
-                            
-                        	do{
-                        		$next = $next->nextSibling;
-	                            if ($next)
-	                                $this->greedy($next, $nextitem);
-                        	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
+                            do{
+                                do{
+                                    $next = $next->nextSibling;
+                                }while( get_class($next) !== "DOMElement" );
+
+                                if ($next)
+                                    $this->greedy($next, $nextitem);
+                            }while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
 
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
