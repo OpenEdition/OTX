@@ -163,56 +163,6 @@ error_log("DOC: ".var_export($this->_doc,true));
         rmdir( $path );
     }
 
-        /**
-    * transformation d'un document en odt (txt, rtf, xhtml, tei, pdf, ...)
-    * ! system call inside (soffice)
-    **/
-//     protected function soffice2odt($suffix="odt") {
-//         # get the mime type
-//         $this->getmime();
-//         $sourcepath = $this->_param['sourcepath'];
-//         $extension = $this->_param['extension'];
-// 
-//         switch($suffix) {
-//             case 'docx': $suffix = 'doc'; break;
-//             case 'odt':
-//             case 'pdf':
-//             case 'doc':
-//             case 'rtf':
-//             case 'txt':
-//             //case 'html': //TODO ?
-//             case "xhtml":
-//             case "tei":
-//                 break;
-//             default:
-//                 throw new Exception($this->_status);
-//         }
-//         //$odtpath = $this->_param['odtpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".$suffix";
-//         $targetpath = $this->_param['sourcepath'].".$suffix";
-//         $odtpath = $this->_param['odtpath'] = $targetpath;
-// 
-//         if ($this->_param['mime'] !== "OpenDocument Text" || $suffix !== 'odt') {
-//             $in = escapeshellarg($sourcepath);
-//             $out = escapeshellarg($targetpath);
-//             $command = $this->_config->soffice['pythonpath'] . " {$this->_param['LIBPATH']}DocumentConverter.py $in $out";
-// 
-//             $returnvar=0;
-//             $result='';
-//             ob_start();
-//             passthru($command, $returnvar); sleep(1);
-//             $result = ob_get_contents();
-//             ob_end_clean();
-// 
-//             if ($returnvar or $result!='') {
-//                 @copy($sourcepath, $sourcepath.".error");@unlink($sourcepath);
-//                 throw new Exception($this->_status);
-//             }
-//         }
-// 
-//         $this->_param['outputpath'] = $targetpath;
-//         return true;
-//     }
-
     private function getmime() {
             $sourcepath = $this->_param['sourcepath'];
             $mime = mime_content_type($sourcepath);
