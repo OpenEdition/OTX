@@ -24,6 +24,7 @@ class orphannotes extends Plugin {
             {
                 throw new Exception($this->_status);
             }
+            unlink($this->_param['sourcepath']);
 
             $this->_doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $doc['iddocument']);
 
@@ -268,6 +269,9 @@ class orphannotes extends Plugin {
         }
 
         $this->output['orphannotes'] = array('document' => file_get_contents($this->_doc['pathDocument']), 'name' => $this->_doc['realname']);
+        // récupération terminée, on efface les fichiers
+        unlink(dirname($this->_doc['pathDocument'])."/".$this->_doc['realname']);
+        unlink($this->_doc['pathDocument']);
     }
 
 }
