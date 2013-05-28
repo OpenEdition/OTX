@@ -215,67 +215,8 @@ error_log("DOC: ".var_export($this->_doc,true));
 
     private function getmime() {
             $sourcepath = $this->_param['sourcepath'];
-
             $mime = mime_content_type($sourcepath);
-            if ($mime === "application/x-zip" OR $mime === "application/zip") {
-                $file = escapeshellarg($sourcepath);
-                list($mime, $tmp) = explode(",", system("file -b $file"));
-            }
-
-            $extension = ".odt";
-            if ( trim($mime) != "OpenDocument Text") {
-                switch ($mime) {
-                    case "Rich Text Format data":   //, version 1, ANSI   //, version 1, Apple Macintosh
-                    case "text/rtf":
-                        $extension = ".rtf";
-                        break;
-                    case "Microsoft Office Document":
-                    case "application/msword":
-                        $extension = ".doc";
-                        break;
-                    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                        $extension = ".docx";
-                        break;
-                    case "OpenOffice.org 1.x Writer document":
-                    case "application/vnd.sun.xml.writer":
-                        $extension = ".sxw";
-                        break;
-                    default:
-                        # the last chance !    // ben'à défaut on se base sur l'extention du fichier...
-                        $temp = explode(".", $sourcepath);
-                        $ext = trim( array_pop($temp));
-                        $this->_status = "Warning : mime detection based on document extension (.$ext)";
-                        array_push($this->log['warning'], $this->_status);
-                        switch ($ext) {
-                            case "rtf":
-                                $extension = ".rtf";
-                                break;
-                            case "sxw":
-                                $extension = ".sxw";
-                                break;
-                            case "doc":
-                                $extension = ".doc";
-                                break;
-                            case "docx":
-                                $extension = ".docx";
-                                break;
-                            default:
-                                $this->_status="error: unknown mime type: $mime ($sourcepath)";$this->_iserror=true;
-                                throw new Exception($this->_status);
-                                break;
-                        }
-                    break;
-                }
-            }
-
-            if (! rename($sourcepath, $sourcepath.$extension)) {
-                throw new Exception($this->_status);
-            }
-            $this->_param['sourcepath'] = $sourcepath.$extension;
-
-            $this->_param['extension'] = $extension;
             $this->_param['mime'] = $mime;
-
             return true;
         }
 
