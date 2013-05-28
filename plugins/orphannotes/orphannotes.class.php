@@ -249,7 +249,7 @@ class orphannotes extends Plugin {
         }
 
         //On enleve tous les @NOTE@<chiffre> qui ne sont pas des notes
-        $this->_doc['xml'] = ereg_replace("@NOTE@[0-9]*@","",$this->_doc['xml']);
+        $this->_doc['xml'] = preg_replace("/@NOTE@[0-9]*@/","",$this->_doc['xml']);
 
         $za->addFromString('content.xml', $this->_doc['xml']);
         $za->close();
@@ -412,11 +412,11 @@ class OrphanNotesParser
 
                 if( preg_match( "/^[[(]?[0-9]+[])]?/i" , $txtNote , $regs ) )// si notre txtNote commence par une note
                 {
-                    $noteTrouvee = ereg_replace( "[^0-9]" , "" , $regs[0] ); // note trouvee
+                    $noteTrouvee = preg_replace( "/[^0-9]/" , "" , $regs[0] ); // note trouvee
                     if ( (int)$noteTrouvee == (int)$this->_numeroNoteCourrante ) // si cela correspond au num courant de la note qu'on cherche
                     {
                         //il faut maintenant retirer la note trouvée de son texte.
-                        $txtNote = ereg_replace("^[[(]?[0-9]+[])]?","",$txtNote);
+                        $txtNote = preg_replace("/^[[(]?[0-9]+[])]?/","",$txtNote);
                         if($txtNote[0] == ".")
                             $txtNote = substr($txtNote,1,strlen($txtNote));
                         if(!empty($debutbalise))
@@ -535,40 +535,40 @@ class OrphanNotesParser
                 {
                     if(preg_match("/[[:punct:]]$/i",$str))
                         $probaNote = "0.75";
-                    $str = ereg_replace("^[()]?[0-9]+[-]?[0-9]+[()]+","",$str);
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/^[()]?[0-9]+[-]?[0-9]+[()]+/","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
                 else if(preg_match("/^[^0-9]+[0-9]+[[:punct:]]{0,5}$/i",$str))
                 {
                     if(preg_match("/[[:punct:]]$/i",$str))
                         $probaNote = "0.75";
                     //on enleve tout ce qui n'est pas un chiffre
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
                 else if( preg_match("/[0-9]{4}[0-9]+[[:punct:]]?/i",$str)) //gestion date à quatre chiffres
                 {
                     //on enleve les 4 premier chiffres
                     $str = substr($str,4,strlen($str));
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
                 else if( preg_match("/[0-9]{3}[0-9]+[[:punct:]]?/i",$str) && $this->_prec_date < 4) //gestion date à trois chiffres
                 {
                     //on enleve les 3 premier chiffres
                     $probaNote = "0.50";
                     $str = substr($str,3,strlen($str));
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
                 else if( preg_match("/[0-9]{2}[0-9]+[[:punct:]]?/i",$str) && $this->_prec_date < 4) //gestion date à deux chiffres
                 {
                     //on enleve les 2 premier chiffres
                     $probaNote = "0.25";
                     $str = substr($str,2,strlen($str));
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
                 else if(preg_match("/[0-9][[:punct:]]?/",$str))
                 {
                     $probaNote = "0.75";
-                    $str = ereg_replace("[^0-9]","",$str);
+                    $str = preg_replace("/[^0-9]/","",$str);
                 }
 
                 //construction de l'extrait
