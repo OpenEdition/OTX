@@ -17,7 +17,6 @@ class orphannotes extends Plugin {
     
     function run()
     {
-error_log("A: ".var_export($this->_param,true));
         if('proposal-extended' === $this->_param['type'] || 'recompose' === $this->_param['type'])
         {
             $doc = unserialize(base64_decode(file_get_contents($this->_param['sourcepath'])));
@@ -63,7 +62,6 @@ error_log("A: ".var_export($this->_param,true));
         }
 
         $za = new ZipArchive();
-error_log("DOC: ".var_export($this->_doc,true));
         if(!$za->open($this->_doc['pathDocument']))
         {
             throw new Exception($this->_status);
@@ -233,7 +231,7 @@ error_log("DOC: ".var_export($this->_doc,true));
             $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->_doc['iddocument']." AND numNote=".$curnote);
 
             //Au cas ou la note soit entre parenthese on enleve ces parenthèses
-            if(eregi("^(.)*\([0-9]+\)[.]{0,3}$",trim($motNote)))
+            if(preg_match("/^(.)*\([0-9]+\)[.]{0,3}$/i",trim($motNote)))
             {
                 $motNote = str_replace("(".$curnote.")", sprintf($modeleNote, $curnote, $curnote, $texteNote), $motNote);
             }
@@ -405,14 +403,14 @@ class OrphanNotesParser
             {
                 //On est en acquisition des notes, on recherche si le texte présent contient une note potentielle...
                 //Si le texte commence par une balise, on l'enleve pour après traiter si c'est une note
-                if(eregi( "^<text:span" , trim( $this->_lectureNoteCourrante ) ) ) // note en italique, gras, exposant,...
+                if(preg_match( "/^<text:span/i" , trim( $this->_lectureNoteCourrante ) ) ) // note en italique, gras, exposant,...
                 {
                     $txtNote = substr($this->_lectureNoteCourrante,strpos($this->_lectureNoteCourrante,">")+1,strlen($this->_lectureNoteCourrante));
                     $debutbalise = substr($this->_lectureNoteCourrante,0,strpos($this->_lectureNoteCourrante,">")+1); // on stocke la balise de debut
                 }
                 else $txtNote = $this->_lectureNoteCourrante ; // On met txtNote a lectureNoteCourrante
 
-                if( eregi( "^[[(]?[0-9]+[])]?" , $txtNote , $regs ) )// si notre txtNote commence par une note
+                if( preg_match( "/^[[(]?[0-9]+[])]?/i" , $txtNote , $regs ) )// si notre txtNote commence par une note
                 {
                     $noteTrouvee = ereg_replace( "[^0-9]" , "" , $regs[0] ); // note trouvee
                     if ( (int)$noteTrouvee == (int)$this->_numeroNoteCourrante ) // si cela correspond au num courant de la note qu'on cherche
@@ -438,7 +436,7 @@ class OrphanNotesParser
                 }
                 else // sinon si ce n'est apparemment pas une note
                 {
-                    if(ereg("^[*]",$txtNote)) // si c'est une astérisque on en tient compte (et on teste avec txtNote qui ne contient plus l'éventuelle balise de début
+                    if(preg_match("/^[*]/",$txtNote)) // si c'est une astérisque on en tient compte (et on teste avec txtNote qui ne contient plus l'éventuelle balise de début
                     {
                         $this->_nbAsterisques++;
                         $this->_txtAsterisques[] = $this->_lectureNoteCourrante;
@@ -446,7 +444,7 @@ class OrphanNotesParser
                         $this->_lectureNoteCourrante = "";
                         $this->_numeroNoteCourrante--;
                     }
-                    elseif(ereg("^(I|X|V|D|M|L|C)+.",$txtNote)) //detection d'une note en chiffre romain
+                    elseif(preg_match("/^(I|X|V|D|M|L|C)+./",$txtNote)) //detection d'une note en chiffre romain
                     {
                         $this->_nbRomains++;
                         $this->_txtRomains[] = $this->_lectureNoteCourrante;
@@ -533,41 +531,41 @@ class OrphanNotesParser
                 //DIFFERENTS CAS POSSIBLES et différent suivant si on est en passe rapide ou approfondie
                 // (paramètre prof)
                 //si la note contient un mot suivit d'un chiffre et éventuellement dun signe de ponctuation
-                if(ereg("[()]?[0-9]+[-]?[0-9]+[()]+[0-9]+[:punct:]?",$str)) // note de la forme 67)4
+                if(preg_match("/[()]?[0-9]+[-]?[0-9]+[()]+[0-9]+[[:punct:]]?/",$str)) // note de la forme 67)4
                 {
-                    if(eregi("[:punct:]$",$str))
+                    if(preg_match("/[[:punct:]]$/i",$str))
                         $probaNote = "0.75";
                     $str = ereg_replace("^[()]?[0-9]+[-]?[0-9]+[()]+","",$str);
                     $str = ereg_replace("[^0-9]","",$str);
                 }
-                else if(eregi("^[^0-9]+[0-9]+[:punct:]{0,5}$",$str))
+                else if(preg_match("/^[^0-9]+[0-9]+[[:punct:]]{0,5}$/i",$str))
                 {
-                    if(eregi("[:punct:]$",$str))
+                    if(preg_match("/[[:punct:]]$/i",$str))
                         $probaNote = "0.75";
                     //on enleve tout ce qui n'est pas un chiffre
                     $str = ereg_replace("[^0-9]","",$str);
                 }
-                else if( eregi("[0-9]{4}[0-9]+[:punct:]?",$str)) //gestion date à quatre chiffres
+                else if( preg_match("/[0-9]{4}[0-9]+[[:punct:]]?/i",$str)) //gestion date à quatre chiffres
                 {
                     //on enleve les 4 premier chiffres
                     $str = substr($str,4,strlen($str));
                     $str = ereg_replace("[^0-9]","",$str);
                 }
-                else if( eregi("[0-9]{3}[0-9]+[:punct:]?",$str) && $this->_prec_date < 4) //gestion date à trois chiffres
+                else if( preg_match("/[0-9]{3}[0-9]+[[:punct:]]?/i",$str) && $this->_prec_date < 4) //gestion date à trois chiffres
                 {
                     //on enleve les 3 premier chiffres
                     $probaNote = "0.50";
                     $str = substr($str,3,strlen($str));
                     $str = ereg_replace("[^0-9]","",$str);
                 }
-                else if( eregi("[0-9]{2}[0-9]+[:punct:]?",$str) && $this->_prec_date < 4) //gestion date à deux chiffres
+                else if( preg_match("/[0-9]{2}[0-9]+[[:punct:]]?/i",$str) && $this->_prec_date < 4) //gestion date à deux chiffres
                 {
                     //on enleve les 2 premier chiffres
                     $probaNote = "0.25";
                     $str = substr($str,2,strlen($str));
                     $str = ereg_replace("[^0-9]","",$str);
                 }
-                else if(ereg("[0-9][:punct:]?",$str))
+                else if(preg_match("/[0-9][[:punct:]]?/",$str))
                 {
                     $probaNote = "0.75";
                     $str = ereg_replace("[^0-9]","",$str);
