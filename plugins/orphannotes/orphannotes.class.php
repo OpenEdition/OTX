@@ -11,42 +11,36 @@ class orphannotes extends Plugin {
 	private $doc_tmp;
 	private $doc_output;
 	private $xml;
+	private $request;
 	public $output = array();
 
-    protected function __construct($db, $param){
-    	$this->_param  = $param;
-        $this->_db     = $db;
-        $this->_config = OTXConfig::singleton();
-    }
-    
-    function run()
-    {
-        if('proposal-extended' === $this->_param['type'] || 'recompose' === $this->_param['type'])
-        {
-            $doc = unserialize(base64_decode(file_get_contents($this->_param['sourcepath'])));
-            if(empty($doc['iddocument']))
-            {
+	protected function __construct($db, $param){
+		$this->_param  = $param;
+		$this->_db     = $db;
+		$this->_config = OTXConfig::singleton();
+	}
+
+	function run() {
+		if('proposal-extended' === $this->_param['type'] || 'recompose' === $this->_param['type']) {
+            $this->request = unserialize(base64_decode(file_get_contents($this->_param['sourcepath'])));
+            if(empty($this->request['iddocument'])) {
                 throw new Exception($this->_status);
             }
             unlink($this->_param['sourcepath']);
 
-            $this->_doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $doc['iddocument']);
+            $doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $this->request['iddocument']);
+			if(empty($doc)) {
+				throw new Exception($this->_status);
+			}
 
-            if(empty($this->_doc))
-            {
-                throw new Exception($this->_status);
-            }
+			$this->doc_tmp = $this->getFileInfo($doc['pathDocument']);
+			$this->doc_source = $doc['realname'];
 
-            $this->_doc['iddocument'] = $this->_doc['idDocument'];
-
-            if('recompose' === $this->_param['type'])
-            {
-                unset($doc['iddocument']);
-                $this->_doc = array_merge($this->_doc, $doc);
-            }
-        }
-        else
-        {
+//             if('recompose' === $this->_param['type']) {
+//                 unset($doc['iddocument']);
+//                 $this->_doc = array_merge($this->_doc, $doc);
+//             }
+		} else {
             $realname = basename($this->_param['sourcepath']);
             $this->doc_source = $this->getFileInfo($this->_param['sourcepath']);
 
@@ -57,47 +51,34 @@ class orphannotes extends Plugin {
             $this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '".sqlite_escape_string($this->doc_source['basename'])."', '".sqlite_escape_string($tmp_path)."')");
             $this->doc_source['iddocument'] = $this->_db->insert_id();
 
-            if(! $this->doc_source['iddocument'])
-            {
+            if(! $this->doc_source['iddocument']) {
                 throw new Exception($this->_status);
             }
         }
 
         $za = new ZipArchive();
-        if(!$za->open($this->doc_tmp['realpath']))
-        {
+        if(!$za->open($this->doc_tmp['realpath'])) {
             throw new Exception($this->_status);
         }
 
-        if(! ($this->xml = $za->getFromName('content.xml')))
-        {
+        if(! ($this->xml = $za->getFromName('content.xml'))) {
             throw new Exception($this->_status);
         }
-        switch($this->_param['type'])
-        {
-            case 'proposal':
-
-                return $this->_orphanNotes(false, $za);
-
-                break;
-
-            case 'proposal-extended':
-
-                return $this->_orphanNotes(true, $za);
-
-                break;
-
-            case 'recompose':
-
-                return $this->_orphanNotesRecomposeDocument($za);
-
-                break;
-
-            default:
-                $this->_status = 'Unknown mode type';
-                throw new Exception($this->_status);
-                break;
-        }
+		switch($this->_param['type']) {
+			case 'proposal':
+				return $this->_orphanNotes(false, $za);
+				break;
+			case 'proposal-extended':
+				return $this->_orphanNotes(true, $za);
+				break;
+			case 'recompose':
+				return $this->_orphanNotesRecomposeDocument($za);
+				break;
+			default:
+				$this->_status = 'Unknown mode type';
+				throw new Exception($this->_status);
+				break;
+		}
     }
 
     /**
@@ -106,8 +87,6 @@ class orphannotes extends Plugin {
     * return : le chemin vers le document convertit
     **/
     protected function convertDocument($sourcepath, $extension) {
-        # get the mime type
-        $mime = $this->getmime($sourcepath);
 		$source_info = $this->getFileInfo($sourcepath);
         $targetpath = $source_info['dirname'];
 
@@ -116,7 +95,7 @@ class orphannotes extends Plugin {
 				$convertTo = 'odt:writer8';
 				break;
 			case 'doc':
-				$convertTo = 'doc:writer8';
+				$convertTo = 'doc:"MS Word 2007 XML"';
 				break;
 			default:
 			$this->_status = "Can not convert '$sourcepath' to $extension";
@@ -154,30 +133,28 @@ class orphannotes extends Plugin {
         return $targetpath . DIRECTORY_SEPARATOR . $source_info['filename'] . "." . $extension;
     }
 
-    private function rmdir( $path )
-    {
-        $files = glob( $path . '*', GLOB_MARK );
-        foreach( $files as $file ){
-            if( substr( $file, -1 ) == '/' )
-                $this->rmdir( $file );
-        	else
-        		unlink( $file );
-        }
-        rmdir( $path );
-    }
+	private function rmdir( $path ) {
+		$files = glob( $path . '*', GLOB_MARK );
+		foreach( $files as $file ){
+			if( substr( $file, -1 ) == '/' )
+				$this->rmdir( $file );
+			else
+				unlink( $file );
+		}
+		rmdir( $path );
+	}
 
 
-    protected function getFileInfo($path) {
+	protected function getFileInfo($path) {
 		$infos = pathinfo($path);
 		$infos['realpath'] = realpath($path);
 		return $infos;
-    }
+	}
 
-    private function getmime() {
-            $sourcepath = $this->_param['sourcepath'];
-            $mime = mime_content_type($sourcepath);
-            return $mime;
-        }
+	private function getmime($sourcepath) {
+		$mime = mime_content_type($sourcepath);
+		return $mime;
+	}
 
     protected function _orphanNotes($extended = false, ZipArchive $za)
     {
@@ -227,9 +204,9 @@ class orphannotes extends Plugin {
     protected function _orphanNotesRecomposeDocument(ZipArchive $za)
     {
 
-        $nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->_doc['iddocument']);
+        $nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->request['iddocument']);
 
-        $this->_doc['xml'] = $za->getFromName('final.xml');
+        $this->xml = $za->getFromName('final.xml');
         $za->deleteName('final.xml');
         $za->deleteName('content.xml');
 
@@ -238,9 +215,9 @@ class orphannotes extends Plugin {
         //Stylage des appels et notes
         for( $curnote = 1 ; $curnote <= $nbNotesTrouvees ; $curnote ++ )
         {
-            $motNote = substr($this->_doc["notenum".$curnote],strpos($this->_doc["notenum".$curnote],"@")+1);
+            $motNote = substr($this->request["notenum".$curnote],strpos($this->request["notenum".$curnote],"@")+1);
 
-            $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->_doc['iddocument']." AND numNote=".$curnote);
+            $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->request['iddocument']." AND numNote=".$curnote);
 
             //Au cas ou la note soit entre parenthese on enleve ces parenthèses
             if(preg_match("/^(.)*\([0-9]+\)[.]{0,3}$/i",trim($motNote)))
@@ -256,33 +233,27 @@ class orphannotes extends Plugin {
                 $motNote = substr_replace($motNote, sprintf($modeleNote, $curnote, $curnote, $texteNote), $tab[0][1], strlen($curnote));
             }
 
-            if(trim($this->_doc["notenum".$curnote])!="")
-                $this->_doc['xml'] = str_replace("@NOTE@".$this->_doc["notenum".$curnote], $motNote, $this->_doc['xml'] );
+            if(trim($this->request["notenum".$curnote])!="")
+                $this->xml = str_replace("@NOTE@".$this->request["notenum".$curnote], $motNote, $this->xml );
         }
 
         //On enleve tous les @NOTE@<chiffre> qui ne sont pas des notes
-        $this->_doc['xml'] = preg_replace("/@NOTE@[0-9]*@/","",$this->_doc['xml']);
+        $this->xml = preg_replace("/@NOTE@[0-9]*@/","",$this->xml);
 
-        $za->addFromString('content.xml', $this->_doc['xml']);
+        $za->addFromString('content.xml', $this->xml);
         $za->close();
-        $ext = strtolower(pathinfo($this->_doc['realname'], PATHINFO_EXTENSION));
-        if('docx' === $ext)
-        {
-            $this->_doc['realname'] = substr_replace($this->_doc['realname'], 'doc', -4);
-            $ext = 'doc';
+
+        $ext = strtolower(pathinfo($this->doc_source, PATHINFO_EXTENSION));
+        if ($ext !== 'odt') {
+            $final_file = $this->convertDocument($this->doc_tmp['realpath'], $ext);
+        } else {
+			$final_file = $this->doc_tmp['realpath'];
         }
 
-        if($ext !== strtolower(pathinfo($this->_doc['pathDocument'], PATHINFO_EXTENSION)))
-        {
-            $this->_param['sourcepath'] = $this->_doc['pathDocument'];
-            $this->soffice($ext);
-            $this->_doc['pathDocument'] = $this->_param['outputpath'];
-        }
-
-        $this->output['orphannotes'] = array('document' => file_get_contents($this->_doc['pathDocument']), 'name' => $this->_doc['realname']);
+        $this->output['orphannotes'] = array('document' => file_get_contents($final_file), 'name' => $this->doc_source);
         // récupération terminée, on efface les fichiers
-        unlink(dirname($this->_doc['pathDocument'])."/".$this->_doc['realname']);
-        unlink($this->_doc['pathDocument']);
+        unlink($final_file);
+        unlink($this->doc_tmp);
     }
 
 }
