@@ -12,6 +12,7 @@ class orphannotes extends Plugin {
 	private $doc_output;
 	private $xml;
 	private $request;
+	private $iddocument;
 	public $output = array();
 
 	protected function __construct($db, $param){
@@ -26,9 +27,11 @@ class orphannotes extends Plugin {
             if(empty($this->request['iddocument'])) {
                 throw new Exception($this->_status);
             }
+			$this->iddocument = intval($this->request['iddocument']);
+			unset($this->request['iddocument']);
             unlink($this->_param['sourcepath']);
 
-            $doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $this->request['iddocument']);
+            $doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $this->iddocument);
 			if(empty($doc)) {
 				throw new Exception($this->_status);
 			}
@@ -49,9 +52,9 @@ class orphannotes extends Plugin {
             $this->doc_tmp = $this->getFileInfo($tmp_path);
 
             $this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '".sqlite_escape_string($this->doc_source['basename'])."', '".sqlite_escape_string($tmp_path)."')");
-            $this->doc_source['iddocument'] = $this->_db->insert_id();
+            $this->iddocument = $this->_db->insert_id();
 
-            if(! $this->doc_source['iddocument']) {
+            if(! $this->iddocument) {
                 throw new Exception($this->_status);
             }
         }
@@ -156,14 +159,12 @@ class orphannotes extends Plugin {
 		return $mime;
 	}
 
-    protected function _orphanNotes($extended = false, ZipArchive $za)
-    {
+    protected function _orphanNotes($extended = false, ZipArchive $za) {
         $this->_db->debug = true;
+		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
+		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
 
-        class_exists('OrphanNotesParser', false);
-        // || require self::_SERVEL_LIB_.'OrphanNotes/OrphanNotes.php';
-
-        $orphan = new OrphanNotesParser($this->_db, $this->doc_source['iddocument']);
+        $orphan = new OrphanNotesParser($this->_db, $this->iddocument);
         $orphan->XMLLaunchParseOne($this->xml);
 
         if($extended)
@@ -195,16 +196,14 @@ class orphannotes extends Plugin {
             'boutondetection'   => $extended,
             'errorsappels'      => $orphan->getErrorsAppels(),
             'realficname'       => $this->doc_source['basename'],
-            'iddocument'        => $this->doc_source['iddocument'],
-			'source_extension'  => $this->doc_source['extension']
+            'iddocument'        => $this->iddocument
         );
         $this->output['orphannotes']['nberrorsappels'] = count($this->output['orphannotes']['errorsappels']);
     }
-    
-    protected function _orphanNotesRecomposeDocument(ZipArchive $za)
-    {
 
-        $nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->request['iddocument']);
+    protected function _orphanNotesRecomposeDocument(ZipArchive $za) {
+
+        $nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->iddocument);
 
         $this->xml = $za->getFromName('final.xml');
         $za->deleteName('final.xml');
@@ -213,19 +212,15 @@ class orphannotes extends Plugin {
         $modeleNote = '<text:note text:id="ftn%d" text:note-class="footnote"><text:note-citation>%d</text:note-citation><text:note-body><text:p text:style-name="Footnote">%s</text:p></text:note-body></text:note>';
 
         //Stylage des appels et notes
-        for( $curnote = 1 ; $curnote <= $nbNotesTrouvees ; $curnote ++ )
-        {
+        for( $curnote = 1 ; $curnote <= $nbNotesTrouvees ; $curnote ++ ) {
             $motNote = substr($this->request["notenum".$curnote],strpos($this->request["notenum".$curnote],"@")+1);
 
-            $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->request['iddocument']." AND numNote=".$curnote);
+            $texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->iddocument." AND numNote=".$curnote);
 
             //Au cas ou la note soit entre parenthese on enleve ces parenthèses
-            if(preg_match("/^(.)*\([0-9]+\)[.]{0,3}$/i",trim($motNote)))
-            {
+            if(preg_match("/^(.)*\([0-9]+\)[.]{0,3}$/i",trim($motNote))) {
                 $motNote = str_replace("(".$curnote.")", sprintf($modeleNote, $curnote, $curnote, $texteNote), $motNote);
-            }
-            else
-            {
+            } else {
                 //Gestion du cas ou on a un mot du style 18707 (utilisation de substr_replace
                 preg_match_all("/".$curnote."/",$motNote,$matches,PREG_OFFSET_CAPTURE);
                 $tab = array_reverse($matches[0]);
@@ -243,6 +238,10 @@ class orphannotes extends Plugin {
         $za->addFromString('content.xml', $this->xml);
         $za->close();
 
+		// efface les traces de la base
+		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
+		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
+
         $ext = strtolower(pathinfo($this->doc_source, PATHINFO_EXTENSION));
         if ($ext !== 'odt') {
             $final_file = $this->convertDocument($this->doc_tmp['realpath'], $ext);
@@ -253,7 +252,7 @@ class orphannotes extends Plugin {
         $this->output['orphannotes'] = array('document' => file_get_contents($final_file), 'name' => $this->doc_source);
         // récupération terminée, on efface les fichiers
         unlink($final_file);
-        unlink($this->doc_tmp);
+        unlink($this->doc_tmp['realpath']);
     }
 
 }
