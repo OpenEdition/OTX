@@ -7,6 +7,10 @@ class orphannotes extends Plugin {
 	private $_param;
 	private $_status;
 	private $_config;
+	private $doc_source;
+	private $doc_tmp;
+	private $doc_output;
+	private $xml;
 	public $output = array();
 
     protected function __construct($db, $param){
@@ -44,31 +48,28 @@ class orphannotes extends Plugin {
         else
         {
             $realname = basename($this->_param['sourcepath']);
+            $this->doc_source = $this->getFileInfo($this->_param['sourcepath']);
 
-            $this->soffice();
-            $filename = $this->_param['outputpath'];
+            $tmp_path = $this->convertDocument($this->_param['sourcepath'], 'odt');
+			unlink($this->doc_source['realpath']); // efface le document d'origine
+            $this->doc_tmp = $this->getFileInfo($tmp_path);
 
-            $this->_doc = array(
-                'realname' => $realname,
-                'pathDocument' => $filename
-            );
+            $this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '".sqlite_escape_string($this->doc_source['basename'])."', '".sqlite_escape_string($tmp_path)."')");
+            $this->doc_source['iddocument'] = $this->_db->insert_id();
 
-            $this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '".sqlite_escape_string($this->_doc['realname'])."', '".sqlite_escape_string($this->_doc['pathDocument'])."')");
-			$this->_doc['iddocument'] = $this->_db->insert_id();
-
-            if(! $this->_doc['iddocument'])
+            if(! $this->doc_source['iddocument'])
             {
                 throw new Exception($this->_status);
             }
         }
 
         $za = new ZipArchive();
-        if(!$za->open($this->_doc['pathDocument']))
+        if(!$za->open($this->doc_tmp['realpath']))
         {
             throw new Exception($this->_status);
         }
 
-        if(! ($this->_doc['xml'] = $za->getFromName('content.xml')))
+        if(! ($this->xml = $za->getFromName('content.xml')))
         {
             throw new Exception($this->_status);
         }
@@ -100,54 +101,57 @@ class orphannotes extends Plugin {
     }
 
     /**
-    * transformation d'un document (txt, rtf, xhtml, tei, pdf, ...) en (odt, ...)
+    * conversion d'un document
     * ! system call inside (soffice)
-    * copie de la fonction d'otx
+    * return : le chemin vers le document convertit
     **/
-    protected function soffice($suffix="odt") {
+    protected function convertDocument($sourcepath, $extension) {
         # get the mime type
-        $this->getmime();
-        $sourcepath = $this->_param['sourcepath'];
+        $mime = $this->getmime($sourcepath);
+		$source_info = $this->getFileInfo($sourcepath);
+        $targetpath = $source_info['dirname'];
 
-        $targetpath = dirname($sourcepath);
+		switch ($extension) {
+			case 'odt':
+				$convertTo = 'odt:writer8';
+				break;
+			case 'doc':
+				$convertTo = 'doc:writer8';
+				break;
+			default:
+			$this->_status = "Can not convert '$sourcepath' to $extension";
+			throw new Exception($this->_status,E_USER_ERROR);
+		}
 
-        if ( $this->_param['mime'] !== "application/vnd.oasis.opendocument.text" ) {
-            $in = escapeshellarg($sourcepath);
-            $out = escapeshellarg($targetpath);
+		$in = escapeshellarg($sourcepath);
+		$out = escapeshellarg($targetpath);
 
-            /* Création de répertoire temporaire pour le profile */
-            $temp_profile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('OTX');
-            mkdir($temp_profile, 0755, true);
+		/* Création de répertoire temporaire pour le profile */
+		$temp_profile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('OTX');
+		mkdir($temp_profile, 0755, true);
 
-            $command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to odt:writer8 -outdir {$out} {$in}";
+		$command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to {$convertTo} -outdir {$out} {$in}";
 
-            $returnvar = 0;
-            $result    = '';
+		$returnvar = 0;
+		$result    = '';
 
-            $output = exec($command, $result, $returnvar);
+		$output = exec($command, $result, $returnvar);
 
-            /* Suppression du profile temporaire */
-            $this->rmdir($temp_profile);
-            error_log(var_export($result,true));
-            error_log(var_export($output,true));
-            error_log(var_export($returnvar,true));
-            
-            if ($returnvar) {
-                @copy($sourcepath, $sourcepath.".error");
-                @unlink($sourcepath);
-                $this->_status = "error soffice";
-                error_log("$command returned " . var_export($returnvar,true));
-                throw new Exception($this->_status,E_USER_ERROR);
-            }else{
-                $fileinfos = pathinfo($sourcepath);
-                $this->_param['outputpath'] = $targetpath . DIRECTORY_SEPARATOR . $fileinfos['filename'] . ".odt" ;
-            }
-        }else{
-            $this->_param['outputpath'] = $sourcepath;
-        }
-        $this->_param['odtpath'] = $this->_usedfiles[] = $this->_param['outputpath'];
+		/* Suppression du profile temporaire */
+		$this->rmdir($temp_profile);
+		error_log(var_export($result,true));
+		error_log(var_export($output,true));
+		error_log(var_export($returnvar,true));
+		
+		if ($returnvar) {
+			@copy($sourcepath, $sourcepath.".error");
+			@unlink($sourcepath);
+			$this->_status = "error soffice";
+			error_log("$command returned " . var_export($returnvar,true));
+			throw new Exception($this->_status,E_USER_ERROR);
+		}
 
-        return true;
+        return $targetpath . DIRECTORY_SEPARATOR . $source_info['filename'] . "." . $extension;
     }
 
     private function rmdir( $path )
@@ -162,11 +166,17 @@ class orphannotes extends Plugin {
         rmdir( $path );
     }
 
+
+    protected function getFileInfo($path) {
+		$infos = pathinfo($path);
+		$infos['realpath'] = realpath($path);
+		return $infos;
+    }
+
     private function getmime() {
             $sourcepath = $this->_param['sourcepath'];
             $mime = mime_content_type($sourcepath);
-            $this->_param['mime'] = $mime;
-            return true;
+            return $mime;
         }
 
     protected function _orphanNotes($extended = false, ZipArchive $za)
@@ -176,8 +186,8 @@ class orphannotes extends Plugin {
         class_exists('OrphanNotesParser', false);
         // || require self::_SERVEL_LIB_.'OrphanNotes/OrphanNotes.php';
 
-        $orphan = new OrphanNotesParser($this->_db, $this->_doc['iddocument']);
-        $orphan->XMLLaunchParseOne($this->_doc['xml']);
+        $orphan = new OrphanNotesParser($this->_db, $this->doc_source['iddocument']);
+        $orphan->XMLLaunchParseOne($this->xml);
 
         if($extended)
         {
@@ -190,7 +200,7 @@ class orphannotes extends Plugin {
             $precision_date = 4; //4 ou moins, 4 si on ne veut considérer que les dates a quatre chiffre suivies d'une note
         }
 
-        $orphan ->XMLLaunchParseTwo($this->_doc['xml'], $profondeur, $precision_date)
+        $orphan ->XMLLaunchParseTwo($this->xml, $profondeur, $precision_date)
                 ->phaseFinale();
 
         $za->addFromString('final.xml', $orphan->XMLText);
@@ -207,8 +217,9 @@ class orphannotes extends Plugin {
             'texteaffichage'    => $orphan->getTexte(),
             'boutondetection'   => $extended,
             'errorsappels'      => $orphan->getErrorsAppels(),
-            'realficname'       => $this->_doc['realname'],
-            'iddocument'        => $this->_doc['iddocument']
+            'realficname'       => $this->doc_source['basename'],
+            'iddocument'        => $this->doc_source['iddocument'],
+			'source_extension'  => $this->doc_source['extension']
         );
         $this->output['orphannotes']['nberrorsappels'] = count($this->output['orphannotes']['errorsappels']);
     }
