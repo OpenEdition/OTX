@@ -3,12 +3,11 @@
 class orphannotes extends Plugin {
 
 	private $_db;
-	private $_doc;
 	private $_param;
 	private $_status;
 	private $_config;
-	private $doc_source;
-	private $doc_tmp;
+	private $doc_source = array();
+	private $doc_tmp = array();
 	private $doc_output;
 	private $xml;
 	private $request;
@@ -37,12 +36,8 @@ class orphannotes extends Plugin {
 			}
 
 			$this->doc_tmp = $this->getFileInfo($doc['pathDocument']);
-			$this->doc_source = $doc['realname'];
+			$this->doc_source['basename'] = $doc['realname'];
 
-//             if('recompose' === $this->_param['type']) {
-//                 unset($doc['iddocument']);
-//                 $this->_doc = array_merge($this->_doc, $doc);
-//             }
 		} else {
             $realname = basename($this->_param['sourcepath']);
             $this->doc_source = $this->getFileInfo($this->_param['sourcepath']);
@@ -242,14 +237,14 @@ class orphannotes extends Plugin {
 		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
 		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
 
-        $ext = strtolower(pathinfo($this->doc_source, PATHINFO_EXTENSION));
+        $ext = strtolower(pathinfo($this->doc_source['basename'], PATHINFO_EXTENSION));
         if ($ext !== 'odt') {
             $final_file = $this->convertDocument($this->doc_tmp['realpath'], $ext);
         } else {
 			$final_file = $this->doc_tmp['realpath'];
         }
 
-        $this->output['orphannotes'] = array('document' => file_get_contents($final_file), 'name' => $this->doc_source);
+        $this->output['orphannotes'] = array('document' => file_get_contents($final_file), 'name' => $this->doc_source['basename']);
         // récupération terminée, on efface les fichiers
         unlink($final_file);
         unlink($this->doc_tmp['realpath']);
