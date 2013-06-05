@@ -252,24 +252,7 @@
 -->
     </xsl:template>
 
-
-    <!-- lists -->
-
     <!-- headings -->
-    <xsl:template match="text:list[@text:style-name='outline']">
-        <xsl:if test="descendant::text:h[@text:outline-level]">
-            <xsl:call-template name="copyxmlid"/>
-        </xsl:if>
-    </xsl:template>
-
-<!--Gestion de la continuité de la numérotation des listes. Donc: TODO
-    Pas géré ici, et commenter pour ne pas faire disparaitre ces listes du document-->
-<!--    <xsl:template match="text:list[@text:continue-numbering]">
-        <xsl:if test="descendant::text:h[@text:outline-level]">
-            <xsl:call-template name="copyxmlid"/>
-        </xsl:if>
-    </xsl:template>-->
-
     <xsl:template match="text:h[@text:outline-level]">
         <xsl:variable name="heading">
             <xsl:value-of select="concat('heading',@text:outline-level)"/>
@@ -278,46 +261,32 @@
             <xsl:value-of select="@text:style-name"/>
         </xsl:variable>
         <ab type="head" rend="{$heading}">
-	          <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$Style)"/></xsl:attribute>
+            <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$Style)"/></xsl:attribute>
             <xsl:call-template name="copyxmlid"/>
         </ab>
     </xsl:template>
 
-    <!-- list-item -->
-<!--    <xsl:template match="text:list[@text:style-name]">
-        <xsl:variable name="Style">
-            <xsl:value-of select="@text:style-name"/>
-        </xsl:variable>
-        <xsl:choose>
-            <xsl:when test="descendant::text:h[@text:outline-level]">
-                <xsl:call-template name="copyxmlid"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <list rendition="#{$Style}">
-                    <xsl:call-template name="copyxmlid"/>
-                </list>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
--->
-    <xsl:template match="text:list">
-         <xsl:choose>
-            <xsl:when test="descendant::text:h[@text:outline-level]">
-                <xsl:call-template name="copyxmlid"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <list>
-                    <xsl:if test="@text:style-name">
-	                    <xsl:attribute name="rendition">
-	                        <xsl:text>#</xsl:text>
-	                        <xsl:value-of select="@text:style-name" />
-	                    </xsl:attribute>
-                    </xsl:if>
-                   <xsl:call-template name="copyxmlid"/>
-                </list>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
+    <!-- lists -->
+
+<!--Gestion de la continuité de la numérotation des listes. Donc: TODO
+    Pas géré ici, et commenté pour ne pas faire disparaitre ces listes du document-->
+<!--    <xsl:template match="text:list[@text:continue-numbering]">
+        <xsl:if test="descendant::text:h[@text:outline-level]">
+            <xsl:call-template name="copyxmlid"/>
+        </xsl:if>
+    </xsl:template>-->
+
+	<xsl:template match="text:list">
+		<list>
+			<xsl:if test="@text:style-name">
+				<xsl:attribute name="rendition">
+					<xsl:text>#</xsl:text>
+					<xsl:value-of select="@text:style-name" />
+				</xsl:attribute>
+			</xsl:if>
+		<xsl:call-template name="copyxmlid"/>
+		</list>
+	</xsl:template>
 
     <xsl:template match="text:list-header">
         <head>
