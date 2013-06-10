@@ -93,7 +93,7 @@ class orphannotes extends Plugin {
 				$convertTo = 'odt:writer8';
 				break;
 			case 'doc':
-				$convertTo = 'doc:"MS Word 2007 XML"';
+				$convertTo = 'doc';
 				break;
 			default:
 			$this->_status = "Can not convert '$sourcepath' to $extension";
