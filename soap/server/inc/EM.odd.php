@@ -107,6 +107,9 @@ function _em2tei($schema="revorg") {
 // dedicace
 "/tei:TEI/tei:text/tei:front/tei:div[@type='dedication']"
     => 'front:dedication',
+// remerciements
+"/tei:TEI/tei:text/tei:front/tei:div[@type='ack']/tei:p"
+    => 'front:acknowledgment',
 
 // titreoeuvre
 "/tei:TEI/tei:text/tei:front/tei:div[@type='review']/tei:p[@rend='review-title']"
@@ -203,9 +206,6 @@ function _em2tei($schema="revorg") {
 "//*[@rend='bibliographicreference']"   => 'text:bibliographicreference',
 //creditillustration,crditillustration,creditsillustration,crditsillustration
 "//*[@rend='figure-license']"           => 'text:figure-license',
-
-//remerciements,acknowledgment
-"//*[@rend='acknowledgment']"  => 'body:acknowledgment',
 
 //sections
 "//tei:head[@subtype='level1']" =>  'text:heading1',

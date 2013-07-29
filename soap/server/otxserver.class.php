@@ -1717,6 +1717,29 @@ class OTXserver
             $front->appendChild($div);
             $parent->removeChild($item);
         }
+       # /tei/text/front/ack
+        $entries = $xpath->query("//tei:p[@rend='acknowledgment']");
+        foreach ($entries as $item) {
+            $parent = $item->parentNode;
+
+            $rend = $item->getAttribute("rend");
+            $lang = null;
+            $div = $dom->createElement("div");
+            $div->setAttribute('type', "ack");
+            if ( isset($lang)) {
+                $div->setAttribute('xml:lang', $lang);
+            }
+            $clone = $item->cloneNode(true);
+            if ($clone->hasAttributes()) {
+                foreach ($clone->attributes as $attr) {
+                    $clone->removeAttribute($attr->name);
+                }
+            }
+            $div->appendChild($clone);
+            $front->appendChild($div);
+            $parent->removeChild($item);
+        }
+
         # /tei/text/front/review
         $entries = $xpath->query("//tei:p[starts-with(@rend,'review-')]");
         if ($entries->length) {
