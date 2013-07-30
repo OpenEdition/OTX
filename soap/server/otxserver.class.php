@@ -1718,7 +1718,7 @@ class OTXserver
             $parent->removeChild($item);
         }
        # /tei/text/front/ack
-        $entries = $xpath->query("//tei:p[@rend='acknowledgment']");
+        $entries = $xpath->query("//tei:p[@rend='acknowledgments']");
         foreach ($entries as $item) {
             $parent = $item->parentNode;
 

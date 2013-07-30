@@ -109,7 +109,7 @@ function _em2tei($schema="revorg") {
     => 'front:dedication',
 // remerciements
 "/tei:TEI/tei:text/tei:front/tei:div[@type='ack']/tei:p"
-    => 'front:acknowledgment',
+    => 'front:acknowledgments',
 
 // titreoeuvre
 "/tei:TEI/tei:text/tei:front/tei:div[@type='review']/tei:p[@rend='review-title']"
