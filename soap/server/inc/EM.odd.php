@@ -172,8 +172,8 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:back/tei:div[@type='appendix']"
     => 'back:appendix',
 //
-"/tei:TEI/tei:text/tei:back/tei:div[@type='bibliogr']"
-    => 'back:bibliography',
+"/tei:TEI/tei:text/tei:back/tei:div[@type='bibliography']"
+    => 'back:bibliographie',
 
 
 // citation
