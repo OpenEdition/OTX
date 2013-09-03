@@ -2394,7 +2394,7 @@ class OTXserver
                             }
                         }
 
-                        $attribute->nodeValue = $newname;
+                        $attribute->nodeValue = "Pictures/img-" . $this->LodelImg[$imgname.$imgext] . "." . $imgext;
                     }
                     else {
 
