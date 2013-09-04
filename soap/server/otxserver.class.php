@@ -2530,7 +2530,7 @@ class OTXserver
                 }
             }else{
                 // table border
-                if (strpos('table', $name) === 0 && preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
+                if ($name && strpos($name, 'table') === 0 && preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
                     if($match[2] == "none") {
                         $border = "{$match[1]}:none";
                     }else{
