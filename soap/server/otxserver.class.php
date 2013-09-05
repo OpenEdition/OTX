@@ -27,16 +27,18 @@ class OTXserver
     private $report 	= array();
 
     protected $meta 	= array();
+    // correspondance entre les noms de style et la rendition attendu
     protected $EModel 	= array();
     private $EMotx 		= array();
+    // tableau en dur correspondant au fichier inc/EM.odd.php. Fait correspondre le champ 'otx' du ME lodel à la rendition attendue
     private $EMTEI 		= array();
     private $EMandatory = array();
     private $LodelImg 	= array();
 
-    private $dom 		= array();
+    private $dom 		= array(); // fourre tout
     private $automatic 	= array();
     private $rend 		= array();
-    private $rendition 	= array();
+    private $rendition 	= array(); // tableau des styles du document, puis de ceux à appliquer
     private $Pnum 		= 0;
     private $Tnum 		= 0;
     private $tagsDecl 	= array();
@@ -101,7 +103,7 @@ class OTXserver
        if (!self::$_instance_) {
             self::$_instance_ = $this;
        } else {
-            trigger_error("Unserializing this instance while another exists voilates the Singleton pattern", E_USER_ERROR);
+            trigger_error("Unserializing this instance while another exists voilates the Singleton pattern", E_USER_ERROR); // sic
             return null;
         }
     }
@@ -185,13 +187,13 @@ class OTXserver
             case 'lodel':
                 $this->soffice();
                 $this->oo2report('soffice', $this->_param['odtpath']);
-                $this->Schema2OO();
-                $this->lodelodt();
-                $this->oo2lodelxml();
+                $this->Schema2OO(); // Création de EMTEI[], EMotx[] et EModel[]
+                $this->lodelodt(); // créer une sortie du fichier .odt en TEI simple dans dom['teifodt']
+                $this->oo2lodelxml(); // de dom['teifodt'] à _param['lodelTEI'] TEI lodel
                 $this->output['lodelxml'] = null;
                 $this->oo2report('lodel', $this->_param['lodelodtpath']);
                 $this->output['contentpath'] = $this->_param['lodelodtpath'];
-                $this->loodxml2xml();
+                $this->loodxml2xml(); // de _param['lodelTEI'] à _param['TEI'] TEI lodel complète
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
                 $this->output['report'] = json_encode($this->report);
                 break;
@@ -221,7 +223,12 @@ class OTXserver
 
 
 /**
- * dynamic mapping of Lodel EM
+ * «dynamic mapping» (sic) of Lodel EM
+ * Création des tableaux de correspondance entre le ME et les attributs rendition
+ * EMTEI[] : tableau en dur du fichier inc/EM.odd.php
+ * EMotx[] : liens entre rendition et place dans la TEI (css whitelist aussi)
+ * EModel[] : liens entre style du ME et rendition
+ * _keywords[] : tableau de nom des types de mots-clefs
 **/
     protected function Schema2OO() {
 
@@ -251,6 +258,8 @@ class OTXserver
         $OOTX = array();
         $nbEmStyle = $nbOtxStyle = 0;
 
+        // lecture du ME
+        // Création du tableau EMotx[nom_rendition] = array('key'=> head|front|body|text, 'allowedstyles' => whitelist CSS, 'surround' => qui ne sert à rien)
         foreach($domxpath->query('//row') as $node){
             $value = $keys = $g_otx = $lang = '';
             $row      = array();
@@ -299,6 +308,12 @@ class OTXserver
                         case 'surrounding':
                             $row[$attr] = trim($col->nodeValue);
                             break;
+                        case 'allowedtags': // hack of allowedtags to create csswhitelist
+                            $allowedstyles = $this->list_allowedstyles(trim($col->nodeValue));
+                            if ($allowedstyles) {
+                                $row['allowedstyles'] = $allowedstyles;
+                            }
+                            break;
                         case "lang":
                             $lang = trim($col->nodeValue);
                             $row[$attr] = trim($col->nodeValue);
@@ -324,7 +339,7 @@ class OTXserver
 
                 $emotx = $row['otx'];
                 if (! isset($this->EMTEI[$emotx])) {
-                    // TODO ?
+                    // TODO ? haha, ben oui TODO : rendre le mapping dynamique et non pas se baser sur un tableau en dur
                     continue;
                 }else {
                     $nbOtxStyle++;
@@ -338,6 +353,8 @@ class OTXserver
                     if ( strstr($emotx, ":")) {
                         list($otxkey, $otxvalue) = explode(":", $emotx);
                         $this->EMotx[$otxvalue]['key'] = $otxkey;
+                        if (isset($row['allowedstyles']))
+                            $this->EMotx[$otxvalue]['allowedstyles'] = $row['allowedstyles'];
                     } else {
                         $otxvalue = $emotx;
                         continue;
@@ -362,114 +379,12 @@ class OTXserver
                 }
             }
         }
-/*
-        foreach ($domxml->getElementsByTagName('row') as $node) {
-            $value = $keys = $g_otx = $lang = '';
-            if ($node->hasChildNodes()) {
-                $row=array(); $otxvalue=null; $bstyle=false;
-                foreach ($node->childNodes as $tag) {
-                    if ($tag->hasAttributes()) {
-                        foreach ($tag->attributes as $attr) {
-                            if ($attr->name == "name") {
-                                    switch ($attr->value) {
-                                        case "classtype":
-                                            $row['classtype'] = $tag->nodeValue;
-                                            break;
-                                        case "type":
-                                            break;
-                                        case "name":
-                                            if (! isset($row['name'])) $row['name'] = trim($tag->nodeValue);
-                                          break;
-                                        case "style":
-                                            $row[$attr->value] = trim($tag->nodeValue);
-                                            $style = trim($tag->nodeValue);
-                                            if ($style == '') { // empty : no style defined !
-                                                continue 4;
-                                            }
-                                            $bstyle = true; 
-                                            break;
-                                        case "g_type":
-                                        case "g_name":
-                                            $gvalue = trim($tag->nodeValue);
-                                            $row['gname'] = trim($tag->nodeValue);
-                                            break;
-                                        case 'surrounding':
-                                            $row[$attr->value] = trim($tag->nodeValue);
-                                            break;
-                                        case "lang":
-                                            $lang = trim($tag->nodeValue);
-                                            $row[$attr->value] = trim($tag->nodeValue);
-                                            break;
-                                        case "otx":
-                                            $nodevalue = trim($tag->nodeValue);
-                                            if ($nodevalue == '') {
-                                                continue 4;
-                                            }
-                                            $row[$attr->value] = trim($tag->nodeValue);
-                                            break;
-                                        default:
-                                            break;
-                                }
-                            }
-                        }
-                    }
-                }
 
-                // EM otx style definition
-                if ( isset($row['otx'])) {
-                    if (! isset($row['style'])) {
-                    continue;
-                    }
-
-                    $emotx = $row['otx'];
-                    if (! isset($this->EMTEI[$emotx])) {
-                        // TODO ?
-                        continue;
-                    } 
-                    else {
-                        $nbOtxStyle++;
-                        $otxkey = $otxvalue = '';
-                        $emotx = $this->EMTEI[$emotx];
-
-                        if(isset($row['lang'])) error_log("{$emotx} : {$row['lang']}");
-
-                        if ( isset($row['lang']) ) {
-                            $emotx .= "-".$row['lang'];
-                        }
-
-                        if ( strstr($emotx, ":")) {
-                            list($otxkey, $otxvalue) = explode(":", $emotx);
-                            $this->EMotx[$otxvalue]['key'] = $otxkey;
-                        } else {
-                            $otxvalue = $emotx;
-                            continue;
-                        }
-                    }
-
-                    $style = $row['style']; $nbEmStyle++;
-                    if (! strstr($style, ",")) {
-                        $OOTX[$style] = $otxvalue;
-                        isset($row['name']) ? $Model[$style]=$row['name'] : $Model[$style]=$style;
-                    } else {
-                        foreach ( explode(",", $style) as $stl) {
-                            $stl = trim($stl);
-                            $OOTX[$stl] = $otxvalue;
-                            isset($row['name']) ? $Model[$stl]=$row['name'] : $Model[$stl]=$style;
-                        }
-                    }
-
-                    if ( isset($row['gname']) and $emotx!='') {
-                        $gvalue = $row['gname'];
-                        $this->EMandatory[$gvalue] = $otxvalue;
-                    }
-                }
-
-            }
-        }
-*/
         $this->_param['EMreport']['nbLodelStyle'] = $nbEmStyle;
         $this->_param['EMreport']['nbOTXStyle'] = $nbEmStyle;
 
+        // construction de EModel
+        // pour chaque style défini dans le ME, donner un nom canonique qui sera utilisé comme attribut rendition
         foreach ($Model as $key=>$value) {
             // hack pour les styles traduits, eg. style:lang
             $newkey = ''; $lang='';
@@ -486,7 +401,7 @@ class OTXserver
                 else 
                     $this->EModel[$key] = $otxvalue;
             }
-            else {
+            else { // ceci n'arrive jamais !
                 if ($newkey!='' and $lang!='')
                     $this->EModel[$newkey] = $value."-$lang";
                 else 
@@ -497,6 +412,7 @@ class OTXserver
         unset($OOTX);
 
         # surrounding
+        // le surrounding n'est utilisé nul par ailleur (évacué car inutile et faiseur de bug)
         $xpath = new DOMXPath($domxml);
         $query = '/lodelEM/table[@name="#_TP_internalstyles"]/datas/row';
         $entries = $xpath->query($query);
@@ -551,11 +467,30 @@ class OTXserver
         
     }
 
+    // Construct csswhitelist for a given field in the document
+    private function list_allowedstyles($allowedtags) {
+        $allowedstyles = array();
+        if ($allowedtags) {
+            if (preg_match('/style:(.*)(;|$)/', $allowedtags, $m)) {
+                $allowedstyles[$m[1]] = true;
+            }
+        }
+        return empty($allowedstyles) ? false :  $allowedstyles;
+    }
+
 /**
  * transformation d'un odt en lodel-odt : format pivot de travail
+ * dezipe l'odt
+ * création de rendition[] et automatic[]
+ * whitelist des css
+ * simplification XML du fichier odt 
+ * création du fichier TEI
 **/
     protected function lodelodt() {
 
+//
+// Traitement des fichiers (dézipage, etc…)
+//
         $cleanup = array('/_20_Car/', '/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
         $odtfile						= $this->_param['odtpath'];
@@ -676,14 +611,16 @@ class OTXserver
         $this->lodelpictures($domlodelcontent, $za);
         $domlodelcontent->normalizeDocument();
 
-
-        // 1. office:automatic-styles
+//
+// Traitement des styles
+//
+        // 1. office:automatic-styles : rendition[] et automatic[]
         $this->ooautomaticstyles($domlodelcontent);
-        // 2. office:styles
+        // 2. office:styles : rendition[] et automatic[]
         $this->oostyles($domlodelstyles);
-        // 3. (document) meta
+        // 3. (document) meta : meta[]
         $this->oolodel2meta($domlodelcontent);
-
+        // 4. meta[] de meta.xml
         $this->meta2lodelodt($domlodelmeta);
         # LodelODT
         if (! $za->addFromString('meta.xml', $domlodelmeta->saveXML())) {
@@ -777,6 +714,9 @@ class OTXserver
         }
         $domfodt->normalizeDocument();
 
+//
+// Traitement par xsl
+//
         # add xml:id (otxid.xsl)
         $xslfilter = "soap/server/inc/otxid.xsl";
         $xsl = new DOMDocument;
@@ -802,7 +742,8 @@ class OTXserver
 
         $domidfodt->normalizeDocument();
 
-        # oo to lodeltei xslt [oo2lodeltei.xsl]
+        // oo to lodeltei xslt [oo2lodeltei.xsl]
+        // change les styles ODT en rendition (style == ^p | ^t | standard) et en rend (style == heading et les autres)
         $xslfilter = "soap/server/inc/oo2lodeltei.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
@@ -837,6 +778,9 @@ class OTXserver
 
 /**
  * transformation d'un lodel-odt en lodel-xml ( flat TEI... [raw mode] )
+ * utilise dom['teifodt'] (TEI simple)
+ * traite les styles
+ * ajoute les éléments <rendition> à la TEI
 **/
     protected function oo2lodelxml() {
 
@@ -866,6 +810,7 @@ class OTXserver
             }
         }
 
+        // traiter le style des lists
         $entries = $xpath->query("//tei:list[@rendition]");
         foreach ($entries as $item) {
             $this->liststyles($item);
@@ -879,9 +824,7 @@ class OTXserver
             if ($nodename=="p" or $nodename=="s" or $nodename=="cell" or $nodename=="ab" or $nodename=="table") {
                 if ( $value=$item->getAttribute("rendition")) {
                     if ($nodename=="cell" or $nodename=="table") {
-                        $name = $value;
-                        $id = ''; list($table, $id) = explode(".", $name);
-                        $value = "#td".$table[strlen($table)-1].$id;
+                        $value = "#".str_replace('.','_',$value);
                     }
                     // rend ?
                     if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
@@ -1074,15 +1017,14 @@ class OTXserver
                         case "*-":
                             // next
                             $next = $item;
-                            
                             do{
                                 do{
                                     $next = $next->nextSibling;
                                 }while( get_class($next) !== "DOMElement" );
 
-	                            if ($next)
-	                                $this->greedy($next, $nextitem);
-                        	}while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
+                                if ($next)
+                                    $this->greedy($next, $nextitem);
+                            }while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
 
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
@@ -1203,6 +1145,7 @@ class OTXserver
         return true;
     }
 
+	// process du style des list
 	private function liststyles($list, $level = 1, $rendition = null){
 		if(!isset($rendition)){
 			$rendname  = $list->getAttribute('rendition') or $list->getAttribute('text:style-name');
@@ -1255,6 +1198,10 @@ class OTXserver
 
 /**
  * transformation d'un lodel-xml en xml (TEI P5)
+ * utilise _param['lodelTEI'] (TEI lodel)
+ * traite en dur les éléments qui doivent aller dans <head>, <front> et <back>
+ * traite les mots-clefs en utilisant _keywords
+ * enregistre le document final dans _param['TEI']
 **/
     protected function loodxml2xml() {
         $lodelmeta = array();
@@ -1696,117 +1643,6 @@ class OTXserver
                 }
             }
         }
-/*
-        $entries = $xpath->query("//tei:p[starts-with(@rend,'keywords-')]");
-        foreach ($entries as $item) {
-            $parent = $item->parentNode;
-            $rend = $item->getAttribute("rend");
-            if ( preg_match("/keywords-(.+)/", $rend, $match)) {
-                $lang = $match[1];
-            } else {
-                $lang = null;
-            }
-            $newnode = $dom->createElement("keywords");
-            $newnode->setAttribute('scheme', "keyword");
-            if ( isset($lang)) {
-                $newnode->setAttribute('xml:lang', $lang);
-            }
-            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
-            $textclass->appendChild($newnode);
-            $newlist = $dom->createElement("list");
-            $newnode->appendChild($newlist);
-            if (! preg_match("/,/", $item->nodeValue)) {
-                $newitem = $dom->createElement("item", $item->nodeValue);
-                $newlist->appendChild($newitem);
-            }
-            else {
-                $index = explode(",", $item->nodeValue);
-                foreach ($index as $ndx) {
-                    $ndx = trim($ndx);
-                    $newitem = $dom->createElement("item", $ndx);
-                    $newlist->appendChild($newitem);
-                }
-            }
-            $parent->removeChild($item);
-        }
-        # LodelME : Index thématique
-        $entries = $xpath->query("//tei:p[@rend='subject']");
-        foreach ($entries as $item) {
-
-            $parent = $item->parentNode;
-            $rend = $item->getAttribute("rend");
-            $newnode = $dom->createElement("keywords");
-            $newnode->setAttribute('scheme', "subject");
-            //if ($lang=$item->getAttribute('xml:lang')) { $newnode->setAttribute('xml:lang', $lang); }
-            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
-            $textclass->appendChild($newnode);
-            $newlist = $dom->createElement("list");
-            $newnode->appendChild($newlist);
-            if (! preg_match("/,/", $item->nodeValue)) {
-                $newitem = $dom->createElement("item", $item->nodeValue);
-                $newlist->appendChild($newitem);
-            }
-            else {
-                $index = explode(",", $item->nodeValue);
-                foreach ($index as $ndx) {
-                    $ndx = trim($ndx);
-                    $newitem = $dom->createElement("item", $ndx);
-                    $newlist->appendChild($newitem);
-                }
-            }
-            $parent->removeChild($item);
-        }
-        # lodelME : Index chronologique
-        $entries = $xpath->query("//tei:p[@rend='chronological']");
-        foreach ($entries as $item) {
-            $parent = $item->parentNode;
-            $rend = $item->getAttribute("rend");
-            $newnode = $dom->createElement("keywords");
-            $newnode->setAttribute('scheme', "chronological");
-            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
-            $textclass->appendChild($newnode);
-            $newlist = $dom->createElement("list");
-            $newnode->appendChild($newlist);
-            if (! preg_match("/,/", $item->nodeValue)) {
-                $newitem = $dom->createElement("item", $item->nodeValue);
-                $newlist->appendChild($newitem);
-            }
-            else {
-                $index = explode(",", $item->nodeValue);
-                foreach ($index as $ndx) {
-                    $ndx = trim($ndx);
-                    $newitem = $dom->createElement("item", $ndx);
-                    $newlist->appendChild($newitem);
-                }
-            }
-            $parent->removeChild($item);
-        }
-        # LodelME : Index géographique
-        $entries = $xpath->query("//tei:p[@rend='geographical']");
-        foreach ($entries as $item) {
-            $parent = $item->parentNode;
-            $rend = $item->getAttribute("rend");
-            $newnode = $dom->createElement("keywords");
-            $newnode->setAttribute('scheme', "geographical");
-            if ($id=$item->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
-            $textclass->appendChild($newnode);
-            $newlist = $dom->createElement("list");
-            $newnode->appendChild($newlist);
-            if (! preg_match("/,/", $item->nodeValue)) {
-                $newitem = $dom->createElement("item", $item->nodeValue);
-                $newlist->appendChild($newitem);
-            }
-            else {
-                $index = explode(",", $item->nodeValue);
-                foreach ($index as $ndx) {
-                    $ndx = trim($ndx);
-                    $newitem = $dom->createElement("item", $ndx);
-                    $newlist->appendChild($newitem);
-                }
-            }
-            $parent->removeChild($item);
-        }
-*/
 
         # /tei/text/front
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
@@ -1839,28 +1675,6 @@ class OTXserver
             $parent->removeChild($item);
         }
 
-        # /tei/text/front/ack
-        $entries = $xpath->query("//tei:p[@rend='acknowledgment']");
-        foreach ($entries as $item) {
-            $parent = $item->parentNode;
-
-            $rend = $item->getAttribute("rend");
-            $lang = null;
-            $div = $dom->createElement("div");
-            $div->setAttribute('type', "ack");
-            if ( isset($lang)) {
-                $div->setAttribute('xml:lang', $lang);
-            }
-            $clone = $item->cloneNode(true);
-            if ($clone->hasAttributes()) {
-                foreach ($clone->attributes as $attr) {
-                    $clone->removeAttribute($attr->name);
-                }
-            }
-            $div->appendChild($clone);
-            $front->appendChild($div);
-            $parent->removeChild($item);
-        }
         # /tei/text/front/dedication
         $entries = $xpath->query("//tei:p[@rend='dedication']");
         foreach ($entries as $item) {
@@ -1903,6 +1717,29 @@ class OTXserver
             $front->appendChild($div);
             $parent->removeChild($item);
         }
+       # /tei/text/front/ack
+        $entries = $xpath->query("//tei:p[@rend='acknowledgments']");
+        foreach ($entries as $item) {
+            $parent = $item->parentNode;
+
+            $rend = $item->getAttribute("rend");
+            $lang = null;
+            $div = $dom->createElement("div");
+            $div->setAttribute('type', "ack");
+            if ( isset($lang)) {
+                $div->setAttribute('xml:lang', $lang);
+            }
+            $clone = $item->cloneNode(true);
+            if ($clone->hasAttributes()) {
+                foreach ($clone->attributes as $attr) {
+                    $clone->removeAttribute($attr->name);
+                }
+            }
+            $div->appendChild($clone);
+            $front->appendChild($div);
+            $parent->removeChild($item);
+        }
+
         # /tei/text/front/review
         $entries = $xpath->query("//tei:p[starts-with(@rend,'review-')]");
         if ($entries->length) {
@@ -2151,40 +1988,8 @@ class OTXserver
         return true;
     }
 
-    private function entries( $xpath, $entrytype )
-    {
-        $entries = $xpath->query("//tei:p[starts-with(@rend, '{$entrytype}-')]");
-        foreach ($entries as $item) {
-            $parent = $item->parentNode;
-            $rend = $item->getAttribute("rend");
-            if ( preg_match("/$entrytype-(.+)/", $rend, $match)) {
-                $lang = $match[1];
-            } else {
-               $lang = null;
-            }
-            $newnode = $dom->createElement("keywords");
-            $newnode->setAttribute('scheme', $entrytype);
-            if ( isset($lang)) {
-                $newnode->setAttribute('xml:lang', $lang);
-            }
-            if ($id = $item->getAttribute('xml:id')) {
-                $newnode->setAttribute('xml:id', $id);
-            }
-            $textclass->appendChild($newnode);
-            $newlist = $dom->createElement("list");
-            $newnode->appendChild($newlist);
-
-            $index = explode(",", $item->nodeValue);
-            foreach ($index as $ndx) {
-                $ndx = trim($ndx);
-                $newitem = $dom->createElement("item", $ndx);
-                $newlist->appendChild($newitem);
-            }
-            $parent->removeChild($item);
-        }
-
-    }
-
+        // création du sommaire
+        // retourne la profondeur maximale des titres
         private function summary(&$dom, &$xpath) {
             $max = 0;
             $summary = array();
@@ -2204,6 +2009,7 @@ class OTXserver
             return $max;
         }
 
+        // transforme les <ab> en <div type="divLEVEL"><head subtype="levelLEVEL">, en entourant les paragraphes qui suivent
         private function heading2div(&$dom, &$xpath, $level) {
            if ($level == 0) return;
             $entries = $xpath->query("//tei:text/tei:body/tei:ab[@rend='heading$level']", $dom);
@@ -2408,6 +2214,8 @@ class OTXserver
         return true;
     }
 
+    // utilise content.xml du fichier ODT
+    // créer les tableaux rendition[] et automatic[], filtrer le css selon le tableau EMotx[]
     private function ooautomaticstyles(&$dom) {
         $xpath = new DOMXPath($dom);
         
@@ -2443,10 +2251,7 @@ class OTXserver
             if ($attrname = $attributes->getNamedItem("name")) {
                 $name = $attrname->nodeValue;
                 if (false !== strpos($name, "table")) {
-
-                    $id = ''; list($table, $id) = explode(".", $name);
-                    $key = "#td".$table[strlen($table)-1].$id;
-                    //$key = "#".$name;
+                    $key = "#".str_replace('.','_',$name);
                 } else {
                     $key = "#".$name;
                     if ( preg_match("/^T(\d+)$/", $name, $match)) {
@@ -2487,7 +2292,7 @@ class OTXserver
                     }
                 }
 
-                list($lang, $rendition) = $this->styles2csswhitelist($properties); // white list
+                list($lang, $rendition) = $this->styles2csswhitelist($properties, $name); // white list
 
                 if ($lang == "") $lang = null;
                 $this->rendition[$key]['lang'] = $lang;
@@ -2516,6 +2321,8 @@ class OTXserver
         }
     }
 
+    // utilise styles.xml du fichier ODT
+    // créer les tableaux rendition[] et automatic[], filtrer le css selon le tableau EMotx[]
     private function oostyles(&$dom) {
         $xpath = new DOMXPath($dom);
 
@@ -2596,7 +2403,7 @@ class OTXserver
                         }
                     }
                 }
-                list($lang, $rendition) = $this->styles2csswhitelist($properties);
+                list($lang, $rendition) = $this->styles2csswhitelist($properties, $name);
 
                 if ( isset($this->rendition[$key])) { // from automaticstyle
                     // TODO : merge ?
@@ -2620,9 +2427,11 @@ class OTXserver
     }
 
     /** styles to css white list ! **/
-    private function styles2csswhitelist(&$properties, $type="strict") {
+    // Transforme les style ODT en CSS
+    private function styles2csswhitelist(&$properties, $name=false) {
         $lang = $rendition = "";
         $csswhitelist = array();
+
         // default : strict mode
         foreach ($properties as $prop) {
             // xhtml:sup
@@ -2684,6 +2493,10 @@ class OTXserver
             }
             $type = $this->_param['type'];
             if ($type==="extended") {
+                // no extended for fields that have allowedstyles set to strict
+                if ($name && isset($this->EMotx[$name]['allowedstyles']) && isset($this->EMotx[$name]['allowedstyles']['strict'])) {
+                    continue;
+                }
                 if ( preg_match("/^font-size:/", $prop)) {
                     array_push($csswhitelist, $prop);
                     continue;
@@ -2717,11 +2530,11 @@ class OTXserver
                 }
             }else{
                 // table border
-                if ( preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
+                if ($name && strpos($name, 'table') === 0 && preg_match("/^(border.*):((.+)\s+(solid|double)\s+(#\d+)|none)$/", $prop, $match)) {
                     if($match[2] == "none") {
                         $border = "{$match[1]}:none";
                     }else{
-                        $border = "{$match[1]}:1px solid {$match[2]}";
+                        $border = "{$match[1]}:1px solid {$match[5]}";
                     }
                     array_push($csswhitelist, $border);
                     // TODO raw as cell !
@@ -2730,6 +2543,11 @@ class OTXserver
             }
         }
         $rendition = implode(";", $csswhitelist);
+
+        // no style for fields that have allowedstyles set to none (at the end because of $lang)
+        if ($name && isset($this->EMotx[$name]['allowedstyles']) && isset($this->EMotx[$name]['allowedstyles']['none'])) {
+            $rendition = "";
+        }
 
         return array($lang, $rendition);
     }
@@ -2791,6 +2609,7 @@ class OTXserver
     }
 
     /** css tagsDecl to tei:hi rendition ! **/
+    // fonction non appelée
     private function tagsdecl2rendition($tagdeclid, &$rendition /*$type="strict"*/) {
 
         if (! isset($this->tagsDecl[$tagdeclid])) {
@@ -2860,6 +2679,7 @@ class OTXserver
     }
 
     /** get meta from lodel document **/
+    // utilise content.xml du fichier ODT
     private function oolodel2meta(&$dom) {
         $items = $dom->getElementsByTagName('*');
         foreach ($items as $item) {
@@ -2904,6 +2724,7 @@ class OTXserver
     }
 
     /** set lodel-document properties */
+    // utilise meta.xml du fichier ODT
     private function meta2lodelodt(&$dommeta) {
         # office:document-meta/office:meta
         $items = $dommeta->getElementsByTagName('*');
@@ -3117,6 +2938,7 @@ EOD;
     }
 
 
+    // fonction non appelée
     protected function meta2xml() {
 
         if ($this->pdfsource != '') { // AND
@@ -3317,6 +3139,7 @@ EOD;
 
 
     /** pdf document to xml **/
+    // fonction non appelée
     protected function pdf2tei() {
         $CHARendofpage = "\x0C";
         $TI = array();

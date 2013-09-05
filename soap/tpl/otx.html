@@ -43,6 +43,7 @@
                 </div>
 
                     <?php
+                        $config = OTXConfig::singleton();
                         $status = ""; $oo = _soffice($status);
                         $load = $oo['load'];
                         $running = explode(" ", exec('stat -c %x /proc/$(pgrep soffice.bin)'));
@@ -50,7 +51,7 @@
 
                 <div>
                     <ul>
-                        <h2><?php echo __OTX_NAME__; ?></h2>
+                        <h2><?php echo $config->servicename; ?></h2>
                     </ul>
                 </div>
                 <div>
