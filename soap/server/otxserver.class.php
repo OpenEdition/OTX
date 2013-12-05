@@ -1020,7 +1020,7 @@ class OTXserver
                             do{
                                 do{
                                     $next = $next->nextSibling;
-                                }while( get_class($next) !== "DOMElement" );
+                                }while( is_object($prev) && get_class($next) !== "DOMElement" );
 
                                 if ($next)
                                     $this->greedy($next, $nextitem);
