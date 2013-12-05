@@ -997,7 +997,7 @@ class OTXserver
                             if(!isset($prev)){
                                 do {
                                     $prev = $item->previousSibling;
-                                } while ( get_class($prev) !== "DOMElement" );
+                                } while ( is_object($prev) && get_class($prev) !== "DOMElement" );
                             }
 
                             if ($prev)
