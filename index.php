@@ -1,80 +1,67 @@
 <?php
-/**
- * index.php
- * PHP >= 5.2
- * @author Nicolas Barts
- * @copyright 2010, CLEO/Revues.org
- * @licence http://www.gnu.org/copyleft/gpl.html
-**/
 
-/*
-ini_set("max_execution_time", "180");
-ini_set("max_input_time", "180");
-ini_set("post_max_size", "64M");
-ini_set("upload_max_filesize", "64M");
-ini_set("memory_limit", "256M");
-set_time_limit(3600);
-*/
-ini_set("session.auto_start", 0);
-
-include_once('soap/otx.soapserver.inc.php');
+require_once('soap/server/otxserver.class.php');
 require_once('otx.class.php');
-require_once('soap/otx.soapserver.class.php');
 require_once('OTXConfig.class.php');
 
+otx_auth();
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (! otx_auth()) {
-        header('WWW-Authenticate: Basic realm="OTX Realm"');
-        header('HTTP/1.0 401 Unauthorized');
-        exit(1);
-    }
-
-    // for persistent session
-    session_start();
-    session_name(uniqid('OTXSID'));
-
     # create the server instantiation
     try {
     	$config = OTXConfig::singleton();
-    	
-        $options = array();
-        $options['trace'] = TRUE;
-        $options['soap_version'] = SOAP_1_2;
-        $options['exceptions'] = TRUE;
-        //$options['compression'] = SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_GZIP | 5;
-        $options['encoding'] = SOAP_LITERAL;
-        // service
-        $SoapServer = new SoapServer($config->wsdl, $options);
-        $SoapServer->setClass('OTXSoapServer');
+        $plugin = array();
 
-        $SoapServer->setPersistence(SOAP_PERSISTENCE_SESSION);
-        $SoapServer->handle();
-    } 
-    catch (SoapFault $fault) {
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-        echo "\n<otx type=\"SoapFault\">";
-        echo "\n<faultcode><![CDATA[".$fault->faultcode."]]></faultcode>";
-        echo "\n<faultstring><![CDATA[".$fault->faultstring."]]></faultstring>";
-        echo "\n<error>" .$Return['status'] ."</error>";
-        echo "\n</otx>";
-    	exit(1);
+        foreach( array('mode', 'site', 'sourceoriginale') as $arg ){
+            if(!isset($_POST[$arg])) throw new Exception('Argument missing');
+        }
+
+        if(isset($_FILES['attachment'])){
+            $attachment = $_FILES['attachment']['tmp_name'];
+        }elseif(isset($_POST['attachment'])){
+            $attachment = tempnam($config->_config->tmppath, "attachment");
+            file_put_contents($attachment, base64_decode($_POST['attachment']));
+        }else
+            throw new Exception('File missing');
+
+        $schemapath = tempnam(sys_get_temp_dir(), 'otx');
+        file_put_contents($schemapath, $_POST['schema']);
+
+
+        $server = OTXserver::singleton($_POST['site'], $_POST['sourceoriginale'], $_POST['mode'], $schemapath, $attachment);
+
+        $return = $server->run();
+
+        $response = array(
+            'status'     => $return['status'],
+            'xml'        => $return['xml'],
+            'report'     => $return['report'],
+            'odt'        => $return['odt'],
+            'lodelxml'   => $return['lodelxml'],
+        );
+
+        if (preg_match("/^plugin:(?P<plugin>\w+)/", $_POST['mode'], $match)){
+            $plugin[$match['plugin']] = $return[$match['plugin']];
+        }
+
+        if(!empty($plugin)){
+            $pluginname              = current(array_keys($plugin));
+            $response[$pluginname]   = base64_encode(serialize($plugin[$pluginname]));
+        }
+
+        header('Content-type: application/json');
+        echo(json_encode($response));
+        exit;
     }
-
-    return true;
+    catch (Exception $fault) {
+        /*
+         * TODO
+         * Catch exceptions
+         */
+        header("HTTP/1.0 500 Exception");
+        echo($fault->getMessage());
+        die();
+    }
 }
 
-
-if (! empty($_GET)) {
-
-    if (! otx_query()) {
-        header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found",true,404);
-    exit(1);
-    }
-
-    return true;
-}
-
-include('soap/tpl/otx.html');
-return true;
-
-#EOF
+header("HTTP/1.0 400 Bad Request");

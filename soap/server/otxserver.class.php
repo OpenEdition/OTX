@@ -45,7 +45,6 @@ class OTXserver
 
     private $log 		= array();
 
-    private $_param 	= array();
     private $_data 		= array();
     private $_status	= "";
     private $_trace		= "";
@@ -61,19 +60,16 @@ class OTXserver
     private $_usedfiles = array();
 
     /** A private constructor; prevents direct creation of object (singleton because) **/
-    private function __construct($request="", $mode="", $modelpath="", $entitypath="") {
+    private function __construct($site="", $sourceoriginale="", $mode="", $modelpath="", $entitypath="") {
         $this->_config = OTXConfig::singleton();
 
-        $this->input['request'] 	= $request;
+        $this->input['site'] = preg_replace("/[^\w\d]+/", "", $site);
+        $this->input['sourceoriginale'] =  $sourceoriginale;
         $this->input['mode'] 		= $mode;
         $this->input['modelpath'] 	= $modelpath;
         $this->input['entitypath'] 	= $entitypath;
 
         $this->_param['EMreport']	= array();
-        $this->_param['request'] 	= $request;
-        $this->_param['mode'] 		= $mode;
-        $this->_param['sourcepath'] = $entitypath;
-        $this->_param['modelpath'] 	= $modelpath;
         $this->_param['mime'] 		= "";
         $this->_param['prefix'] 	= "";
         $this->_param['sufix'] 		= "";
@@ -81,7 +77,9 @@ class OTXserver
         $this->_param['xmlodt'] 	= "";
         $this->_param['xmlreport'] 	= "";
         $this->_param['LIBPATH'] 	= "soap/server/lib/";
-        $this->_param['CACHEPATH'] 	= $this->_config->cachepath;
+
+        $this->_param['tmppath'] = $this->_config->tmppath . DIRECTORY_SEPARATOR . $this->input['site'] . DIRECTORY_SEPARATOR . uniqid("convert");
+        @mkdir($this->_param['tmppath'], '0755', true);
 
         $this->log['warning'] = array();
 
@@ -91,53 +89,23 @@ class OTXserver
 
     /** Prevent users to clone the instance (singleton because) **/
     public function __clone() {
-        $this->_status="Cannot duplicate a singleton !";$this->_iserror=true;
+        $this->_status = "Cannot duplicate a singleton";
+        $this->_iserror = true;
         throw new Exception($this->_status,E_ERROR);
     }
 
-    public function __destruct() {
-        $this->oo2report('otx');
-    }
-
-    public function __wakeup(){
-       if (!self::$_instance_) {
-            self::$_instance_ = $this;
-       } else {
-            trigger_error("Unserializing this instance while another exists voilates the Singleton pattern", E_USER_ERROR); // sic
-            return null;
-        }
-    }
-    
     public function __toString() {
         return $this->_status;
-    }
-    
-    public function __set($key, $value) {
-        if ( array_key_exists($key, $this->_param)) {
-            $this->_param[$key] = $value;
-        } else {
-            $trace = debug_backtrace();
-            trigger_error('Undefined property via __set(): '.$key.' : '.$value.' in '.$trace[0]['file'].' on line '.$trace[0]['line'], E_USER_NOTICE);
-            return null;
-        }
-    }
-    public function __get($name) {
-        if ( array_key_exists($name, $this->_param)) {
-            return $this->_param[$name];
-        }
-        $trace = debug_backtrace();
-        trigger_error('Undefined property via __get(): '.$name.' in '.$trace[0]['file'].' on line '. $trace[0]['line'], E_USER_NOTICE);
-        return null;
     }
 
     /**
     * The singleton method
     **/
-    public static function singleton($request="", $mode="", $modelpath="", $entitypath="") {
+    public static function singleton($site="", $sourceoriginale="", $mode="", $modelpath="", $entitypath="") {
         if (!isset(self::$_instance_)) {
             // First invocation only.
             $class = __CLASS__;
-            self::$_instance_ = new $class($request, $mode, $modelpath, $entitypath);
+            self::$_instance_ = new $class($site, $sourceoriginale, $mode, $modelpath, $entitypath);
             return self::$_instance_;
         }
         else {
@@ -152,8 +120,8 @@ class OTXserver
 **/
     public function run() {
         $suffix = "odt";
-        if (false !== strpos($this->_param['mode'], ":")) {
-            $action = explode(":", $this->_param['mode']);
+        if (false !== strpos($this->input['mode'], ":")) {
+            $action = explode(":", $this->input['mode']);
             switch($action[0]) {
                 case 'soffice':
                     $suffix = $action[1];
@@ -161,20 +129,19 @@ class OTXserver
                 case 'lodel':
                     $this->_param['type'] = $action[1];
                     break;
-		        case 'plugin':
-		            $this->_param['type'] = $action[2];
-		            break;
+                case 'plugin':
+                    $this->_param['type'] = $action[2];
+                    break;
             }
         }
         else {
-            $action = $this->_param['mode'];
+            $action = array($this->input['mode'], );
             $suffix = "odt";
         }
 
         if ($action !== "hello") {
             $this->params();
         }
-        $this->_status = "todo: {$action[0]}";
 
         switch ($action[0]) {
             case 'soffice':
@@ -196,10 +163,16 @@ class OTXserver
                 $this->loodxml2xml(); // de _param['lodelTEI'] à _param['TEI'] TEI lodel complète
                 $this->output['xml'] = _windobclean($this->_param['TEI']);
                 $this->output['report'] = json_encode($this->report);
+
+                if(file_exists($this->_param['outputpath'])){
+                    $this->output['odt'] = base64_encode(file_get_contents($this->_param['lodelodtpath']));
+                }
+
                 break;
-            case 'partners':
-            case 'cairn':
-                $this->_status = "todo: partners/cairn";
+            case 'tei-c':
+                // Conversion simple à partir de la feuille du consortium TEI
+                $this->soffice($suffix);
+                $this->to_teip5($this->_param['odtpath']);
                 break;
             case 'plugin':
                 $this->plugin($action[1]);
@@ -208,8 +181,6 @@ class OTXserver
                 $this->hello();
                 return $this->output;
                 break;
-
-
             default:
                 $this->_status="error: unknown action ($action)";$this->_iserror=true;
                 throw new Exception($this->_status,E_USER_ERROR);
@@ -221,6 +192,34 @@ class OTXserver
         return $this->output;
     }
 
+    private function to_teip5($odt_path)
+    {
+        $odt_file = new ZipArchive();
+        if( $odt_file->open($odt_path) === TRUE ){
+            $odt_file->extractTo($this->_param['tmppath']);
+            $odt_file->close();
+
+            $content = $this->_param['tmppath'] . DIRECTORY_SEPARATOR . 'content.xml';
+            $odt_dom = new DOMDocument();
+            $odt_dom->load($content);
+
+            $xslfilter = "soap/server/inc/oo2lodeltei.xsl";
+            $xsl = new DOMDocument();
+            if (! $xsl->load($xslfilter)) {
+                throw new Exception("error load xsl ($xslfilter)",E_ERROR);
+            }
+
+            $proc = new XSLTProcessor();
+            $proc->importStyleSheet($xsl);
+            if (! $tei = $proc->transformToXML($odt_dom)) {
+                throw new Exception("error transform xslt ($xslfilter)",E_ERROR);
+            }
+            error_log(var_export($tei,true));
+        }else{
+            throw new Exception("File can't be converted");
+        }
+
+    }
 
 /**
  * «dynamic mapping» (sic) of Lodel EM
@@ -240,7 +239,7 @@ class OTXserver
         $domxml->resolveExternals = false;
         $domxml->preserveWhiteSpace = true;
         $domxml->formatOutput = false;
-        if (! $domxml->load($this->_param['modelpath'])) {
+        if (! $domxml->load($this->input['modelpath'])) {
             $this->_status="error load model.xml";
             throw new Exception($this->_status,E_ERROR);
         }
@@ -493,9 +492,9 @@ class OTXserver
 //
         $cleanup = array('/_20_Car/', '/_20_/', '/_28_/', '/_29_/', '/_5f_/', '/_5b_/', '/_5d_/', '/_32_/', '/WW-/' );
 
-        $odtfile						= $this->_param['odtpath'];
-        $this->_param['lodelodtpath']	= $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodel.odt";
-        $lodelodtfile 					= $this->_param['lodelodtpath'];
+        $odtfile = $this->_param['odtpath'];
+        $this->_param['lodelodtpath'] = $this->_param['tmppath']. DIRECTORY_SEPARATOR .$this->_param['prefix'].".lodel.odt";
+        $lodelodtfile = $this->_param['lodelodtpath'];
         
         if (! copy($odtfile, $lodelodtfile)) {
             $this->_status="error copy file; ".$lodelodtfile;
@@ -1116,9 +1115,9 @@ class OTXserver
         $dom->resolveExternals = false;
         $dom->preserveWhiteSpace = true;
         $dom->formatOutput = false;
-        $dom->loadXML($lodeltei);
+        @$dom->loadXML($lodeltei);
         $dom->normalizeDocument();
-        $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".lodeltei.xml";
+        $this->_param['xmloutputpath'] = $this->_param['tmppath'] . DIRECTORY_SEPARATOR .$this->_param['prefix'].".lodeltei.xml";
         $dom->save($this->_param['xmloutputpath']);
         $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
@@ -1212,7 +1211,7 @@ class OTXserver
         $dom->resolveExternals = false;
         $dom->preserveWhiteSpace = true;
         $dom->formatOutput = false;
-        if (! $dom->loadXML($this->_param['lodelTEI'])) {
+        if (! @$dom->loadXML($this->_param['lodelTEI'])) {
             $this->_status="error load lodel.tei.xml";
             throw new Exception($this->_status,E_ERROR);
         }
@@ -1967,10 +1966,10 @@ class OTXserver
         $otxml = $dom->saveXML();
         $search = array('xmlns="http://www.tei-c.org/ns/1.0"', 'xmlns:default="http://www.tei-c.org/ns/1.0"');
         $otxml = str_replace($search, '', $otxml);
-        $dom->loadXML($otxml);
+        @$dom->loadXML($otxml);
 
         $dom->normalizeDocument();
-        $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
+        $this->_param['xmloutputpath'] = $this->_param['tmppath'] . DIRECTORY_SEPARATOR  .$this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
         $this->_usedfiles[] = $this->_param['xmloutputpath'];
 
@@ -1980,8 +1979,8 @@ class OTXserver
 
         $otxml = $dom->saveXML();
         $otxml = str_replace('<TEI>', '<TEI xmlns="http://www.tei-c.org/ns/1.0">', $otxml);
-        $dom->loadXML($otxml);
-        $this->_param['xmloutputpath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['prefix'].".otx.tei.xml";
+        @$dom->loadXML($otxml);
+        $this->_param['xmloutputpath'] = $this->_param['tmppath'] . DIRECTORY_SEPARATOR . $this->_param['prefix'].".otx.tei.xml";
         $dom->save($this->_param['xmloutputpath']);
 
         $this->_param['TEI'] = $otxml;
@@ -2064,7 +2063,7 @@ class OTXserver
             $out = escapeshellarg($targetpath);
 
             /* Création de répertoire temporaire pour le profile */
-            $temp_profile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('OTX');
+            $temp_profile = $this->_param['tmppath'] . DIRECTORY_SEPARATOR . uniqid('OTX');
             mkdir($temp_profile, 0755, true);
 
             $command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to odt:writer8 -outdir {$out} {$in}";
@@ -2076,16 +2075,11 @@ class OTXserver
 
             /* Suppression du profile temporaire */
             $this->rmdir($temp_profile);
-            error_log(var_export($result,true));
-            error_log(var_export($output,true));
-            error_log(var_export($returnvar,true));
-            
+
             if ($returnvar) {
-                @copy($sourcepath, $sourcepath.".error");
-                @unlink($sourcepath);
                 $this->_status = "error soffice";
                 error_log("$command returned " . var_export($returnvar,true));
-                throw new Exception($this->_status,E_USER_ERROR);
+                throw new Exception($this->_status, E_USER_ERROR);
             }else{
                 $fileinfos = pathinfo($sourcepath);
                 $this->_param['outputpath'] = $targetpath . DIRECTORY_SEPARATOR . $fileinfos['filename'] . ".odt" ;
@@ -2107,7 +2101,6 @@ class OTXserver
         	else
         		unlink( $file );
         }
-        rmdir( $path );
     }
 
     private function getmime() {
@@ -2843,7 +2836,7 @@ class OTXserver
                 break;
         }
 
-        $mode = $this->_param['mode'];
+        $mode = $this->input['mode'];
         $xmlreport = ''; //.$this->_param['xmlreport'];
 
         $xmlreport = <<<EOD
@@ -3065,66 +3058,17 @@ EOD;
 	}
 
     private function params() {
-        $request = $this->_param['request'];
-        $mode = $this->_param['mode'];
+        $mode = $this->input['mode'];
 
-        $domrequest = new DOMDocument;
-		if (! $domrequest->loadXML($request)) {
-	            $this->_status="error: can't load xml request";$this->_iserror=true;
-	            throw new Exception($this->_status,E_ERROR);
-		}
+        $this->_param['extension'] = pathinfo($this->input['sourceoriginale'], PATHINFO_EXTENSION);
+        $this->_param['prefix'] = pathinfo($this->input['sourceoriginale'], PATHINFO_FILENAME);
 
-        # !! TODO !!
-        // document type
-        /*
-        editorial
-        article
-        actualite
-        compterendu
-        notedelecture
-        chronique
-        informations
-        */
+        $this->_param['sourcepath'] = $this->_param['tmppath'] . DIRECTORY_SEPARATOR . $this->input['sourceoriginale'];
 
-        // parse rdf request
-        foreach ($domrequest->getElementsByTagName('*') as $tag) {
-            switch ($tag->nodeName) {
-                case 'dc:source':
-                    if ($mode === "cairn") {
-                        $this->_param['uri'] = "". $tag->nodeValue;
-                    }
-                    else {
-                        $this->_param['sourcename'] = $tag->nodeValue;
-                        $split = explode(".", $tag->nodeValue);
-                        $this->_param['extension'] = array_pop($split);
-                        $this->_param['prefix'] = implode('.', $split);
-                    }
-                    break;
-                case 'prism:publicationName':
-                    $this->_param['revuename'] = "". $tag->nodeValue;
-                    break;
-                case 'dc:alternative': 
-                    $this->_param['pdfsource'] = "". $tag->nodeValue;
-                    break;
-                case 'dc:title':
-                case 'dc:date':
-                case 'dc:identifier':
-                case 'dc:type':
-                case 'dc:language':
-                default:
-                    $this->_param[$tag->nodeName] = "" .$tag->nodeValue;
-            }
-        }
-
-        @mkdir($this->_param['CACHEPATH'],0755);
-		@mkdir($this->_param['CACHEPATH'].$this->_param['revuename'],0755);
-
-        $this->_param['sourcepath'] = $this->_param['CACHEPATH'].$this->_param['revuename']."/".$this->_param['sourcename'];
-        if (! copy($this->input['entitypath'], $this->_param['sourcepath'])) {
+        if (! rename($this->input['entitypath'], $this->_param['sourcepath'])) {
             $this->_status="error: failed copy {$this->input['entitypath']} to {$this->_param['sourcepath']}";
-            throw new Exception($this->_status,E_ERROR);
+            throw new Exception($this->_status, E_ERROR);
         }
-
     }
 
 

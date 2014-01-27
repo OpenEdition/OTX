@@ -22,15 +22,18 @@ class orphannotes extends Plugin {
 
 	function run() {
 		if('proposal-extended' === $this->_param['type'] || 'recompose' === $this->_param['type']) {
-			$this->request = unserialize(base64_decode(file_get_contents($this->_param['sourcepath'])));
+			$this->request = unserialize(file_get_contents($this->_param['sourcepath']));
+
 			if(empty($this->request['iddocument'])) {
 				throw new Exception($this->_status);
 			}
 			$this->iddocument = intval($this->request['iddocument']);
+
 			unset($this->request['iddocument']);
 			unlink($this->_param['sourcepath']);
 
 			$doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $this->iddocument);
+
 			if(empty($doc)) {
 				throw new Exception($this->_status);
 			}
@@ -116,10 +119,7 @@ class orphannotes extends Plugin {
 
 		/* Suppression du profile temporaire */
 		$this->rmdir($temp_profile);
-		error_log(var_export($result,true));
-		error_log(var_export($output,true));
-		error_log(var_export($returnvar,true));
-		
+
 		if ($returnvar) {
 			@copy($sourcepath, $sourcepath.".error");
 			@unlink($sourcepath);
@@ -139,7 +139,6 @@ class orphannotes extends Plugin {
 			else
 				unlink( $file );
 		}
-		rmdir( $path );
 	}
 
 	protected function getFileInfo($path) {
@@ -154,7 +153,7 @@ class orphannotes extends Plugin {
 	}
 
 	protected function _orphanNotes($extended = false, ZipArchive $za) {
-		$this->_db->debug = true;
+		$this->_db->debug = false;
 		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
 		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
 
