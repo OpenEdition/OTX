@@ -8,10 +8,11 @@ function otx_auth() {
 
 
         $config = OTXConfig::singleton();
-        $db = ADONewConnection("sqlite");
+        $db = ADONewConnection("sqlite3");
+
         $db->connect($config->dbpath);
 
-        $user_password = $db->GetOne("SELECT password FROM users WHERE username='" . $db->escape($login)."'");
+        $user_password = $db->GetOne("SELECT password FROM users WHERE username='" . $db->escape($login)."'"); 
 
         if (crypt($password, $user_password) != $user_password)
         {
