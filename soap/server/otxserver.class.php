@@ -2186,21 +2186,11 @@ class OTXserver
                     $attributes = $item->attributes;
                     $attribute = $attributes->getNamedItem("href");
                     if ( preg_match("/^Pictures/", $attribute->nodeValue)) {
-                        $match = $attribute->nodeValue;
-                        list($imgpre, $imgext) = explode(".", trim($match));
-                        list($pictures, $imgname) = explode("/", $imgpre);
-                        if (! isset($this->LodelImg[$imgname.$imgext])) {
+                        $basename = pathinfo($attribute->nodeValue, PATHINFO_BASENAME);
+                        if (! isset($this->LodelImg[$basename])) {
                             $imgindex++;
-                            $this->LodelImg[$imgname.$imgext] = $imgindex;
-                            $currentname = "Pictures/$imgname.$imgext";
-                            $newname = "Pictures/img-$imgindex.$imgext";
-                            if (! $za->renameName($currentname, $newname)) {
-                                $this->_status="error rename files in ziparchive ($currentname => $newname)";
-                                throw new Exception($this->_status,E_ERROR);
-                            }
+                            $this->LodelImg[$basename] = $imgindex;
                         }
-
-                        $attribute->nodeValue = "Pictures/img-" . $this->LodelImg[$imgname.$imgext] . "." . $imgext;
                     }
                     else {
 
