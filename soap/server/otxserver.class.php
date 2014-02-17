@@ -83,8 +83,9 @@ class OTXserver
 
         $this->log['warning'] = array();
 
-        $this->_db = ADONewConnection("sqlite");
-        $this->_db->connect($this->_config->dbpath);
+        $this->_db = ADONewConnection("pdo");
+
+        $this->_db->connect('sqlite:'.realpath($this->_config->dbpath));
     }
 
     /** Prevent users to clone the instance (singleton because) **/
