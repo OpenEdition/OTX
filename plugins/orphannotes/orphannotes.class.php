@@ -48,8 +48,7 @@ class orphannotes extends Plugin {
 			$tmp_path = $this->convertDocument($this->_param['sourcepath'], 'odt');
 			unlink($this->doc_source['realpath']); // efface le document d'origine
 			$this->doc_tmp = $this->getFileInfo($tmp_path);
-
-			$this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, '".sqlite_escape_string($this->doc_source['basename'])."', '".sqlite_escape_string($tmp_path)."')");
+			$this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, ".$this->_db->Quote($this->doc_source['basename']).", ".$this->_db->Quote($tmp_path).");");
 			$this->iddocument = $this->_db->insert_id();
 
 			if(! $this->iddocument) {
@@ -188,6 +187,7 @@ class orphannotes extends Plugin {
 			'realficname'       => $this->doc_source['basename'],
 			'iddocument'        => $this->iddocument
 		);
+
 		$this->output['orphannotes']['nberrorsappels'] = count($this->output['orphannotes']['errorsappels']);
     }
 
@@ -741,4 +741,3 @@ class OrphanNotesParser {
     }
 }
 
-?>
