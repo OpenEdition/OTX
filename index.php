@@ -1,7 +1,7 @@
 <?php
 
 require_once('soap/server/otxserver.class.php');
-require_once('otx.class.php');
+require_once('otx.func.php');
 require_once('OTXConfig.class.php');
 
 otx_auth();
