@@ -1,0 +1,26 @@
+Installation
+============
+
+Cloner le dépôt dans un répertoire accessible via votre server HTTP:
+
+> git clone https://github.com/OpenEdition/OTX.git
+
+
+Initialiser la base de donnée, ici sqlite3, mais n'importe quel type de base de données fonctionnant avec PDO peut être utilisé.
+
+> sqlite3 otx.sqlite3 < install/init.sql
+
+Copier le fichier de configuration d'exemple otx.config.xml.sample en otx.config.xml
+
+> cp otx.config.xml.sample otx.config.xml
+
+Renseigner dans se fichier les différentes valeurs:
+ * servicename : Le nom du service
+ * otxpath : chemin vers l'installation d'OTX
+ * cachepath : répertoire où sera stocké les fichiers en cours de traitement
+ * officepath : chemin vers libreoffice
+ * db : DSN pour l'initialisation de connexion avec PDO, ex: sqlite:/data/otx.sqlite3
+
+Par pure précaution, il faut faire en sorte que ce fichier de configuration ne soit pas accessible.
+
+Votre serveur web doit avoir les autorisation nécessaires sur le répertoire de cache (cachepath).
