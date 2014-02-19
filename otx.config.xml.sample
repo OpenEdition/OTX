@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <config>
-    <servicename></servicename>
-    <otxpath></otxpath>
-    <cachepath></cachepath>
-    <wsdl>http://otx.url/?wsdl</wsdl>
+    <servicename>OTX</servicename>
+    <otxpath>/var/www/OTX</otxpath>
+    <cachepath>CACHE/</cachepath>
     <soffice>
-        <officepath></officepath>
-        <host>127.0.0.1</host>
-        <port>8100</port>
+        <officepath>/usr/bin/libreoffice</officepath>
     </soffice>
-    <dbpath>soap/server/db/servel.db</dbpath>
+    <db>otx.sqlite3</db>
 </config>
