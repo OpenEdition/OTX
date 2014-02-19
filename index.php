@@ -1,6 +1,8 @@
 <?php
 
-require_once('soap/server/otxserver.class.php');
+ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . 'server' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR );
+
+require_once('server/otxserver.class.php');
 require_once('otx.func.php');
 require_once('OTXConfig.class.php');
 
@@ -19,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if(isset($_FILES['attachment'])){
             $attachment = $_FILES['attachment']['tmp_name'];
         }elseif(isset($_POST['attachment'])){
-            $attachment = tempnam($config->_config->tmppath, "attachment");
+            $attachment = tempnam($config->_config->cachepath, "attachment");
             file_put_contents($attachment, base64_decode($_POST['attachment']));
         }else
             throw new Exception('File missing');

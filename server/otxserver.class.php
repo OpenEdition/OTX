@@ -76,16 +76,16 @@ class OTXserver
         $this->_param['odtpath'] 	= "";
         $this->_param['xmlodt'] 	= "";
         $this->_param['xmlreport'] 	= "";
-        $this->_param['LIBPATH'] 	= "soap/server/lib/";
+        $this->_param['LIBPATH'] 	= "server/lib/";
 
-        $this->_param['tmppath'] = $this->_config->tmppath . DIRECTORY_SEPARATOR . $this->input['site'] . DIRECTORY_SEPARATOR . uniqid("convert");
+        $this->_param['tmppath'] = $this->_config->cachepath . DIRECTORY_SEPARATOR . $this->input['site'] . DIRECTORY_SEPARATOR . uniqid("convert");
         @mkdir($this->_param['tmppath'], '0755', true);
 
         $this->log['warning'] = array();
 
         $this->_db = ADONewConnection("pdo");
 
-        $this->_db->connect('sqlite:'.realpath($this->_config->dbpath));
+        $this->_db->connect($this->_config->db);
     }
 
     /** Prevent users to clone the instance (singleton because) **/
@@ -204,7 +204,7 @@ class OTXserver
             $odt_dom = new DOMDocument();
             $odt_dom->load($content);
 
-            $xslfilter = "soap/server/inc/oo2lodeltei.xsl";
+            $xslfilter = "server/inc/oo2lodeltei.xsl";
             $xsl = new DOMDocument();
             if (! $xsl->load($xslfilter)) {
                 throw new Exception("error load xsl ($xslfilter)",E_ERROR);
@@ -718,7 +718,7 @@ class OTXserver
 // Traitement par xsl
 //
         # add xml:id (otxid.xsl)
-        $xslfilter = "soap/server/inc/otxid.xsl";
+        $xslfilter = "server/inc/otxid.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
             $this->_status="error load xsl ($xslfilter)";
@@ -744,7 +744,7 @@ class OTXserver
 
         // oo to lodeltei xslt [oo2lodeltei.xsl]
         // change les styles ODT en rendition (style == ^p | ^t | standard) et en rend (style == heading et les autres)
-        $xslfilter = "soap/server/inc/oo2lodeltei.xsl";
+        $xslfilter = "server/inc/oo2lodeltei.xsl";
         $xsl = new DOMDocument;
         if (! $xsl->load($xslfilter)) {
             $this->_status="error load xsl ($xslfilter)";

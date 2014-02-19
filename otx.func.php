@@ -8,9 +8,9 @@ function otx_auth() {
 
 
         $config = OTXConfig::singleton();
-        $db = ADONewConnection("sqlite3");
+        $db = ADONewConnection("pdo");
 
-        $db->connect($config->dbpath);
+        $db->connect($config->db);
 
         $user_password = $db->GetOne("SELECT password FROM users WHERE username='" . $db->escape($login)."'"); 
 
