@@ -69,6 +69,8 @@ class OTXserver
         $this->input['modelpath'] 	= $modelpath;
         $this->input['entitypath'] 	= $entitypath;
 
+	$this->_usedfiles = array($modelpath, $entitypath);
+
         $this->_param['EMreport']	= array();
         $this->_param['mime'] 		= "";
         $this->_param['prefix'] 	= "";

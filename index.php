@@ -51,6 +51,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $response[$pluginname]   = base64_encode(serialize($plugin[$pluginname]));
         }
 
+
+        $this->Server->cleanup();
+
         header('Content-type: application/json');
         echo(json_encode($response));
         exit;
