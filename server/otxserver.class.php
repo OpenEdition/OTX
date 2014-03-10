@@ -81,7 +81,7 @@ class OTXserver
         $this->_param['LIBPATH'] 	= "server/lib/";
 
         $this->_param['tmppath'] = $this->_config->cachepath . DIRECTORY_SEPARATOR . $this->input['site'] . DIRECTORY_SEPARATOR . uniqid("convert");
-        @mkdir($this->_param['tmppath'], '0755', true);
+        @mkdir($this->_param['tmppath'], 0755, true);
 
         $this->log['warning'] = array();
 
@@ -2076,9 +2076,6 @@ class OTXserver
 
             $output = exec($command, $result, $returnvar);
 
-            /* Suppression du profile temporaire */
-            $this->rmdir($temp_profile);
-
             if ($returnvar) {
                 $this->_status = "error soffice";
                 error_log("$command returned " . var_export($returnvar,true));
@@ -2097,13 +2094,16 @@ class OTXserver
 
     private function rmdir( $path )
     {
-        $files = glob( $path . '*', GLOB_MARK );
+        $files = glob( $path . DIRECTORY_SEPARATOR . '*', GLOB_MARK );
+
         foreach( $files as $file ){
             if( substr( $file, -1 ) == '/' )
                 $this->rmdir( $file );
         	else
         		unlink( $file );
         }
+
+	rmdir($path);
     }
 
     private function getmime() {
@@ -3163,6 +3163,7 @@ EOD;
         	foreach($this->_usedfiles as $file){
         		@unlink($file);
         	}
+		$this->rmdir($this->_param['tmppath']);
         }
 
 
