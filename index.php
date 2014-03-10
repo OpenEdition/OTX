@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
 
-        $this->Server->cleanup();
+        $server->cleanup();
 
         header('Content-type: application/json');
         echo(json_encode($response));
