@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if(isset($_FILES['attachment'])){
             $attachment = $_FILES['attachment']['tmp_name'];
         }elseif(isset($_POST['attachment'])){
-            $attachment = tempnam($config->_config->cachepath, "attachment");
+            $attachment = tempnam($config->cachepath, "attachment");
             file_put_contents($attachment, base64_decode($_POST['attachment']));
         }else
             throw new Exception('File missing');
@@ -49,10 +49,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if(!empty($plugin)){
             $pluginname              = current(array_keys($plugin));
             $response[$pluginname]   = base64_encode(serialize($plugin[$pluginname]));
-        }
-
-
-        $server->cleanup();
+        }else{
+	        $server->cleanup();
+	}
 
         header('Content-type: application/json');
         echo(json_encode($response));

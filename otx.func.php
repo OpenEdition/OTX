@@ -8,11 +8,11 @@ function otx_auth() {
 
 
         $config = OTXConfig::singleton();
-        $db = ADONewConnection("pdo");
+        $db = new PDO($config->db['dsn'], $config->db['user'], $config->db['password']);
 
-        $db->connect($config->db);
+        $row = $db->query("SELECT password FROM users WHERE username=" . $db->quote($login))->fetch(); 
 
-        $user_password = $db->GetOne("SELECT password FROM users WHERE username='" . $db->escape($login)."'"); 
+        $user_password = $row['password'];
 
         if (crypt($password, $user_password) != $user_password)
         {

@@ -30,9 +30,9 @@ class orphannotes extends Plugin {
 			$this->iddocument = intval($this->request['iddocument']);
 
 			unset($this->request['iddocument']);
-			unlink($this->_param['sourcepath']);
+			$this->rmdir(dirname($this->_param['sourcepath']));
 
-			$doc = $this->_db->GetRow('SELECT * FROM Document WHERE idDocument = '.(int) $this->iddocument);
+			$doc = $this->_db->query('SELECT * FROM Document WHERE idDocument = '.(int) $this->iddocument)->fetch();
 
 			if(empty($doc)) {
 				throw new Exception($this->_status);
@@ -46,10 +46,11 @@ class orphannotes extends Plugin {
 			$this->doc_source = $this->getFileInfo($this->_param['sourcepath']);
 
 			$tmp_path = $this->convertDocument($this->_param['sourcepath'], 'odt');
-			unlink($this->doc_source['realpath']); // efface le document d'origine
+			unlink($this->doc_source['realpath']);
 			$this->doc_tmp = $this->getFileInfo($tmp_path);
-			$this->_db->execute("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, ".$this->_db->Quote($this->doc_source['basename']).", ".$this->_db->Quote($tmp_path).");");
-			$this->iddocument = $this->_db->insert_id();
+
+			$this->_db->query("INSERT INTO Document (nbNotes, realname, pathDocument) VALUES (0, ".$this->_db->Quote($this->doc_source['basename']).", ".$this->_db->Quote($tmp_path).");");
+			$this->iddocument = $this->_db->lastInsertId();
 
 			if(! $this->iddocument) {
 				throw new Exception($this->_status);
@@ -131,13 +132,14 @@ class orphannotes extends Plugin {
 	}
 
 	private function rmdir( $path ) {
-		$files = glob( $path . '*', GLOB_MARK );
+		$files = glob( $path . DIRECTORY_SEPARATOR . '*', GLOB_MARK );
 		foreach( $files as $file ){
-			if( substr( $file, -1 ) == '/' )
-				$this->rmdir( $file );
-			else
+			if( is_file($file) )
 				unlink( $file );
+			else
+				$this->rmdir( $file );
 		}
+		rmdir($path);
 	}
 
 	protected function getFileInfo($path) {
@@ -151,10 +153,13 @@ class orphannotes extends Plugin {
 		return $mime;
 	}
 
+	protected function cleanup(){
+		$this->rmdir($this->doc_tmp['dirname']);
+	}
+
 	protected function _orphanNotes($extended = false, ZipArchive $za) {
-		$this->_db->debug = false;
-		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
-		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
+		$this->_db->query("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
+		$this->_db->query("DELETE FROM NotePossible where idDocument=".$this->iddocument);
 
 		$orphan = new OrphanNotesParser($this->_db, $this->iddocument);
 		$orphan->XMLLaunchParseOne($this->xml);
@@ -192,7 +197,7 @@ class orphannotes extends Plugin {
     }
 
 	protected function _orphanNotesRecomposeDocument(ZipArchive $za) {
-		$nbNotesTrouvees = $this->_db->getOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->iddocument);
+		$nbNotesTrouvees = $this->_db->query("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->iddocument)->fetch()[0];
 
 		$this->xml = $za->getFromName('final.xml');
 		$za->deleteName('final.xml');
@@ -202,9 +207,10 @@ class orphannotes extends Plugin {
 
 		//Stylage des appels et notes
 		for( $curnote = 1 ; $curnote <= $nbNotesTrouvees ; $curnote ++ ) {
+
 			$motNote = substr($this->request["notenum".$curnote],strpos($this->request["notenum".$curnote],"@")+1);
 
-			$texteNote = $this->_db->getOne("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->iddocument." AND numNote=".$curnote);
+			$texteNote = $this->_db->query("SELECT texteNote FROM NoteTexte WHERE idDocument=".$this->iddocument." AND numNote=".$curnote)->fetch()[0];
 
 			//Au cas ou la note soit entre parenthese on enleve ces parenthèses
 			if(preg_match("/^(.)*\([0-9]+\)[.]{0,3}$/i",trim($motNote))) {
@@ -213,7 +219,6 @@ class orphannotes extends Plugin {
 				//Gestion du cas ou on a un mot du style 18707 (utilisation de substr_replace
 				preg_match_all("/".$curnote."/",$motNote,$matches,PREG_OFFSET_CAPTURE);
 				$tab = array_reverse($matches[0]);
-
 				$motNote = substr_replace($motNote, sprintf($modeleNote, $curnote, $curnote, $texteNote), $tab[0][1], strlen($curnote));
 			}
 
@@ -237,10 +242,10 @@ class orphannotes extends Plugin {
 
 		$this->output['orphannotes'] = array('document' => file_get_contents($final_file), 'name' => $this->doc_source['basename']);
 		// récupération terminée, on efface nos traces
-		$this->_db->execute("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
-		$this->_db->execute("DELETE FROM NotePossible where idDocument=".$this->iddocument);
+		$this->_db->query("DELETE FROM NoteTexte where idDocument=".$this->iddocument);
+		$this->_db->query("DELETE FROM NotePossible where idDocument=".$this->iddocument);
 		unlink($final_file);
-		unlink($this->doc_tmp['realpath']);
+		$this->cleanup();
 	}
 
 }
@@ -289,9 +294,9 @@ class OrphanNotesParser {
 
     /**
      * Constructeur
-     * Attend une instance ADODB
+     * Attend une instance PDO
      *
-     * @param mixed $db une instance ADODB
+     * @param mixed $db une instance PDO
      * @access public
      */
     public function __construct($db, $idDocument) {
@@ -377,7 +382,7 @@ class OrphanNotesParser {
                         if(!empty($debutbalise))
                             $txtNote = $debutbalise . $txtNote;
                         //On ajoute la note possible dans la base
-                        $this->_db->execute("INSERT into NoteTexte (numNote, texteNote, idDocument) VALUES (" . $this->_numeroNoteCourrante . " ," . $this->_db->quote( $txtNote ) . " , " . $this->_idDocument . ")");
+                        $this->_db->query("INSERT into NoteTexte (numNote, texteNote, idDocument) VALUES (" . $this->_numeroNoteCourrante . " ," . $this->_db->quote( $txtNote ) . " , " . $this->_idDocument . ")");
                         // ... et on passe à la lecture de la suivante en remettant lectureNoteCourrante à vide
                         $this->_lectureNoteCourrante = "";
                     } else { //sinon on affiche une erreur
@@ -403,10 +408,10 @@ class OrphanNotesParser {
                         if($this->_numeroNoteCourrante!=1 || $this->_numeroNoteCourrante!=$this->_nbAsterisques) { // si on est pas au début des notes, on raccroche le texte a la note précédente
                             $this->_erreurs[] =  "<strong>Attention !</strong>Une note sans numéro a été trouvée, elle est rattachée à la précédente.<br />";
                             $this->_numeroNoteCourrante--;
-                            $row =  $this->_db->GetRow("SELECT * from NoteTexte where numNote={$this->_numeroNoteCourrante} AND idDocument={$this->_idDocument}");
+                            $row =  $this->_db->query("SELECT * from NoteTexte where numNote={$this->_numeroNoteCourrante} AND idDocument={$this->_idDocument}")->fetch();
                             $this->_lectureNoteCourrante =$row["texteNote"]."</text:p><text:p text:style-name=\"Footnote\">".$this->_lectureNoteCourrante;
                             //echo "lectureNote : ".$this->_lectureNoteCourrante."<br />";
-                            $this->_db->execute("UPDATE NoteTexte SET texteNote=".  $this->_db->quote($this->_lectureNoteCourrante) ." where numNote={$this->_numeroNoteCourrante} AND idDocument={$this->_idDocument}");
+                            $this->_db->query("UPDATE NoteTexte SET texteNote=".  $this->_db->quote($this->_lectureNoteCourrante) ." where numNote={$this->_numeroNoteCourrante} AND idDocument={$this->_idDocument}");
                             $this->_lectureNoteCourrante = "";
                         } else { // sinon on affiche une erreur
                             $this->_erreurs[] = "<strong>Erreur !</strong>Une note n'a pas pu être identifiée<br /><strong>Texte de la note :</strong> " . $this->_lectureNoteCourrante. "<br />";
@@ -514,7 +519,7 @@ class OrphanNotesParser {
                     $this->_prof = 1;
 
                 if ((int)$str != 0 && (int)$str <= $this->_nombreNotes && abs(((int)$str -  $this->_pointeurNote)) <= (int)$this->_prof) {
-                    $this->_db->execute("INSERT into NotePossible (idNote,numNote,motNote,extraitMotNote,probaNote,idDocument) VALUES (null,".$str.", \"".($this->_nombreNotesPossibles+1)."@".$mot."\",\"".$extraitNote."\", '$probaNote',".$this->_idDocument.")");
+                    $this->_db->query("INSERT into NotePossible (idNote,numNote,motNote,extraitMotNote,probaNote,idDocument) VALUES (null,".$str.", \"".($this->_nombreNotesPossibles+1)."@".$mot."\",\"".$extraitNote."\", '$probaNote',".$this->_idDocument.")");
 
                     $this->_numeroNoteCourrante = $str;
                     if((int)$str - (int)$this->_pointeurNote >= 0 )
@@ -623,20 +628,19 @@ class OrphanNotesParser {
      * Dernière modification : 24-08-2004
      */
     public function phaseFinale() {
-        $this->_nbNotesTrouvees = $this->_db->GetOne("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->_idDocument);
-        $this->_nbPropositions = $this->_db->GetOne('SELECT COUNT(*) FROM NotePossible WHERE idDocument ='.$this->_idDocument);
+        $this->_nbNotesTrouvees = $this->_db->query("SELECT COUNT(*) FROM NoteTexte WHERE idDocument=".$this->_idDocument)->fetch()[0];
+        $this->_nbPropositions = $this->_db->query('SELECT COUNT(*) FROM NotePossible WHERE idDocument ='.$this->_idDocument)->fetch()[0];
 
         for ($i = 1; $i <= $this->_nbNotesTrouvees; $i++) {
-            $rows = $this->_db->execute("SELECT * FROM NotePossible WHERE numNote =".$i." AND idDocument =".$this->_idDocument." ORDER BY probaNote DESC, idNote ASC");
+            $rows = $this->_db->query("SELECT * FROM NotePossible WHERE numNote =".$i." AND idDocument =".$this->_idDocument." ORDER BY probaNote DESC, idNote ASC");
 
-            $count = $rows->recordCount();
+            $count = $rows->rowCount();
 
             $lesprops = array();
             if ( $count > 1 ) {
                 $first = TRUE;
                 $uneprop = array();
-                while (!$rows->EOF) {
-                    $row = $rows->fields;
+                foreach ($rows as $row) {
                     if ($first) {
                         $uneprop['name'] = "notenum".$i;
                         $uneprop['value'] = $row["motNote"];
@@ -650,12 +654,10 @@ class OrphanNotesParser {
                         $uneprop['checked'] = "";
                     }
                     $lesprops[] = $uneprop;
-
-                    $rows->moveNext();
                 }
                 $this->_props[$i] = $lesprops;
             } elseif( $count == 1) {
-                $row = $rows->fields;
+                $row = $rows->fetch();
                 $uneprop['name'] = "notenum".$i;
                 $uneprop['value'] = $row["motNote"];
                 $uneprop['txt'] = $row["extraitMotNote"];
@@ -664,7 +666,6 @@ class OrphanNotesParser {
                 $this->_props[$i] = $lesprops;
             }
 
-            $rows->close();
         }//for
 
         return $this;

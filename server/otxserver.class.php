@@ -8,8 +8,6 @@
 **/
 include_once('inc/utils.inc.php');
 include_once('inc/EM.odd.php');
-require_once 'adodb/adodb.inc.php';
-
 
 /**
  * Singleton class
@@ -52,7 +50,7 @@ class OTXserver
     private $_isdebug	= true;
     private $oostyle 	= array();
     private $_dbg 		= 1;
-    private $_db; 		// adodb instance
+    private $_db; 		// db instance
     private $_config;
     
     private $_keywords = array();
@@ -85,9 +83,7 @@ class OTXserver
 
         $this->log['warning'] = array();
 
-        $this->_db = ADONewConnection("pdo");
-
-        $this->_db->connect($this->_config->db);
+        $this->_db = new PDO($this->_config->db['dsn'], $this->_config->db['user'], $this->_config->db['password']);
     }
 
     /** Prevent users to clone the instance (singleton because) **/

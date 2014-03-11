@@ -6,5 +6,10 @@
     <soffice>
         <officepath>/usr/bin/libreoffice</officepath>
     </soffice>
-    <db>otx.sqlite3</db>
+    <db>
+        <dsn>mysql:host=localhost;dbname=opentext</dsn>
+        <user>username</user>
+        <password>password</password>
+    </db>
+
 </config>
