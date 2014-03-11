@@ -8,7 +8,7 @@ Cloner le dépôt dans un répertoire accessible via votre server HTTP:
 
 Initialiser la base de donnée, ici sqlite3, mais n'importe quel type de base de données fonctionnant avec PDO peut être utilisé.
 
-> sqlite3 otx.sqlite3 < install/init.sql
+> mysql opentext < install/init.sql
 
 Copier le fichier de configuration d'exemple otx.config.xml.sample en otx.config.xml
 
@@ -19,7 +19,10 @@ Renseigner dans se fichier les différentes valeurs:
  * otxpath : chemin vers l'installation d'OTX
  * cachepath : répertoire où sera stocké les fichiers en cours de traitement
  * officepath : chemin vers libreoffice
- * db : DSN pour l'initialisation de connexion avec PDO, ex: sqlite:/data/otx.sqlite3
+ * db :
+   * dsn : dsn d'initialisation de connexion avec PDO, ex: sqlite:/data/otx.sqlite3
+   * user : utilisateur SQL (si nécessaire)
+   * password : mot de passe de l'utilisateur SQL (si nécessaire)
 
 Par pure précaution, il faut faire en sorte que ce fichier de configuration ne soit pas accessible.
 
