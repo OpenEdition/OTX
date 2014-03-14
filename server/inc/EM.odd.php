@@ -36,6 +36,9 @@ function _em2tei($schema="revorg") {
 // editeurscientifique
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:editor[not(@role)]"
     => 'header:scientificeditor',
+// directeur des fouilles
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:editor[@role='directeurdesfouilles']"
+    => 'header:excavationsdirector',
 
 // descriptionauteur
 "//tei:affiliation"

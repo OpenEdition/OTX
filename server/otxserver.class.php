@@ -1305,7 +1305,7 @@ class OTXserver
         foreach ($entries as $entry) {
             $titlestmt->removeChild($entry);
         }
-        $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor']");
+        $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor' or @rend='excavationsdirector']");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;
             $items = array(); 
@@ -1327,11 +1327,14 @@ class OTXserver
                         break;
                     case 'scientificeditor':
                     case 'translator':
+                    case 'excavationsdirector':
                         $author = $dom->createElement('editor');
                         break;
                 }
                 if ($rend == "translator") {
                     $author->setAttribute('role', "translator");
+                } elseif ($rend == "excavationsdirector") {
+                    $author->setAttribute('role', "excavationsdirector");
                 }
                 $titlestmt->appendChild($author);
                 $name = $dom->createElement('name', $item);
@@ -1536,6 +1539,16 @@ class OTXserver
 	            $name = $dom->createElement('name', $translator);
 	            $respstmt->appendChild($name);
 	        }
+            if(array_key_exists('excavationsdirector', $lodelmeta)){
+                foreach ($lodelmeta["excavationsdirector"] as $excavationsdirector) {
+                    $respstmt = $dom->createElement('respStmt');
+                    $titlestmt->appendChild($respstmt);
+                    $resp = $dom->createElement('resp', "excavationsdirector");
+                    $respstmt->appendChild($resp);
+                    $name = $dom->createElement('name', $excavationsdirector);
+                    $respstmt->appendChild($name);
+                }
+            }
         # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
         $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
         # LodelEM:creationdate
@@ -1827,65 +1840,226 @@ class OTXserver
         }
 
         # /tei/text/back
-        $entries = $xpath->query("//tei:back"); $back = $entries->item(0);
-
+        $entries = $xpath->query("//tei:back");
+        $back = $entries->item(0);
         # Bibliography
         $entries = $xpath->query("//tei:div[@rend='LodelBibliography']");
         if ($entries->length) {
+            // Les bibliographies vont être dans un élément <div type="bibliography"></div>
+            // On crée cet élément, vide, qu'on va coller dans le document à la suite de l'ancienne biblio.
             $bibliography = $dom->createElement("div");
             $bibliography->setAttribute('type', "bibliography");
             $back->appendChild($bibliography);
-            $listbibl = $dom->createElement("listBibl");
-            $bibliography->appendChild($listbibl);
+
+            // Pour chaque <div rend="LodelBibliography"> (l'ancienne biblio)
             foreach($entries as $entry){
+                // On parcourt toutes les entrées biblio et les titres de biblio
                 foreach ($entry->childNodes as $tag) {
-                    if ( preg_match("/^bibliograph.+\-(.+)/", $tag->getAttribute("rend"), $matches)) {
+                    // Pour chaque titre on crée un nouvel élément titre <head> qu'on colle dans la nouvelle biblio.
+                    if (preg_match("/^bibliograph.+\-(.+)/", $tag->getAttribute("rend"), $matches)) {
                         if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                            $bibl = $dom->createElement("bibl");
-                            $this->copyNode($tag, $bibl);
-                            $bibl->setAttribute('type', "head");
-                            $bibl->setAttribute('subtype', "level".$match[1]);
-                            $listbibl->appendChild($bibl);
+                            $head = $dom->createElement("head");
+                            // On remplit le nouvel élément <head>
+                            $this->copyNode($tag, $head);
+                            $head->setAttribute('subtype', "level".$match[1]);
+                            $bibliography->appendChild($head);
+                            if($tag->hasAttribute('xml:id')) {
+                                $head->setAttribute('xml:id', $tag->getAttribute('xml:id'));
+                            }
                             continue;
                         }
                     }
-                    
-                    $bibl = $dom->createElement("bibl");
-                    if($tag->hasAttribute('rendition')) $bibl->setAttribute('rendition', $tag->getAttribute('rendition'));
 
-                    if($tag->nodeName == "list"){
+                    // Pour chaque entrée bibliographique on crée un nouvel élément <bibl> qu'on colle dans la nouvelle biblio
+                    $bibl = $dom->createElement("bibl");
+
+                    if($tag->hasAttribute('rendition')) {
+                        $bibl->setAttribute('rendition', $tag->getAttribute('rendition'));
+                    }
+
+                    if($tag->hasAttribute('xml:id')) {
+                        $bibl->setAttribute('xml:id', $tag->getAttribute('xml:id'));
+                    }
+
+                    if($tag->nodeName == "list") {
                         $bibl->appendChild(clone($tag));
-                    }else{
+                    }
+
+                    // On remplit le nouvel élément <bibl>
+                    else {
                         $this->copyNode($tag, $bibl);
                     }
-                   	$listbibl->appendChild($bibl);
+
+                    // On colle le nouvel élément <bibl> dans la nouvelle biblio.
+                    $bibliography->appendChild($bibl);
                 }
 
+                // Suppression de l'ancienne biblio maintenant qu'on a mis son contenu dans la nouvelle.
                 $entry->parentNode->removeChild($entry);
             }
+
+            /*
+             * Structuration de la biblio dans des éléments <listBibl>
+             * Les éléments <listBibl> fonctionnent comme les <div> qui structurent le corps du texte et sont imbriqués entre eux :
+             *	<div type="bibliography">
+             *		<listBibl>
+             *			<head subtype="level1"/>
+             *			<bibl/>
+             *		</listBibl>
+             *		<listBibl>
+             *			<head subtype="level1"/>
+             *			<bibl>
+             *		</listBibl>
+             *	</div>
+             */
+            // Pour chaque niveau de titre dans la nouvelle biblio, en commençant par les plus petits puis en les englobant ensuite dans les niveaux supérieurs.
+            for ($i = 9 ; $i > 0 ; $i--) {
+                // Pour chaque entrée (titre <head> ou référence biblio <bibl>)
+                for ($j = 0, $c = $bibliography->childNodes->length ; $j < $c ; $j++) {
+                    $tag = $bibliography->childNodes->item($j);
+
+                    // Si on trouve un titre du niveau voulu à traiter
+                    if ($tag->nodeName == "head"
+                        && $tag->attributes->getNamedItem('subtype') != null
+                        && strstr($tag->attributes->getNamedItem('subtype')->nodeValue, 'level' . $i) != false) {
+                        // Dans le XPath on ne peut pas utiliser current(), alors on va marquer provisoirement le noeud courant avec un id unique
+                        $uniqidAttribute = $dom->createAttribute('uniqid');
+                        $uniqidAttribute->value = uniqid();
+                        $tag->setAttributeNode($uniqidAttribute);
+
+                        // Requête de tous les éléments concernés par le titre
+                        $query = "following-sibling::*[not(self::head[substring(@subtype, 6) <= " . $i . "])][not(preceding-sibling::head[substring(@subtype, 6) <= " . $i . "][preceding-sibling::head[@uniqid = '" . $uniqidAttribute->value . "']])]";
+                        $sameLevelNodes = $xpath->query($query, $tag);
+
+                        // Création de l'élément <listBibl>
+                        $newlistBibl = $dom->createElement('listBibl');
+
+                        // Remplissage du <listBibl>
+                        $tag->removeAttribute("uniqid");
+                        $newlistBibl->appendChild($tag->cloneNode(true));
+                        foreach($sameLevelNodes as $subNode) {
+                            $newlistBibl->appendChild($subNode);
+                        }
+
+                        // Insertion du <listBibl> dans l'arbre source (remplace le head, préalablement cloné dans le <listBibl>)
+                        $tag->parentNode->replaceChild($newlistBibl, $tag);
+
+                        // Réduire le nombre d'itérations, du nombre d'éléments insérés dans le <listBibl>
+                        $c -= $sameLevelNodes->length;
+                    }
+                }
+            }
+
+            /*
+             * Si la bibliographie ne contient pas de titre et n'est pas structurée on a ça :
+             *	<div type="bibliography">
+             *		<bibl/>
+             *		<bibl/>
+             *	</div>
+             *
+             * Dans ce cas on veut quand même mettre tous les éléments <bibl> dans un élément <listBibl>
+             *	<div type="bibliography">
+             *		<listBibl>
+             *			<bibl/>
+             *			<bibl/>
+             *		</listBibl>
+             *	</div>
+             */
+            if ($bibliography->firstChild->nodeName != "listBibl") {
+                // On crée l'élément <listBibl> qui va englober les <bibl>, et on le met à la suite de tous les <bibl>
+                $listbibl = $dom->createElement("listBibl");
+                $bibliography->appendChild($listbibl);
+
+                // Boucle sur tous les éléments <bibl> fils de <div type="bibliography"> pour les déplacer dans <listBibl>
+                // On ne boucle pas sur le dernier élément fils, qui est <listBibl> lui-même ($i < $c-1)
+                for ($i = 0, $c = $bibliography->childNodes->length ; $i < $c-1 ; $i ++) {
+                    $node = $bibliography->firstChild;
+                    $listbibl->appendChild($node);
+                }
+            }
         }
+
+
 
         # Appendix
         $entries = $xpath->query("//tei:div[@rend='LodelAppendix']");
         if ($entries->length) {
+            // Les annexes vont être dans un élément <div type="appendix"></div>
+            // On crée cet élément, vide, qu'on va coller dans le document à la suite de l'ancienne annexe
             $lodel = $entries->item(0);
             $parent = $lodel->parentNode;
             $appendix = $dom->createElement("div");
             $appendix->setAttribute('type', "appendix");
             $back->appendChild($appendix);
+
+            // Pour chaque <div type="appendix"> (l'ancienne annexe)
             foreach($entries as $entry){
+                // On parcourt tous les paragraphes d'annexe et les titres d'annexe
                 foreach ($entry->childNodes as $tag) {
-                    $clone = $tag->cloneNode(true);
-                    if ( preg_match("/^appendix-(.+)$/", $clone->getAttribute("rend"), $matches)) {
-                        if ( preg_match("/^heading(\d+)$/", $matches[1], $match)) {
-                            $clone->setAttribute('type', "head");
-                            $clone->setAttribute('subtype', "level".$match[1]);
-                            $clone->setAttribute('rend', "appendix");
+                    // Pour chaque titre on crée un nouvel élément titre <head> qu'on colle dans la nouvelle annexe.
+                    if (preg_match("/^appendix-(.+)$/", $tag->getAttribute("rend"), $matches)) {
+                        if (preg_match("/^heading(\d+)$/", $matches[1], $match)) {
+                            $head = $dom->createElement("head");
+                            // On remplit le nouvel élément <head>
+                            $this->copyNode($tag, $head);
+                            $head->setAttribute('subtype', "level".$match[1]);
+                            $appendix->appendChild($head);
+                            if($tag->hasAttribute('xml:id')) {
+                                $head->setAttribute('xml:id', $tag->getAttribute('xml:id'));
+                            }
+                            continue;
                         }
                     }
-                    $appendix->appendChild($clone);
+
+                    // Pour chaque paragraphe d'annexe on crée un nouvel élément <p> qu'on colle dans la nouvelle annexe
+                    $p = $tag->cloneNode(true);
+
+                    $appendix->appendChild($p);
                 }
+
+                // Suppression de l'ancienne annexe maintenant qu'on a mis son contenu dans la nouvelle.
                 $parent->removeChild($entry);
+            }
+
+            // Structuration des annexes dans des <div>, comme pour le corps de texte.
+            for ($i = 9 ; $i > 0 ; $i--) {
+                // Pour chaque entrée (titre <head> ou paragraphe <p>)
+                for ($j = 0, $c = $appendix->childNodes->length ; $j < $c ; $j++) {
+                    $tag = $appendix->childNodes->item($j);
+
+                    // Si on trouve un titre du niveau voulu à traiter
+                    if ($tag->nodeName == "head"
+                        && $tag->attributes->getNamedItem('subtype') != null
+                        && strstr($tag->attributes->getNamedItem('subtype')->nodeValue, 'level' . $i) != false) {
+                        // Dans le XPath on ne peut pas utiliser current(), alors on va marquer provisoirement le noeud courant avec un id unique
+                        $uniqidAttribute = $dom->createAttribute('uniqid');
+                        $uniqidAttribute->value = uniqid();
+                        $tag->setAttributeNode($uniqidAttribute);
+
+                        // Requête de tous les éléments concernés par le titre
+                        $query = "following-sibling::*[not(self::head[substring(@subtype, 6) <= " . $i . "])][not(preceding-sibling::head[substring(@subtype, 6) <= " . $i . "][preceding-sibling::head[@uniqid = '" . $uniqidAttribute->value . "']])]";
+                        $sameLevelNodes = $xpath->query($query, $tag);
+
+                        // Création de l'élément <div>
+                        $newDiv = $dom->createElement('div');
+                        $divAttribute = $dom->createAttribute('type');
+                        $divAttribute->value = "div" . $i;
+                        $newDiv->setAttributeNode($divAttribute);
+
+                        // Remplissage du <div>
+                        $tag->removeAttribute("uniqid");
+                        $newDiv->appendChild($tag->cloneNode(true));
+                        foreach($sameLevelNodes as $subNode) {
+                            $newDiv->appendChild($subNode);
+                        }
+
+                        // Insertion du <div> dans l'arbre source (remplace le head, préalablement cloné dans le <div>)
+                        $tag->parentNode->replaceChild($newDiv, $tag);
+
+                        // Réduire le nombre d'itérations, du nombre d'éléments insérés dans le <div>
+                        $c -= $sameLevelNodes->length;
+                    }
+                }
             }
         }
 
