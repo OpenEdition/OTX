@@ -2,8 +2,7 @@
 <!--
 # The Contents of this file are made available subject to the terms of
 # the GNU Lesser General Public License Version 2.1
-# Nicolas Barts
-# copyright 2010, Cléo/Revue.org
+# copyright Centre pour L'édition Électronique Ouverte
 # OpenOffice v3.x
 -->
 <!--

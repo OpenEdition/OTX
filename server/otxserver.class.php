@@ -1,11 +1,10 @@
 <?php
 /**
- * otxserver.class.php
- * PHP >= 5.2
- * @author Nicolas Barts
- * @copyright 20010, CLEO/Revues.org
- * @licence http://www.gnu.org/copyleft/gpl.html
-**/
+ * @package OTX
+ * @copyright Centre pour L'édition Électronique Ouverte
+ * @licence http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ **/
+
 include_once('inc/utils.inc.php');
 include_once('inc/EM.odd.php');
 
@@ -1305,6 +1304,7 @@ class OTXserver
         foreach ($entries as $entry) {
             $titlestmt->removeChild($entry);
         }
+
         $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor' or @rend='excavationsdirector']");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;

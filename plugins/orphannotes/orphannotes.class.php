@@ -1,4 +1,9 @@
 <?php
+/**
+ * @package OTX
+ * @copyright Centre pour L'édition Électronique Ouverte
+ * @licence http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ **/
 
 class orphannotes extends Plugin {
 

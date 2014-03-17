@@ -1,10 +1,10 @@
 <?php
 /**
- * EM.odd.php
- * @author Nicolas Barts
- * @copyright 2010, CLEO/Revues.org
- * @licence http://www.gnu.org/copyleft/gpl.html
-**/
+ * @package OTX
+ * @copyright Centre pour L'édition Électronique Ouverte
+ * @licence http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
+ **/
+
 
 function _em2tei($schema="revorg") {
 
