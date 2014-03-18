@@ -10,9 +10,9 @@ OTX provides a conversion server from .doc or .odt files to XML-TEI integrated w
 
 ### System Requirements
 
-PHP version 5.4.4 or higher
-Any PHP-PDO compliant database
-LibreOffice 3.x or higher
+ * PHP version 5.4.4 or higher
+ * Any PHP-PDO compliant database
+ * LibreOffice 3.x or higher
 
 
 ### License
