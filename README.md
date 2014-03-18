@@ -1,7 +1,6 @@
 # OTX
 
-OTX provides a conversion server from .doc or .odt files to XML-TEI integrated with Lodel 1.0.
-
+[OTX](http://openedition.github.io/OTX/) provides a conversion server from .doc or .odt files to XML-TEI integrated with Lodel 1.0.
 
 ### Installation instructions
 
