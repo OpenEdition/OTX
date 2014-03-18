@@ -6,3 +6,15 @@ OTX provides a conversion server from .doc or .odt files to XML-TEI integrated w
 ### Installation instructions
 
   Look at the INSTALL file in this repository
+
+
+### System Requirements
+
+PHP version 5.4.4 or higher
+Any PHP-PDO compliant database
+LibreOffice 3.x or higher
+
+
+### License
+
+OTX is free software. It is released under the terms of the GPL version 2. See LICENSE file in this repository.
