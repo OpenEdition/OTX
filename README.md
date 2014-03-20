@@ -13,6 +13,11 @@
  * Any PHP-PDO compliant database
  * LibreOffice 3.x or higher
 
+#### Modules et librairies PHP
+
+ * php-config
+ * php5-json
+ * php5-curl
 
 ### License
 
