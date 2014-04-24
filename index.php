@@ -5,8 +5,6 @@
  * @licence http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  **/
 
-ini_set('include_path', ini_get('include_path') . PATH_SEPARATOR . 'server' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR );
-
 require_once('server/otxserver.class.php');
 require_once('otx.func.php');
 require_once('OTXConfig.class.php');
