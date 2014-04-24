@@ -20,6 +20,10 @@ $db = new PDO($config->db['dsn'], $config->db['user'], $config->db['password']);
 
 $password_crypted = crypt($password);
 
-$db->query('INSERT INTO users (username, password) VALUES(' . $db->quote($username) . ', ' . $db->quote($password_crypted) . ')');
-
-die("User created successfully\n");
+$ok = $db->query('INSERT INTO users (username, password) VALUES(' . $db->quote($username) . ', ' . $db->quote($password_crypted) . ')');
+if (!$ok) {
+	$error = var_export($db->errorInfo(), true);
+	die("ERREUR:\n$error\n");
+} else {
+	die("User created successfully\n");
+}
