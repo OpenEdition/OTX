@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <config>
     <servicename>OTX</servicename>
-    <otxpath>/var/www/OTX</otxpath>
-    <cachepath>CACHE/</cachepath>
+    <otxpath>/var/www/OTX/</otxpath>
+    <cachepath>/var/www/CACHE/</cachepath>
     <soffice>
         <officepath>/usr/bin/libreoffice</officepath>
     </soffice>
