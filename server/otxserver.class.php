@@ -1461,61 +1461,60 @@ class OTXserver
             error_log("<li>? [Warning] no date defined</li>\n");
         }
 
-		# mathematics formula, group formula and create nodes for it
-		include_once('inc/html_entities.php');
-		foreach (array('hi', 'p') as $elem ) { // inline and block, then mathml and latex
-			foreach(array('mathml'=>'mathml', 'mathlatex'=>'latex') as $style => $notation) {
-				$query = "//tei:{$elem}[@rend='{$style}'][not(preceding-sibling::tei:{$elem}[1][@rend='{$style}'])]";
-				$entries = $xpath->query($query);
-				foreach($entries as $entry){
-					$formula = $entry->textContent;
-					$parent  = $entry->parentNode;
-					if ($elem === 'p') { // block: group siblings together
-						while ($sibling = $entry->nextSibling) {
-							if (!($sibling->getAttribute('rend') === $style))
-								break;
-							$formula .= $sibling->textContent;
-							$parent->removeChild($entry);
-							$entry = $sibling;
-						}
-					}
-					$formula = html_convert_entities($formula);
-					if ($style === 'mathlatex') // latex formula can contain htmlspecialchars
-						$formula = '<![CDATA[' . $formula . ']]>';
-					$df = $dom->createDocumentFragment();
-					$df->appendXML($formula);
-					
-					$el = $dom->createElement($elem);
-					$el->setAttribute('rend', $notation);
-					$parent->replaceChild($el, $entry);
-					$f = $dom->createElement('formula');
-					$f->setAttribute('notation', $notation);
-					$el->appendChild($f);
-					$f->appendChild($df);
-				}
-			}
-		}
-		// be sure math tags have a namespace
-		foreach($dom->getElementsByTagName('math') as $node) {
-			$node->setAttribute('xmlns','http://www.w3.org/1998/Math/MathML');
-		}
-		
+        # mathematics formula, group formula and create nodes for it
+        include_once('inc/html_entities.php');
+        foreach (array('hi', 'p') as $elem ) { // inline and block, then mathml and latex
+            foreach(array('mathml'=>'mathml', 'mathlatex'=>'latex') as $style => $notation) {
+                $query = "//tei:{$elem}[@rend='{$style}'][not(preceding-sibling::tei:{$elem}[1][@rend='{$style}'])]";
+                $entries = $xpath->query($query);
+                foreach($entries as $entry){
+                    $formula = $entry->textContent;
+                    $parent  = $entry->parentNode;
+                    if ($elem === 'p') { // block: group siblings together
+                        while ($sibling = $entry->nextSibling) {
+                            if (!($sibling->getAttribute('rend') === $style))
+                                break;
+                            $formula .= $sibling->textContent;
+                            $parent->removeChild($entry);
+                            $entry = $sibling;
+                        }
+                    }
+                    if ($style === 'mathlatex') // latex formula can contain htmlspecialchars
+                        $formula = htmlspecialchars($formula);
+                    $formula = html_convert_entities($formula);
+                    $df = $dom->createDocumentFragment();
+                    $df->appendXML($formula);
 
-		# citations
-		$entries = $xpath->query("//tei:p[contains(@rend,'citation') or contains(@rend,'quotation')]");
-		foreach($entries as $entry){
-			$parent  = $entry->parentNode;
-//			$element = $dom->createElement("q", $entry->nodeValue);
-			$element = $dom->createElement("q");
-		    foreach($entry->childNodes as $child){
-		        $element->appendChild($child->cloneNode(true));
+                    $el = $dom->createElement($elem);
+                    $el->setAttribute('rend', $notation);
+                    $parent->replaceChild($el, $entry);
+                    $f = $dom->createElement('formula');
+                    $f->setAttribute('notation', $notation);
+                    $el->appendChild($f);
+                    $f->appendChild($df);
+                }
+            }
+        }
+        // be sure math tags have a namespace
+        foreach($dom->getElementsByTagName('math') as $node) {
+            $node->setAttribute('xmlns','http://www.w3.org/1998/Math/MathML');
+        }
+
+        # citations
+        $entries = $xpath->query("//tei:p[contains(@rend,'citation') or contains(@rend,'quotation')]");
+        foreach($entries as $entry){
+            $parent  = $entry->parentNode;
+//            $element = $dom->createElement("q", $entry->nodeValue);
+            $element = $dom->createElement("q");
+            foreach($entry->childNodes as $child){
+                $element->appendChild($child->cloneNode(true));
             }
 
-			foreach($entry->attributes as $attribute){
-				$element->setAttribute($attribute->nodeName,$attribute->nodeValue);
-			}
-			$parent->replaceChild($element, $entry);
-		}
+            foreach($entry->attributes as $attribute){
+                $element->setAttribute($attribute->nodeName,$attribute->nodeValue);
+            }
+            $parent->replaceChild($element, $entry);
+        }
 
         # /tei/teiHeader/publicationStmt/availability [lodel:license]
         $entries=$xpath->query("//tei:p[@rend='license']");
