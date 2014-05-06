@@ -1479,9 +1479,10 @@ class OTXserver
                             $entry = $sibling;
                         }
                     }
-                    if ($style === 'mathlatex') // latex formula can contain htmlspecialchars
-                        $formula = htmlspecialchars($formula);
-                    $formula = html_convert_entities($formula);
+                    if ($style === 'mathlatex') // latex formula can contain &,<,>
+                        $formula = "<![CDATA[" . $formula . "]]>";
+                    else
+                        $formula = html_convert_entities($formula); // convert mathml entities to xml entities
                     $df = $dom->createDocumentFragment();
                     $df->appendXML($formula);
 
