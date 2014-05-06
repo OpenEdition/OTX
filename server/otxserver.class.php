@@ -1485,6 +1485,12 @@ class OTXserver
                         $formula = html_convert_entities($formula); // convert mathml entities to xml entities
                     $df = $dom->createDocumentFragment();
                     $df->appendXML($formula);
+                    if ($style === 'mathml') {
+                        $math = $df->firstChild;
+                        if ($math && $math->nodeName == 'math') {
+                            $math->setAttribute('display', $elem == 'hi' ? 'inline' : 'block');
+                        }
+                    }
 
                     $el = $dom->createElement($elem);
                     $el->setAttribute('rend', $notation);
