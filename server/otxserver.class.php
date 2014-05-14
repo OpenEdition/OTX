@@ -1623,8 +1623,8 @@ class OTXserver
             $parent->removeChild($entry);
         }
         else {
-            // TODO : warning no date defined
-            error_log("<li>? [Warning] no date defined</li>\n");
+            // TODO : warning no lang defined
+            error_log("<li>? [Warning] no lang defined</li>\n");
         }
 
         # /tei/teiHeader/profileDesc/textClass
