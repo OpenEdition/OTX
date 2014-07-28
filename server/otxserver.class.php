@@ -711,6 +711,22 @@ class OTXserver
         }
         $domfodt->normalizeDocument();
 
+        // normaliser les xml:id des listes (le but est de toujours sortir le même document, les id données par ooo étant changeantes)
+        $xpath = new DOMXpath($domfodt);
+        $items = $xpath->query("//*[@xml:id[starts-with(., 'list')]]");
+        $lists = array();
+        $i = 0;
+        foreach ($items as $item) {
+            $id = $item->getAttribute('xml:id');
+            if (isset($lists[$id])) {
+                $id = $lists[$id];
+            } else {
+                $id = $lists[$id] = sprintf("list%010d", ++$i);
+            }
+            $item->setAttribute('xml:id', $id);
+        }
+        unset($lists);
+
 //
 // Traitement par xsl
 //
