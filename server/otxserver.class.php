@@ -1019,7 +1019,7 @@ class OTXserver
                             if ( isset($previtem['section'])) {
                                 $newsection = $previtem['section'];
                                 if ($newsection=="back" and isset($previtem['rend'])) {
-                                    $newbacksection = $previtem['rend'];
+                                    $newbacksection = preg_replace('/-.*/','',$previtem['rend']); // copy only the name of the section !
                                 }
                             } else {
                                 if ( isset($current['section'])) {
@@ -1042,7 +1042,7 @@ class OTXserver
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
                                 if ($newsection=="back" and isset($nextitem['rend'])) {
-                                    $newbacksection = $nextitem['rend'];
+                                    $newbacksection = preg_replace('/-.*/','',$nextitem['rend']); // copy only the name of the section !
                                 }
                             } else {
                                 if ( isset($current['section'])) {

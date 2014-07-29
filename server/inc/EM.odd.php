@@ -157,16 +157,6 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:*/tei:p[@rend='break']"
     => 'text:break',
 
-// titreillustration
-"/tei:TEI/tei:text/tei:*/tei:figure/tei:head"
-    => 'text:figure-title',
-// legendeillustration
-"/tei:TEI/tei:text/tei:*/tei:figure-title"
-    => 'text:figure-legend',
-// creditillustration,crditillustration,creditsillustration,crditsillustration
-"/tei:TEI/tei:text/tei:*/tei:figure/tei:note[@type='license']"
-    => 'text:figure-license',
-
 // bibliographiereference
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:notesStmt/tei:note[@type='bibl']"
     => 'header:bibl',
@@ -191,6 +181,8 @@ function _em2tei($schema="revorg") {
 "//*[@rend='figure-title']"             => 'text:figure-title',
 //legendeillustration
 "//*[@rend='figure-legend']"            => 'text:figure-legend',
+//creditillustration,crditillustration,creditsillustration,crditsillustration
+"//*[@rend='figure-license']"           => 'text:figure-license',
 // code
 "//*[@rend='code']"                     => 'text:code',
 // question
@@ -207,8 +199,6 @@ function _em2tei($schema="revorg") {
 "//*[@rend='quotation']"                => 'text:quotation',
 //bibliographiereference
 "//*[@rend='bibliographicreference']"   => 'text:bibliographicreference',
-//creditillustration,crditillustration,creditsillustration,crditsillustration
-"//*[@rend='figure-license']"           => 'text:figure-license',
 
 //sections
 "//tei:head[@subtype='level1']" =>  'text:heading1',
