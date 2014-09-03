@@ -59,6 +59,7 @@ class OTXserver
     /** A private constructor; prevents direct creation of object (singleton because) **/
     private function __construct($site="", $sourceoriginale="", $mode="", $modelpath="", $entitypath="") {
         $this->_config = OTXConfig::singleton();
+        mb_internal_encoding("UTF-8");
 
         $this->input['site'] = preg_replace("/[^\w\d]+/", "", $site);
         $this->input['sourceoriginale'] =  $sourceoriginale;
@@ -66,7 +67,7 @@ class OTXserver
         $this->input['modelpath'] 	= $modelpath;
         $this->input['entitypath'] 	= $entitypath;
 
-	$this->_usedfiles = array($modelpath, $entitypath);
+        $this->_usedfiles = array($modelpath, $entitypath);
 
         $this->_param['EMreport']	= array();
         $this->_param['mime'] 		= "";
