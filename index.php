@@ -14,7 +14,7 @@ otx_auth();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     # create the server instantiation
     try {
-    	$config = OTXConfig::singleton();
+        $config = OTXConfig::singleton();
         $plugin = array();
 
         foreach( array('mode', 'site', 'sourceoriginale') as $arg ){
@@ -53,11 +53,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $pluginname              = current(array_keys($plugin));
             $response[$pluginname]   = base64_encode(serialize($plugin[$pluginname]));
         }else{
-	        $server->cleanup();
-	}
+            $server->cleanup();
+        }
+
+        $json = json_encode($response);
+        if ($json === False || json_last_error() === JSON_ERROR_UTF8) // TODO: better error check, wait for php 5.5 for json_last_error_msg(), to have better description
+            throw new Exception("Could not encode response. Conversion problem !");
 
         header('Content-type: application/json');
-        echo(json_encode($response));
+        echo $json;
         exit;
     }
     catch (Exception $fault) {
