@@ -1170,8 +1170,10 @@ class OTXserver
 			$list->setAttribute('type', $rendition['levels'][$level]);
 
 		if(isset($rendition['type'][$level]) && !empty($rendition['type'][$level])){
-            $this->tagsDecl[$rendname] = "list-style-type: {$rendition['type'][$level]};";
-            $list->setAttribute('rend', $rendname);
+			$this->tagsDecl[$rendname] = "list-style-type: {$rendition['type'][$level]};";
+			$list->setAttribute('rend', $rendname);
+		} else {
+			$list->removeAttribute('rendition');
 		}
 
 		/* Items parsing */
@@ -1184,9 +1186,6 @@ class OTXserver
 					$this->liststyles($childlist, $newlevel, $rendition);
 			}
 		}
-		
-		//$list->removeAttribute('rendition');
-		
 	}
 
     private function hicleanup(&$dom, &$xpath) {
