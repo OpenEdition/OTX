@@ -1465,14 +1465,12 @@ class OTXserver
         include_once('inc/html_entities.php');
         foreach (array('hi', 'p') as $elem ) { // inline and block, then mathml and latex
             foreach(array('mathml'=>'mathml', 'mathlatex'=>'latex') as $style => $notation) {
-				if($elem === 'p') //On ne veut pas grouper les balise 'hi'
-				{
-					$query = "//tei:{$elem}[@rend='{$style}'][not(preceding-sibling::tei:{$elem}[1][@rend='{$style}'])]";
-				
-				}else{
-					$query = "//tei:{$elem}[@rend='{$style}']";
-				}
-
+                // On ne veut pas grouper les balise 'hi'
+                if ($elem === 'p') {
+                    $query = "//tei:{$elem}[@rend='{$style}'][not(preceding-sibling::tei:{$elem}[1][@rend='{$style}'])]";
+                } else {
+                    $query = "//tei:{$elem}[@rend='{$style}']";
+                }
                 $entries = $xpath->query($query);
                 foreach($entries as $entry){
                     $formula = $entry->textContent;
