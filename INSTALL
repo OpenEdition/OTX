@@ -31,3 +31,12 @@ Créer un utilisateur:
 > php install/create_user.php [username] [password]
 
 Votre serveur web doit avoir les autorisation nécessaires sur le répertoire de cache (cachepath).
+
+------
+
+Pour l'utilisation avec lodel, il faut configurer dans lodelconfig.php de votre installation lodel
+la connexion à l'interface du serveur OTX :
+
+$cfg['otxurl']      = "http://myotxserver.com/";
+$cfg['otxusername'] = "username";
+$cfg['otxpasswd']   = "password";
