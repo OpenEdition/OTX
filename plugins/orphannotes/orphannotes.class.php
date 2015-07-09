@@ -115,13 +115,12 @@ class orphannotes extends Plugin {
 		$temp_profile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('OTX');
 		mkdir($temp_profile, 0755, true);
 
-		$command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to {$convertTo} -outdir {$out} {$in}";
+		$command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to {$convertTo} --outdir {$out} {$in}";
 
 		$returnvar = 0;
 		$result    = '';
 
 		$output = exec($command, $result, $returnvar);
-
 		/* Suppression du profile temporaire */
 		$this->rmdir($temp_profile);
 
