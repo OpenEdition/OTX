@@ -15,7 +15,6 @@
 
 #### Modules et librairies PHP
 
- * php-config
  * php5-json
  * php5-curl
  * php5-xsl

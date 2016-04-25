@@ -9,22 +9,21 @@ require_once 'Config.php';
 
 class OTXConfig {
 
-	private static $_instance_;
-	private $_configfile = "otx.config.xml";
-	private $_config;
-	private $_root;
-	private $_array;
+    private static $_instance_;
+    private $_configfile = "otx.config.xml";
+    private $_config;
     
-    private function __construct() {
-    	$this->_config = new Config();
-    	$this->_root   = @$this->_config->parseConfig($this->_configfile, 'XML')
-							or error_log("Warning: $php_errormsg");
-    	$this->_array  = $this->_root->toArray();
+    public function __construct() {
+	is_readable($this->_configfile) || die("{$this->_configfile} is not readable!\n");
+	$this->_config = simplexml_load_file($this->_configfile);
+	FALSE !== $this->_config || die("{$this->_configfile} is not xml parsable!\n");
+	return $this->_config;
     }
     
     public function __get($property){
-    	if(isset($this->_array['root']['config'][$property]))
-    		return $this->_array['root']['config'][$property];
+    	if(isset($this->_config->$property))
+    		return $this->_config->$property;
+	return NULL;
     }
     
     public static function singleton(){

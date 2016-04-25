@@ -83,7 +83,7 @@ class OTXserver
 
         $this->log['warning'] = array();
 
-        $this->_db = new PDO($this->_config->db['dsn'], $this->_config->db['user'], $this->_config->db['password']);
+        $this->_db = new PDO($this->_config->db->dsn, $this->_config->db->user, $this->_config->db->password);
     }
 
     /** Prevent users to clone the instance (singleton because) **/
@@ -2306,7 +2306,7 @@ class OTXserver
             $temp_profile = $this->_param['tmppath'] . DIRECTORY_SEPARATOR . uniqid('OTX');
             mkdir($temp_profile, 0755, true);
 
-            $command = "{$this->_config->soffice['officepath']} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to odt:writer8 -outdir {$out} {$in}";
+            $command = "{$this->_config->soffice->officepath} --norestore --headless -env:UserInstallation=file://{$temp_profile} --convert-to odt:writer8 -outdir {$out} {$in}";
 
             $returnvar = 0;
             $result    = '';

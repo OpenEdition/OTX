@@ -14,12 +14,16 @@ require_once('OTXConfig.class.php');
 $username = $argv[1];
 $password = $argv[2];
 
-$config = OTXConfig::singleton();
-$db = new PDO($config->db['dsn'], $config->db['user'], $config->db['password']);
 
-$password_crypted = crypt($password);
+$config = OTXConfig::singleton();
+
+$db = new PDO($config->db->dsn, $config->db->user, $config->db->password);
+
+$blowfish_salt = "$2y$10$".bin2hex(openssl_random_pseudo_bytes(22));
+$password_crypted = crypt($password, $blowfish_salt);
 
 $ok = $db->query('INSERT INTO users (username, password) VALUES(' . $db->quote($username) . ', ' . $db->quote($password_crypted) . ')');
+
 if (!$ok) {
 	$error = var_export($db->errorInfo(), true);
 	die("ERREUR:\n$error\n");

@@ -5,7 +5,7 @@ Cloner le dépôt dans un répertoire accessible via votre server HTTP:
 
 > git clone https://github.com/OpenEdition/OTX.git
 
-Ne pas oublier les dépendances : php-config, php5-json, php5-curl et php5-xsl
+Ne pas oublier les dépendances : php5-json, php5-curl et php5-xsl
 
 Initialiser la base de donnée, ici sqlite3, mais n'importe quel type de base de données fonctionnant avec PDO peut être utilisé.
 

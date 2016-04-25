@@ -13,13 +13,13 @@ function otx_auth() {
 
 
         $config = OTXConfig::singleton();
-        $db = new PDO($config->db['dsn'], $config->db['user'], $config->db['password']);
+        $db = new PDO($config->db->dsn, $config->db->user, $config->db->password);
 
         $row = $db->query("SELECT password FROM users WHERE username=" . $db->quote($login))->fetch(); 
 
-        $user_password = $row['password'];
+        $user_password = crypt($password, $row['password']);
 
-        if (crypt($password, $user_password) != $user_password)
+        if (crypt($password, $user_password) !== $user_password)
         {
             header('WWW-Authenticate: Basic realm="OTX Realm"');
             header('HTTP/1.0 401 Unauthorized');
