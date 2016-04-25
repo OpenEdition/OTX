@@ -17,7 +17,6 @@ function otx_auth() {
 
         $row = $db->query("SELECT password FROM users WHERE username=" . $db->quote($login))->fetch(); 
 
-       # $user_password = crypt($password, $row['password']);
 	$user_password = $row['password'];
 
         if (crypt($password, $user_password) !== $user_password)
