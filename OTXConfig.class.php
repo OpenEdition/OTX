@@ -5,7 +5,6 @@
  * @licence http://opensource.org/licenses/gpl-2.0.php GNU General Public License v2
  **/
 
-require_once 'Config.php';
 
 class OTXConfig {
 
