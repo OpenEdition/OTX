@@ -1735,6 +1735,22 @@ class OTXserver
                 }
             }
         }
+        # Personcited
+        $entries = $xpath->query("//tei:p[@rend='personcited']");
+        $keyword_node = $dom->createElement('keywords');
+        $keyword_node->setAttribute('scheme', 'personcited');
+        $keyword_list = $dom->createElement('list');
+        foreach($entries as $entry) {
+            foreach(explode(',',$entry->nodeValue) as $word) {
+                $word_node = $dom->createElement('item');
+                $name = $dom->createElement('name', trim($word));
+                $word_node->appendChild($name);
+                $keyword_list->appendChild($word_node);
+            }
+            $entry->parentNode->removeChild($entry);
+        }
+        $keyword_node->appendChild($keyword_list);
+        $textclass->appendChild($keyword_node);
 
         # /tei/text/front
         $entries = $xpath->query("//tei:front"); $front = $entries->item(0);
