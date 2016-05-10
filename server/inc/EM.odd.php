@@ -40,6 +40,10 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:editor[@role='excavationsdirector']"
     => 'header:excavationsdirector',
 
+// collaborateur
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:editor[@role='collaborator']"
+    => 'header:collaborator',
+
 // descriptionauteur
 "//tei:affiliation"
     => 'header:author-description',
@@ -66,7 +70,9 @@ function _em2tei($schema="revorg") {
 # dc:subject
 "/tei:TEI/tei:teiHeader/tei:profileDesc/tei:textClass/tei:keywords[@scheme='keyword']"
     => 'header:keywords',
-
+// Personnes citéees
+"/tei:TEI/tei:teiHeader/tei:profileDesc/tei:textClass/tei:keywords[@scheme='personcited']/tei:list/tei:item"
+    => 'header:personcited',
 // keywords,motclesen
 "/tei:TEI/tei:teiHeader/tei:profileDesc/tei:textClass/tei:keywords[@scheme='keyword'][@xml:lang='en']"
     => 'header:keywords-en',
