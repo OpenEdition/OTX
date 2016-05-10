@@ -1321,7 +1321,7 @@ class OTXserver
             $titlestmt->removeChild($entry);
         }
 
-        $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor' or @rend='excavationsdirector']");
+        $entries = $xpath->query("//tei:p[@rend='author' or @rend='translator' or @rend='scientificeditor' or @rend='excavationsdirector' or @rend='collaborator']");
         foreach ($entries as $entry) {
             $parent = $entry->parentNode;
             $items = array(); 
@@ -1344,6 +1344,7 @@ class OTXserver
                     case 'scientificeditor':
                     case 'translator':
                     case 'excavationsdirector':
+                    case 'collaborator':
                         $author = $dom->createElement('editor');
                         break;
                 }
@@ -1351,7 +1352,10 @@ class OTXserver
                     $author->setAttribute('role', "translator");
                 } elseif ($rend == "excavationsdirector") {
                     $author->setAttribute('role', "excavationsdirector");
+                } elseif ($rend == "collaborator") {
+                    $author->setAttribute('role', "collaborator");
                 }
+                 
                 $titlestmt->appendChild($author);
                 $name = $dom->createElement('name', $item);
                 if ($lang=$entry->getAttribute('xml:lang')) { $name->setAttribute('xml:lang', $lang); }
@@ -1613,6 +1617,16 @@ class OTXserver
                     $resp = $dom->createElement('resp', "excavationsdirector");
                     $respstmt->appendChild($resp);
                     $name = $dom->createElement('name', $excavationsdirector);
+                    $respstmt->appendChild($name);
+                }
+            }
+            if(array_key_exists('collaborator', $lodelmeta)){
+                foreach($lodelmeta["collaborator"] as $collaborator) {
+                    $respstmt = $dom->createElement('respStmt');
+                    $titlestmt->appendChild($respstmt);
+                    $resp = $dom->createElement('resp', "collaborator");
+                    $respstmt->appendChild($resp);
+                    $name = $dom->createElement('name', $collaborator);
                     $respstmt->appendChild($name);
                 }
             }
