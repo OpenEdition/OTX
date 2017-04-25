@@ -70,8 +70,8 @@
         method="xml" 
         version="1.0" 
         encoding="UTF-8" 
-        omit-xml-declaration="no" 
-        doctype-system="http://www.tei-c.org/release/xml/tei/custom/schema/dtd/tei_all.dtd" 
+        omit-xml-declaration="no"
+	doctype-system="server/dtd/tei_all.dtd"
         indent="no"/>
  
     <xsl:preserve-space elements="*" />
