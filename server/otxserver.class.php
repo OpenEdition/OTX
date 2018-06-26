@@ -1030,15 +1030,17 @@ class OTXserver
                             break;
                         case "*-":
                             // next
-                            $next = $item;
-                            do{
+                            if (is_object($next) == true) {
+                                $next = $item;
                                 do{
-                                    $next = $next->nextSibling;
-                                }while( is_object($next) && get_class($next) !== "DOMElement" );
+                                    do{
+                                        $next = $next->nextSibling;
+                                    }while( is_object($next) && get_class($next) !== "DOMElement" );
 
-                                if ($next)
-                                    $this->greedy($next, $nextitem);
-                            }while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
+                                    if ($next)
+                                        $this->greedy($next, $nextitem);
+                                }while( preg_match('/^(heading|frame|figure)/', $nextitem['rend']) );
+                            }
 
                             if ( isset($nextitem['section'])) {
                                 $newsection = $nextitem['section'];
