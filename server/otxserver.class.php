@@ -1030,7 +1030,7 @@ class OTXserver
                             break;
                         case "*-":
                             // next
-                            if (is_object($next) == true) {
+                            if (is_object($item) === true) {
                                 $next = $item;
                                 do{
                                     do{
