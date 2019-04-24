@@ -8,7 +8,6 @@
 require_once('server/otxserver.class.php');
 require_once('otx.func.php');
 require_once('OTXConfig.class.php');
-
 otx_auth();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
