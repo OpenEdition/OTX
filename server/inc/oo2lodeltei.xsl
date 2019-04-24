@@ -243,6 +243,11 @@
 		  <p rend="abstract-ar">
                     <xsl:call-template name="copyxmlid"/>
 		  </p>
+	        </xsl:when>
+                <xsl:when test="$realStyle='motsclesit'">
+		  <p rend="motsclesit">
+	            <xsl:call-template name="copyxmlid"/>
+		  </p>
 		</xsl:when>
 		<xsl:when test="$realStyle='motsclesar'">
 		  <p rend="motsclesar">
@@ -267,6 +272,11 @@
 	      <p rend="abstract-ar">
                 <xsl:call-template name="copyxmlid"/>
               </p>
+            </xsl:when>
+            <xsl:when test="$Style='motsclesit'">
+              <p rend="motsclesit">
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
 	    </xsl:when>
             <xsl:when test="$Style='motsclesar'">
               <p rend="motsclesar">
