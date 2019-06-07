@@ -319,7 +319,17 @@
         </xsl:variable>
         <xsl:variable name="Style">
           <xsl:value-of select="@text:style-name"/>
-        </xsl:variable>
+  </xsl:variable>
+  <xsl:variable name="isautomatic">
+	  <xsl:choose>
+		  <xsl:when test="starts-with($Style,'P')">
+			  <xsl:text>1</xsl:text>
+		</xsl:when>
+		<xsl:otherwise>
+			<xsl:text>0</xsl:text>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>
         <xsl:variable name="realStyle">
           <xsl:choose>
             <xsl:when test="starts-with($Style,'P')">
@@ -357,13 +367,35 @@
               <p rend="{$defStyle}">
                 <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
                 <xsl:call-template name="copyxmlid"/>
-              </p>
+	      </p>
             </xsl:when>
-	    <xsl:otherwise>
+	    <xsl:when test="$isautomatic='1'">
+		    <xsl:choose>
+		    <xsl:when test="$defStyle='keywords'">
+			<p>
+			<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+			<xsl:call-template name="copyxmlid"/>
+			</p>
+		    </xsl:when>
+		    <xsl:otherwise>
+			    <ab type="head" rend="{$heading}">
+				<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+				<xsl:call-template name="copyxmlid"/>
+	      		    </ab>
+		    </xsl:otherwise>
+	            </xsl:choose>
+	    </xsl:when>
+	    <xsl:when test="starts-with($defStyle,'heading')">
 	      <ab type="head" rend="{$heading}">
 		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </ab>
+	    </xsl:when>
+	    <xsl:otherwise>
+	      <p>
+		<xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
 	    </xsl:otherwise>
 	  </xsl:choose>
     </xsl:template>
