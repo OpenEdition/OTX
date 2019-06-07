@@ -2938,7 +2938,7 @@ class OTXserver
     private function oolodel2meta(&$dom) {
         $items = $dom->getElementsByTagName('*');
         foreach ($items as $item) {
-            if ($item->nodeName==="text:p" and $item->hasAttributes()) {
+            if (($item->nodeName==="text:p" || $item->nodeName === "text:h") and $item->hasAttributes()) {
                 $attributes = $item->attributes;
                 if ($attr=$attributes->getNamedItem("style-name")) {
                     $stylename = $attr->value;
@@ -2946,11 +2946,11 @@ class OTXserver
                         if ( isset($this->automatic["#".$stylename])) {
                             $stylename = $this->automatic["#".$stylename];
                         } else continue;
-                    }
-                    switch ($stylename) {
+		    }
+		    switch ($stylename) {
                         case "language":
                             $this->meta['dc:language'] = $item->nodeValue;
-                            break;
+			break;
                         case "title":
                             $this->meta['dc:title'] = $this->_ootitle($item->nodeValue);
                             break;
