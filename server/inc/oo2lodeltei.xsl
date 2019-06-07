@@ -390,7 +390,7 @@
 		<xsl:call-template name="copyxmlid"/>
 	</p>
 		    </xsl:otherwise>
-	            </xsl:choose>
+	        </xsl:choose>
 	    </xsl:when>
 	    <xsl:when test="starts-with($defStyle,'heading')">
 	      <ab type="head" rend="{$heading}">
