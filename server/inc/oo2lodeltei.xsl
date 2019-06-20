@@ -368,7 +368,7 @@
                 <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
                 <xsl:call-template name="copyxmlid"/>
 	      </p>
-            </xsl:when>
+      </xsl:when>
 	    <xsl:when test="$isautomatic='1'">
 		    <xsl:choose>
 		    <xsl:when test="$defStyle='keywords'">
@@ -376,12 +376,19 @@
 			<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
 			<xsl:call-template name="copyxmlid"/>
 			</p>
-		    </xsl:when>
-		    <xsl:otherwise>
+		</xsl:when>
+	    <xsl:when test="starts-with($defStyle,'heading')">
+		    <!-- <xsl:otherwise>-->
 			    <ab type="head" rend="{$heading}">
 				<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 				<xsl:call-template name="copyxmlid"/>
-	      		    </ab>
+			</ab>
+		</xsl:when>
+		<xsl:otherwise>
+			<p>
+		<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	</p>
 		    </xsl:otherwise>
 	            </xsl:choose>
 	    </xsl:when>
