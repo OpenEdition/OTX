@@ -31,6 +31,14 @@
  #  MA  02111-1307  USA
  #
 -->
+<!-- 
+     File updated by Pierre-Yves Buard <pierre-yves.buard@unicaen.fr>. See commit 97b5cb5ff6bd68a42166de765a
+f641a5a3a5875a
+     This update makes it possible to correctly import the metadata (titles, subtitles, ...) for the differe
+nt types of documents accepted by OTX.
+     This works with libreoffice 6.1.5.2. Not tested with latest versions.
+-->
+
 <xsl:stylesheet
   exclude-result-prefixes="office style text table draw fo xlink dc meta number svg chart dr3d math form script ooo ooow oooc dom xforms xsd xsi"
   office:version="1.2" version="1.0" xmlns="http://www.tei-c.org/ns/1.0"
