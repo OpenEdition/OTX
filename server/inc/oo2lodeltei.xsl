@@ -63,17 +63,17 @@
         name="STYLES"
         match="style:style"
         use="@style:name"/>
-    
+
     <xsl:param name="META" select="/"/>
 
-    <xsl:output 
-        method="xml" 
-        version="1.0" 
-        encoding="UTF-8" 
+    <xsl:output
+        method="xml"
+        version="1.0"
+        encoding="UTF-8"
         omit-xml-declaration="no"
 	doctype-system="server/dtd/tei_all.dtd"
         indent="no"/>
- 
+
     <xsl:preserve-space elements="*" />
     <!--  <xsl:strip-space elements="*"/>-->
 
@@ -82,7 +82,7 @@
             <xsl:copy/>
         </xsl:for-each>
         <xsl:apply-templates/>
-    </xsl:template> 
+    </xsl:template>
 
 
 <!-- param = otxmode ? soffice : lodel -->
@@ -222,10 +222,44 @@
                 <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
-            <xsl:when test="starts-with($Style,'P')">
-                <p rendition="#{$Style}">
-                <xsl:call-template name="copyxmlid"/>
-                </p>
+            <xsl:when test="starts-with($Style,'P')">              
+              <xsl:variable name="realStyle">
+                <xsl:choose>
+                  <xsl:when test="starts-with($Style,'P')">
+                    <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <xsl:value-of select="$Style"/>
+                  </xsl:otherwise>
+                </xsl:choose>          
+              </xsl:variable>
+	      <xsl:choose>
+		<xsl:when test="$realStyle='quote'">
+		  <p rend="citation">
+		    <xsl:call-template name="copyxmlid"/>
+		  </p>
+		</xsl:when>
+		<xsl:when test="$realStyle='resumear'">
+		  <p rend="abstract-ar">
+                    <xsl:call-template name="copyxmlid"/>
+		  </p>
+	        </xsl:when>
+                <xsl:when test="$realStyle='motsclesit'">
+		  <p rend="motsclesit">
+	            <xsl:call-template name="copyxmlid"/>
+		  </p>
+		</xsl:when>
+		<xsl:when test="$realStyle='motsclesar'">
+		  <p rend="motsclesar">
+		    <xsl:call-template name="copyxmlid"/>
+		  </p>
+		</xsl:when>
+		<xsl:otherwise>
+		  <p rendition="#{$realStyle}" rend="{$realStyle}">
+		    <xsl:call-template name="copyxmlid"/>
+		  </p>
+		</xsl:otherwise>
+	      </xsl:choose>
             </xsl:when>
             <xsl:when test="starts-with($Style,'heading')">
 		        <ab type="head">
@@ -234,6 +268,26 @@
 		            <xsl:call-template name="copyxmlid"/>
 		        </ab>
             </xsl:when>
+	    <xsl:when test="$Style='resumear'">
+	      <p rend="abstract-ar">
+                <xsl:call-template name="copyxmlid"/>
+              </p>
+            </xsl:when>
+            <xsl:when test="$Style='motsclesit'">
+              <p rend="motsclesit">
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
+	    </xsl:when>
+            <xsl:when test="$Style='motsclesar'">
+              <p rend="motsclesar">
+                <xsl:call-template name="copyxmlid"/>
+              </p>
+            </xsl:when>
+	    <xsl:when test="$Style='quote'">
+	      <p rend="citation">
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
+	    </xsl:when>
             <xsl:otherwise>
                 <p>
                     <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
@@ -254,15 +308,103 @@
     <!-- headings -->
     <xsl:template match="text:h[@text:outline-level]">
         <xsl:variable name="heading">
-            <xsl:value-of select="concat('heading',@text:outline-level)"/>
+	  <!--<xsl:choose>
+	    <xsl:when test="not(preceding::text:h[@text:outline-level])">
+	      <xsl:text>title</xsl:text>
+	    </xsl:when>
+	    <xsl:otherwise>-->
+	      <xsl:value-of select="concat('heading',@text:outline-level)"/>
+	    <!--</xsl:otherwise>
+	  </xsl:choose>-->
         </xsl:variable>
         <xsl:variable name="Style">
-            <xsl:value-of select="@text:style-name"/>
-        </xsl:variable>
-        <ab type="head" rend="{$heading}">
-            <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$Style)"/></xsl:attribute>
-            <xsl:call-template name="copyxmlid"/>
-        </ab>
+          <xsl:value-of select="@text:style-name"/>
+  </xsl:variable>
+  <xsl:variable name="isautomatic">
+	  <xsl:choose>
+		  <xsl:when test="starts-with($Style,'P')">
+			  <xsl:text>1</xsl:text>
+		</xsl:when>
+		<xsl:otherwise>
+			<xsl:text>0</xsl:text>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:variable>
+        <xsl:variable name="realStyle">
+          <xsl:choose>
+            <xsl:when test="starts-with($Style,'P')">
+              <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="$Style"/>
+            </xsl:otherwise>
+            </xsl:choose>          
+          </xsl:variable>
+	  <xsl:variable name="defStyle">
+	    <xsl:choose>
+	      <xsl:when test="$realStyle='Titre'">
+		<xsl:text>title</xsl:text>	
+	      </xsl:when>
+	      <xsl:otherwise>
+		<xsl:value-of select="$realStyle"/>
+	      </xsl:otherwise>
+	    </xsl:choose>
+	  </xsl:variable>
+	  <xsl:choose>
+	    <xsl:when test="not(preceding::text:h[@text:outline-level])">
+	      <p rend="title">
+		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
+	    </xsl:when>
+	    <xsl:when test="$defStyle='subtitle'">
+	      <p rend="subtitle">
+                <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+                <xsl:call-template name="copyxmlid"/>
+              </p>
+	    </xsl:when>
+            <xsl:when test="starts-with($defStyle,'altertitle')">
+              <p rend="{$defStyle}">
+                <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+                <xsl:call-template name="copyxmlid"/>
+	      </p>
+      </xsl:when>
+	    <xsl:when test="$isautomatic='1'">
+		    <xsl:choose>
+		    <xsl:when test="$defStyle='keywords'">
+			<p>
+			<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+			<xsl:call-template name="copyxmlid"/>
+			</p>
+		</xsl:when>
+	    <xsl:when test="starts-with($defStyle,'heading')">
+		    <!-- <xsl:otherwise>-->
+			    <ab type="head" rend="{$heading}">
+				<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+				<xsl:call-template name="copyxmlid"/>
+			</ab>
+		</xsl:when>
+		<xsl:otherwise>
+			<p>
+		<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	</p>
+		    </xsl:otherwise>
+	        </xsl:choose>
+	    </xsl:when>
+	    <xsl:when test="starts-with($defStyle,'heading')">
+	      <ab type="head" rend="{$heading}">
+		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	      </ab>
+	    </xsl:when>
+	    <xsl:otherwise>
+	      <p>
+		<xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+		<xsl:call-template name="copyxmlid"/>
+	      </p>
+	    </xsl:otherwise>
+	  </xsl:choose>
     </xsl:template>
 
     <!-- lists -->
@@ -291,11 +433,11 @@
         <head>
             <xsl:for-each select="text:p">
                 <xsl:value-of select="." />
-            </xsl:for-each> 
+            </xsl:for-each>
 <!--             <xsl:call-template name="copyxmlid"/>  -->
         </head>
     </xsl:template>
-    
+
     <xsl:template match="text:list-item">
         <xsl:choose>
             <xsl:when test="descendant::text:h[@text:outline-level]">
@@ -768,7 +910,7 @@ These seem to have no obvious translation
         <xsl:comment> Warning: match="anchor" </xsl:comment>
     </xsl:template>
     <!-- unkwnon tag -->
-    <xsl:template match="text:*"> 
+    <xsl:template match="text:*">
         <xsl:comment> Warning: unkwnon tag ? </xsl:comment>
         <xsl:comment>[[[UNTRANSLATED <xsl:value-of select="name(.)"/>: <xsl:apply-templates/>]]]</xsl:comment>
     </xsl:template>
