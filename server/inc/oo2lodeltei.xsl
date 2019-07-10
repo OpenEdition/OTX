@@ -230,12 +230,19 @@ nt types of documents accepted by OTX.
                 <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
-            <xsl:when test="starts-with($Style,'P')">              
+	    <xsl:when test="starts-with($Style,'P')">
               <xsl:variable name="realStyle">
                 <xsl:choose>
-                  <xsl:when test="starts-with($Style,'P')">
-                    <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
-                  </xsl:when>
+                    <xsl:when test="starts-with($Style,'P')">
+			    <xsl:choose>
+			      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+				      <xsl:value-of select="$Style"/>
+			      </xsl:when>	 
+                              <xsl:otherwise>
+				 <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+			 </xsl:otherwise>
+		      </xsl:choose>
+		    </xsl:when>
                   <xsl:otherwise>
                     <xsl:value-of select="$Style"/>
                   </xsl:otherwise>
@@ -263,9 +270,14 @@ nt types of documents accepted by OTX.
 		  </p>
 		</xsl:when>
 		<xsl:otherwise>
-		  <p rendition="#{$realStyle}" rend="{$realStyle}">
-		    <xsl:call-template name="copyxmlid"/>
-		  </p>
+		  <xsl:choose>
+                    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+			    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+	            </xsl:when>
+		    <xsl:otherwise>
+			    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+                    </xsl:otherwise>
+	          </xsl:choose>
 		</xsl:otherwise>
 	      </xsl:choose>
             </xsl:when>
