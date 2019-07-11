@@ -352,9 +352,23 @@ nt types of documents accepted by OTX.
 </xsl:variable>
         <xsl:variable name="realStyle">
           <xsl:choose>
-            <xsl:when test="starts-with($Style,'P')">
-              <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
-            </xsl:when>
+		  <xsl:when test="starts-with($Style,'P')">
+			  <xsl:choose>
+				  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+					  <xsl:choose>
+						  <xsl:when test="preceding::text:h[@text:outline-level=1]">
+				                      <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+					          </xsl:when>
+                                                  <xsl:otherwise>
+					              <xsl:value-of select="$Style"/>
+						  </xsl:otherwise>
+				          </xsl:choose>
+			          </xsl:when>
+				  <xsl:otherwise>
+					  <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+				  </xsl:otherwise>
+		          </xsl:choose>
+		  </xsl:when>
             <xsl:otherwise>
               <xsl:value-of select="$Style"/>
             </xsl:otherwise>
@@ -363,7 +377,7 @@ nt types of documents accepted by OTX.
 	  <xsl:variable name="defStyle">
 	    <xsl:choose>
 	      <xsl:when test="$realStyle='Titre'">
-		<xsl:text>title</xsl:text>	
+		<xsl:text>title</xsl:text>
 	      </xsl:when>
 	      <xsl:otherwise>
 		<xsl:value-of select="$realStyle"/>
@@ -419,7 +433,7 @@ nt types of documents accepted by OTX.
 	      </ab>
 	    </xsl:when>
 	    <xsl:otherwise>
-	      <p>
+		    <p>
 		<xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </p>
