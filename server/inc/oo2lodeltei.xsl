@@ -356,11 +356,18 @@ nt types of documents accepted by OTX.
 			  <xsl:choose>
 				  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
 					  <xsl:choose>
-						  <xsl:when test="preceding::text:h[@text:outline-level=1]">
-				                      <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
-					          </xsl:when>
-                                                  <xsl:otherwise>
-					              <xsl:value-of select="$Style"/>
+						  <xsl:when test="preceding::text:h[@text:outline-level='1']">
+							  <xsl:choose>
+								  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and starts-with(@style:parent-style-name,'heading')]">
+									  <xsl:value-of select="$Style"/>
+								  </xsl:when>
+								  <xsl:otherwise>
+									  <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+								  </xsl:otherwise>
+						          </xsl:choose>
+						  </xsl:when>
+						  <xsl:otherwise>
+						      <xsl:value-of select="$Style"/>
 						  </xsl:otherwise>
 				          </xsl:choose>
 			          </xsl:when>
@@ -410,8 +417,8 @@ nt types of documents accepted by OTX.
 			<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
 			<xsl:call-template name="copyxmlid"/>
 			</p>
-		</xsl:when>
-	    <xsl:when test="starts-with($defStyle,'heading')">
+		    </xsl:when>
+	            <xsl:when test="starts-with($defStyle,'heading')">
 		    <!-- <xsl:otherwise>-->
 			    <ab type="head" rend="{$heading}">
 				<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
@@ -419,10 +426,31 @@ nt types of documents accepted by OTX.
 			</ab>
 		</xsl:when>
 		<xsl:otherwise>
-			<p>
-		<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
-		<xsl:call-template name="copyxmlid"/>
-	</p>
+			<xsl:choose>
+				<xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+					<xsl:choose>
+						<xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and starts-with(@style:parent-style-name,'heading')]">
+							<ab type="head" rend="{$heading}">
+								<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+								<xsl:call-template name="copyxmlid"/>
+							</ab>
+						</xsl:when>
+						<xsl:otherwise>
+							<p>
+						<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+						<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+						<xsl:call-template name="copyxmlid"/>
+					</p>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:when>
+				<xsl:otherwise>
+					<p>
+						<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+						<xsl:call-template name="copyxmlid"/>
+					</p>
+				</xsl:otherwise>
+			</xsl:choose>
 		    </xsl:otherwise>
 	        </xsl:choose>
 	    </xsl:when>
@@ -433,10 +461,21 @@ nt types of documents accepted by OTX.
 	      </ab>
 	    </xsl:when>
 	    <xsl:otherwise>
-		    <p>
-		<xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
-		<xsl:call-template name="copyxmlid"/>
-	      </p>
+		    <xsl:choose>
+			    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+				    <p>
+					    <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+					    <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+					    <xsl:call-template name="copyxmlid"/>
+				    </p>
+			    </xsl:when>
+			    <xsl:otherwise>
+				     <p>
+                                           <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+		                           <xsl:call-template name="copyxmlid"/>
+                                     </p>
+			    </xsl:otherwise>
+	           </xsl:choose>
 	    </xsl:otherwise>
 	  </xsl:choose>
     </xsl:template>
