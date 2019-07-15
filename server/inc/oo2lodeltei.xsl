@@ -356,6 +356,9 @@ nt types of documents accepted by OTX.
 			  <xsl:choose>
 				  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
 					  <xsl:choose>
+						  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='subtitle']">
+							  <xsl:value-of select="$Style"/>
+					          </xsl:when>
 						  <xsl:when test="preceding::text:h[@text:outline-level='1']">
 							  <xsl:choose>
 								  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and starts-with(@style:parent-style-name,'heading')]">
@@ -397,7 +400,7 @@ nt types of documents accepted by OTX.
 		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </p>
-	    </xsl:when>
+            </xsl:when>
 	    <xsl:when test="$defStyle='subtitle'">
 	      <p rend="subtitle">
                 <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
