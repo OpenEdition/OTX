@@ -238,8 +238,27 @@ nt types of documents accepted by OTX.
 			      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
 				      <xsl:value-of select="$Style"/>
 			      </xsl:when>	 
-                              <xsl:otherwise>
-				 <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+			      <xsl:otherwise>
+				      <xsl:choose>
+					      <xsl:when test="preceding::text:p[@text:style-name='noindent']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='quotation']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='box']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='appendix']">
+						      <xsl:value-of select="$Style"/>
+				              </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='figure-title']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+				              <xsl:otherwise>
+				                      <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+					      </xsl:otherwise>
+				      </xsl:choose>
 			 </xsl:otherwise>
 		      </xsl:choose>
 		    </xsl:when>
