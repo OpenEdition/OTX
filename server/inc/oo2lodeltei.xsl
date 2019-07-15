@@ -230,12 +230,19 @@ nt types of documents accepted by OTX.
                 <xsl:call-template name="copyxmlid"/>
                 </p>
             </xsl:when>
-            <xsl:when test="starts-with($Style,'P')">              
+	    <xsl:when test="starts-with($Style,'P')">
               <xsl:variable name="realStyle">
                 <xsl:choose>
-                  <xsl:when test="starts-with($Style,'P')">
-                    <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
-                  </xsl:when>
+                    <xsl:when test="starts-with($Style,'P')">
+			    <xsl:choose>
+			      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+				      <xsl:value-of select="$Style"/>
+			      </xsl:when>	 
+                              <xsl:otherwise>
+				 <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+			 </xsl:otherwise>
+		      </xsl:choose>
+		    </xsl:when>
                   <xsl:otherwise>
                     <xsl:value-of select="$Style"/>
                   </xsl:otherwise>
@@ -263,9 +270,14 @@ nt types of documents accepted by OTX.
 		  </p>
 		</xsl:when>
 		<xsl:otherwise>
-		  <p rendition="#{$realStyle}" rend="{$realStyle}">
-		    <xsl:call-template name="copyxmlid"/>
-		  </p>
+		  <xsl:choose>
+                    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+			    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+	            </xsl:when>
+		    <xsl:otherwise>
+			    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+                    </xsl:otherwise>
+	          </xsl:choose>
 		</xsl:otherwise>
 	      </xsl:choose>
             </xsl:when>
@@ -340,9 +352,33 @@ nt types of documents accepted by OTX.
 </xsl:variable>
         <xsl:variable name="realStyle">
           <xsl:choose>
-            <xsl:when test="starts-with($Style,'P')">
-              <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
-            </xsl:when>
+		  <xsl:when test="starts-with($Style,'P')">
+			  <xsl:choose>
+				  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+					  <xsl:choose>
+						  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='subtitle']">
+							  <xsl:value-of select="$Style"/>
+					          </xsl:when>
+						  <xsl:when test="preceding::text:h[@text:outline-level='1']">
+							  <xsl:choose>
+								  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and starts-with(@style:parent-style-name,'heading')]">
+									  <xsl:value-of select="$Style"/>
+								  </xsl:when>
+								  <xsl:otherwise>
+									  <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+								  </xsl:otherwise>
+						          </xsl:choose>
+						  </xsl:when>
+						  <xsl:otherwise>
+						      <xsl:value-of select="$Style"/>
+						  </xsl:otherwise>
+				          </xsl:choose>
+			          </xsl:when>
+				  <xsl:otherwise>
+					  <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+				  </xsl:otherwise>
+		          </xsl:choose>
+		  </xsl:when>
             <xsl:otherwise>
               <xsl:value-of select="$Style"/>
             </xsl:otherwise>
@@ -351,7 +387,7 @@ nt types of documents accepted by OTX.
 	  <xsl:variable name="defStyle">
 	    <xsl:choose>
 	      <xsl:when test="$realStyle='Titre'">
-		<xsl:text>title</xsl:text>	
+		<xsl:text>title</xsl:text>
 	      </xsl:when>
 	      <xsl:otherwise>
 		<xsl:value-of select="$realStyle"/>
@@ -364,7 +400,7 @@ nt types of documents accepted by OTX.
 		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </p>
-	    </xsl:when>
+            </xsl:when>
 	    <xsl:when test="$defStyle='subtitle'">
 	      <p rend="subtitle">
                 <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
@@ -384,8 +420,8 @@ nt types of documents accepted by OTX.
 			<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
 			<xsl:call-template name="copyxmlid"/>
 			</p>
-		</xsl:when>
-	    <xsl:when test="starts-with($defStyle,'heading')">
+		    </xsl:when>
+	            <xsl:when test="starts-with($defStyle,'heading')">
 		    <!-- <xsl:otherwise>-->
 			    <ab type="head" rend="{$heading}">
 				<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
@@ -393,10 +429,31 @@ nt types of documents accepted by OTX.
 			</ab>
 		</xsl:when>
 		<xsl:otherwise>
-			<p>
-		<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
-		<xsl:call-template name="copyxmlid"/>
-	</p>
+			<xsl:choose>
+				<xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+					<xsl:choose>
+						<xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and starts-with(@style:parent-style-name,'heading')]">
+							<ab type="head" rend="{$heading}">
+								<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+								<xsl:call-template name="copyxmlid"/>
+							</ab>
+						</xsl:when>
+						<xsl:otherwise>
+							<p>
+						<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+						<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+						<xsl:call-template name="copyxmlid"/>
+					</p>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:when>
+				<xsl:otherwise>
+					<p>
+						<xsl:attribute name="rend"><xsl:value-of select="$defStyle"/></xsl:attribute>
+						<xsl:call-template name="copyxmlid"/>
+					</p>
+				</xsl:otherwise>
+			</xsl:choose>
 		    </xsl:otherwise>
 	        </xsl:choose>
 	    </xsl:when>
@@ -407,10 +464,21 @@ nt types of documents accepted by OTX.
 	      </ab>
 	    </xsl:when>
 	    <xsl:otherwise>
-	      <p>
-		<xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
-		<xsl:call-template name="copyxmlid"/>
-	      </p>
+		    <xsl:choose>
+			    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+				    <p>
+					    <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+					    <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
+					    <xsl:call-template name="copyxmlid"/>
+				    </p>
+			    </xsl:when>
+			    <xsl:otherwise>
+				     <p>
+                                           <xsl:attribute name="rend"><xsl:value-of select="@text:style-name"/></xsl:attribute>
+		                           <xsl:call-template name="copyxmlid"/>
+                                     </p>
+			    </xsl:otherwise>
+	           </xsl:choose>
 	    </xsl:otherwise>
 	  </xsl:choose>
     </xsl:template>
