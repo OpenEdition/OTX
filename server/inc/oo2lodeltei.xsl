@@ -294,7 +294,14 @@ nt types of documents accepted by OTX.
 			    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
 	            </xsl:when>
 		    <xsl:otherwise>
-			    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+			    <xsl:choose>
+				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='standard']">
+					    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:when>
+				    <xsl:otherwise>
+					    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:otherwise>
+			    </xsl:choose>
                     </xsl:otherwise>
 	          </xsl:choose>
 		</xsl:otherwise>
