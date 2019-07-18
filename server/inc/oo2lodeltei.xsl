@@ -277,7 +277,7 @@ nt types of documents accepted by OTX.
               </xsl:variable>
 	      <xsl:choose>
 		<xsl:when test="$realStyle='quote'">
-		  <q rend="citation">
+		  <q rend="quotation">
 		    <xsl:call-template name="copyxmlid"/>
 		  </q>
 		</xsl:when>
@@ -344,7 +344,7 @@ nt types of documents accepted by OTX.
               </p>
             </xsl:when>
 	    <xsl:when test="$Style='quote'">
-	      <q rend="citation">
+	      <q rend="quotation">
 		<xsl:call-template name="copyxmlid"/>
 	      </q>
 	    </xsl:when>
