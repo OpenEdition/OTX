@@ -235,8 +235,16 @@ nt types of documents accepted by OTX.
                 <xsl:choose>
                     <xsl:when test="starts-with($Style,'P')">
 			    <xsl:choose>
-			      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
-				      <xsl:value-of select="$Style"/>
+				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+					    <xsl:choose>
+						    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='acknowledgments']">
+							    <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+						    </xsl:when>
+						    <xsl:otherwise>
+							      <xsl:value-of select="$Style"/>
+						    </xsl:otherwise>
+					    </xsl:choose>
+
 			      </xsl:when>	 
 			      <xsl:otherwise>
 				      <xsl:choose>
@@ -269,9 +277,9 @@ nt types of documents accepted by OTX.
               </xsl:variable>
 	      <xsl:choose>
 		<xsl:when test="$realStyle='quote'">
-		  <p rend="citation">
+		  <q rend="quotation">
 		    <xsl:call-template name="copyxmlid"/>
-		  </p>
+		  </q>
 		</xsl:when>
 		<xsl:when test="$realStyle='resumear'">
 		  <p rend="abstract-ar">
@@ -287,14 +295,27 @@ nt types of documents accepted by OTX.
 		  <p rend="motsclesar">
 		    <xsl:call-template name="copyxmlid"/>
 		  </p>
-		</xsl:when>
+	  </xsl:when>
+	  <xsl:when test="$realStyle='acknowledgments'">
+		  <p rend="acknowledgments">
+			  <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$Style)"/></xsl:attribute>
+			  <xsl:call-template name="copyxmlid"/>
+	          </p>
+	</xsl:when>
 		<xsl:otherwise>
 		  <xsl:choose>
-                    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
+			  <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style]/style:paragraph-properties[@style:writing-mode='rl-tb']">
 			    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
 	            </xsl:when>
 		    <xsl:otherwise>
-			    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+			    <xsl:choose>
+				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='standard']">
+					    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:when>
+				    <xsl:otherwise>
+					    <p rendition="#{$realStyle}" rend="{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:otherwise>
+			    </xsl:choose>
                     </xsl:otherwise>
 	          </xsl:choose>
 		</xsl:otherwise>
@@ -323,9 +344,9 @@ nt types of documents accepted by OTX.
               </p>
             </xsl:when>
 	    <xsl:when test="$Style='quote'">
-	      <p rend="citation">
+	      <q rend="quotation">
 		<xsl:call-template name="copyxmlid"/>
-	      </p>
+	      </q>
 	    </xsl:when>
             <xsl:otherwise>
                 <p>
