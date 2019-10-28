@@ -244,9 +244,8 @@ nt types of documents accepted by OTX.
 							      <xsl:value-of select="$Style"/>
 						    </xsl:otherwise>
 					    </xsl:choose>
-
-			      </xsl:when>	 
-			      <xsl:otherwise>
+			            </xsl:when>	 
+			            <xsl:otherwise>
 				      <xsl:choose>
 					      <xsl:when test="preceding::text:p[@text:style-name='noindent']">
 						      <xsl:value-of select="$Style"/>
@@ -263,8 +262,8 @@ nt types of documents accepted by OTX.
 					      <xsl:when test="preceding::text:p[@text:style-name='figure-title']">
 						      <xsl:value-of select="$Style"/>
 					      </xsl:when>
-				              <xsl:otherwise>
-				                      <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
+					      <xsl:otherwise>
+			    		              <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
 					      </xsl:otherwise>
 				      </xsl:choose>
 			 </xsl:otherwise>
@@ -309,6 +308,12 @@ nt types of documents accepted by OTX.
 	            </xsl:when>
 		    <xsl:otherwise>
 			    <xsl:choose>
+				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='listparagraph']">
+					    <p rend="standard"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:when>
+				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='paragraphedeliste']">
+					    <p rend="standard"><xsl:call-template name="copyxmlid"/></p>
+				    </xsl:when>
 				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='standard']">
 					    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
 				    </xsl:when>
