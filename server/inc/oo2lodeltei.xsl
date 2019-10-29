@@ -602,7 +602,7 @@ nt types of documents accepted by OTX.
             <!-- <xsl:when test="normalize-space(.)=''"/> -->
 	    <xsl:when test="starts-with($Style,'T')">
 		<xsl:choose>
-			<xsl:when test="parent::text:style-name='review-author'">
+			<xsl:when test="parent::text:p[@text:style-name='review-author']">
 			    <xsl:apply-templates/>
 			</xsl:when>
 			<xsl:otherwise>
@@ -615,7 +615,7 @@ nt types of documents accepted by OTX.
             </xsl:when>
 	    <xsl:otherwise>
 		<xsl:choose>
-			<xsl:when test="parent::text:style-name='review-author'">
+			<xsl:when test="parent::text:p[@text:style-name='review-author']">
 			    <xsl:apply-templates/>
 		        </xsl:when>
                         <xsl:otherwise>
