@@ -600,14 +600,28 @@ nt types of documents accepted by OTX.
                 <xsl:apply-templates/>
             </xsl:when>
             <!-- <xsl:when test="normalize-space(.)=''"/> -->
-            <xsl:when test="starts-with($Style,'T')">
-                <hi rendition="#{$Style}"><xsl:apply-templates/></hi>
+	    <xsl:when test="starts-with($Style,'T')">
+		<xsl:choose>
+			<xsl:when test="parent::text:style-name='review-author'">
+			    <xsl:apply-templates/>
+			</xsl:when>
+			<xsl:otherwise>
+			    <hi rendition="#{$Style}"><xsl:apply-templates/></hi>
+			</xsl:otherwise>
+		</xsl:choose>
             </xsl:when>
             <xsl:when test="$Style='internetlink'">
                 <xsl:apply-templates/>
             </xsl:when>
-            <xsl:otherwise>
-                <hi rend="{$Style}"><xsl:apply-templates/></hi>
+	    <xsl:otherwise>
+		<xsl:choose>
+			<xsl:when test="parent::text:style-name='review-author'">
+			    <xsl:apply-templates/>
+		        </xsl:when>
+                        <xsl:otherwise>
+			    <hi rend="{$Style}"><xsl:apply-templates/></hi>
+			</xsl:otherwise>
+		</xsl:choose>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
