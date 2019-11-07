@@ -1960,7 +1960,10 @@ class OTXserver
                             $head = $dom->createElement("head");
                             // On remplit le nouvel élément <head>
                             $this->copyNode($tag, $head);
-                            $head->setAttribute('subtype', "level".$match[1]);
+			    $head->setAttribute('subtype', "level".$match[1]);
+			    if($tag->getAttribute('rendition')){
+			        $head->setAttribute('rendition', $tag->getAttribute('rendition'));
+			    }
                             $bibliography->appendChild($head);
                             if($tag->hasAttribute('xml:id')) {
                                 $head->setAttribute('xml:id', $tag->getAttribute('xml:id'));
@@ -2101,7 +2104,10 @@ class OTXserver
                             $head = $dom->createElement("head");
                             // On remplit le nouvel élément <head>
                             $this->copyNode($tag, $head);
-                            $head->setAttribute('subtype', "level".$match[1]);
+			    $head->setAttribute('subtype', "level".$match[1]);
+			    if($tag->getAttribute('rendition') != ''){
+			        $head->setAttribute('rendition', $tag->getAttribute('rendition'));
+			    }
                             $appendix->appendChild($head);
                             if($tag->hasAttribute('xml:id')) {
                                 $head->setAttribute('xml:id', $tag->getAttribute('xml:id'));
