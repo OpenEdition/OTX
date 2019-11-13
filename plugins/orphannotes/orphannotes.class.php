@@ -333,8 +333,8 @@ class OrphanNotesParser {
         if ($this->_passe == self::CREATION_NOTES) {
             // On écrit le nom de la balise qu'on vient de créer
             $this->_toWrite .= "<".strtolower($name);
-            $this->_toView .="<".strtolower($name);
-            while (list ($key, $val) = each ($attrs))
+	    $this->_toView .="<".strtolower($name);
+	    foreach ($attrs as $key => $val) {
             {
                 $this->_toWrite .= " ".strtolower($key)."="."\"".$this->_SymbolsToCodedSymbols($val)."\"";
                 $this->_toView .= " ".strtolower($key)."="."\"".$this->_SymbolsToCodedSymbols($val)."\"";
@@ -345,8 +345,8 @@ class OrphanNotesParser {
             if($name == "TEXT:P") {
                 $this->_numeroNoteCourrante++; // Normalement c'est une nouvelle note
             } elseif( $name == "TEXT:SPAN") { // si il y a des italiques, il faut les garder dans la note courrante
-                $this->_lectureNoteCourrante.= "<".strtolower($name);
-                while (list ($key, $val) = each ($attrs))
+		    $this->_lectureNoteCourrante.= "<".strtolower($name);
+		    foreach ($attrs as $key => $val) {
                     $this->_lectureNoteCourrante .= " ".strtolower($key)."="."\"".$this->_SymbolsToCodedSymbols($val)."\"";
                 $this->_lectureNoteCourrante.=">";
             }
