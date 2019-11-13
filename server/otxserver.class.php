@@ -431,12 +431,10 @@ class OTXserver
                                 $surrounding = $value;
                                 break;
                             case "otx":
-                                if ($value == '') continue;
-                                if (! isset($this->EMTEI[$value])) {
-                                    continue;
-                                }
-                                $value = $this->EMTEI[$value];
-                                list($otxkey,$otxvalue) = explode(":", $value);
+                                if (($value != '') && (isset($this->EMTEI[$value])) {
+                                    $value = $this->EMTEI[$value];
+				    list($otxkey,$otxvalue) = explode(":", $value);
+				}
                                 break;
                         }
                     }
