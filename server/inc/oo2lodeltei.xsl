@@ -262,6 +262,15 @@ nt types of documents accepted by OTX.
 					      <xsl:when test="preceding::text:p[@text:style-name='figure-title']">
 						      <xsl:value-of select="$Style"/>
 					      </xsl:when>
+					      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='abstract-ar']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='resumear']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='abstract-he']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
 					      <xsl:otherwise>
 			    		              <xsl:value-of select="//office:automatic-styles/style:style[@style:name=$Style]/@style:parent-style-name"/>
 					      </xsl:otherwise>
@@ -604,8 +613,8 @@ nt types of documents accepted by OTX.
 		<xsl:choose>
 			<xsl:when test="parent::text:p[@text:style-name='review-author']">
 			    <xsl:apply-templates/>
-			</xsl:when>
-			<xsl:otherwise>
+   		        </xsl:when>
+    			<xsl:otherwise>
 			    <hi rendition="#{$Style}"><xsl:apply-templates/></hi>
 			</xsl:otherwise>
 		</xsl:choose>
