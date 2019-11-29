@@ -604,6 +604,9 @@ nt types of documents accepted by OTX.
         <xsl:variable name="Style">
             <xsl:value-of select="@text:style-name"/>
         </xsl:variable>
+	<xsl:variable name="RendRefStyleNode">
+		<xsl:value-of select="(//office:automatic-styles/style:style[starts-with(@style:name,'P') and @style:parent-style-name='standard']/style:paragraph-properties[@style:writing-mode='rl-tb'])[position()=1]/../@style:name"/>
+	</xsl:variable>
         <xsl:choose>
             <xsl:when test="../text:h">
                 <xsl:apply-templates/>
@@ -612,9 +615,18 @@ nt types of documents accepted by OTX.
 	    <xsl:when test="starts-with($Style,'T')">
 		<xsl:choose>
 			<xsl:when test="parent::text:p[@text:style-name='review-author']">
-			    <xsl:apply-templates/>
-   		        </xsl:when>
-    			<xsl:otherwise>
+				<xsl:apply-templates/>
+			</xsl:when>
+			<xsl:when test="parent::text:p[@text:style-name='abstract-ar']">
+				<hi rendition="#{$Style}" rendref='#{$RendRefStyleNode}'><xsl:apply-templates/></hi>
+			</xsl:when>
+			<xsl:when test="parent::text:p[@text:style-name='resumear']">
+				<hi rendition="#{$Style}" rendref='#{$RendRefStyleNode}'><xsl:apply-templates/></hi>
+			</xsl:when>
+			<xsl:when test="parent::text:p[@text:style-name='abstract-he']">
+				<hi rendition="#{$Style}" rendref='#{$RendRefStyleNode}'><xsl:apply-templates/></hi>
+			</xsl:when>
+			<xsl:otherwise>
 			    <hi rendition="#{$Style}"><xsl:apply-templates/></hi>
 			</xsl:otherwise>
 		</xsl:choose>

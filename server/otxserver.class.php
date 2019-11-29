@@ -812,7 +812,14 @@ class OTXserver
                     // xml:lang ?
                     if ($this->rendition[$rendition]['lang']!='') {
                         $lang = $this->rendition[$rendition]['lang'];
-                        $item->setAttribute("xml:lang", $lang);
+			$item->setAttribute("xml:lang", $lang);
+			if($lang == 'ar' || $lang == 'he'){
+			    $parent = $item->parentNode;
+			    if($parent != NULL && $item->getAttribute('rendref')!='' && $item->getAttribute('rendref')!=NULL){
+			        $parent->setAttribute("rendition", $item->getAttribute('rendref'));
+                                $item->removeAttribute('rendref');
+			    }
+			}
                     }
                     // css style
                     if ($this->rendition[$rendition]['rendition']!='') {
