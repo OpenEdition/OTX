@@ -848,9 +848,11 @@ class OTXserver
                         $value = "#".str_replace('.','_',$value);
                     }
                     // rend ?
-                    if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard") {
-                        $rend = $this->automatic[$value];
-                        $item->setAttribute("rend", $rend);
+                    if ( isset($this->automatic[$value]) && $this->automatic[$value]!="standard" ) {
+			$rend = $this->automatic[$value];
+			if($rend!='paragraphedeliste'){
+                            $item->setAttribute("rend", $rend);
+			}
                     }
 
                     // rendition ?
