@@ -262,6 +262,12 @@ nt types of documents accepted by OTX.
 					      <xsl:when test="preceding::text:p[@text:style-name='figure-title']">
 						      <xsl:value-of select="$Style"/>
 					      </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='standard']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
+					      <xsl:when test="preceding::text:p[@text:style-name='paragraphedeliste']">
+						      <xsl:value-of select="$Style"/>
+					      </xsl:when>
 					      <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:parent-style-name='abstract-ar']">
 						      <xsl:value-of select="$Style"/>
 					      </xsl:when>
@@ -321,7 +327,7 @@ nt types of documents accepted by OTX.
 					    <p rend="standard"><xsl:call-template name="copyxmlid"/></p>
 				    </xsl:when>
 				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='paragraphedeliste']">
-					    <p rend="standard"><xsl:call-template name="copyxmlid"/></p>
+					    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
 				    </xsl:when>
 				    <xsl:when test="//office:automatic-styles/style:style[@style:name=$Style and @style:family='paragraph' and @style:parent-style-name='standard']">
 					    <p rendition="#{$realStyle}"><xsl:call-template name="copyxmlid"/></p>
@@ -449,12 +455,12 @@ nt types of documents accepted by OTX.
 	    </xsl:choose>
 	  </xsl:variable>
 	  <xsl:choose>
-	    <xsl:when test="not(preceding::text:h[@text:outline-level])">
+		  <!--<xsl:when test="not(preceding::text:h[@text:outline-level])">
 	      <p rend="title">
 		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </p>
-            </xsl:when>
+	    </xsl:when>-->
 	    <xsl:when test="$defStyle='subtitle'">
 	      <p rend="subtitle">
                 <xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
@@ -516,6 +522,12 @@ nt types of documents accepted by OTX.
 		<xsl:attribute name="rendition"><xsl:value-of select="concat('#',$defStyle)"/></xsl:attribute>
 		<xsl:call-template name="copyxmlid"/>
 	      </ab>
+            </xsl:when>
+            <xsl:when test="not(preceding::text:h[@text:outline-level])">
+	        <p rend="title">
+		    <xsl:attribute name="rendition"><xsl:value-of select="concat('#', $defStyle)"/></xsl:attribute>
+		    <xsl:call-template name="copyxmlid"/>
+		</p>
 	    </xsl:when>
 	    <xsl:otherwise>
 		    <xsl:choose>
