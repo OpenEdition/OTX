@@ -1661,7 +1661,8 @@ class OTXserver
         # LodelEM:pagenumber
         $entries=$xpath->query("//tei:p[@rend='pagenumber']");
         if ($entries->length) {
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:idno[@type='pp']");
+	    //$tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:idno[@type='pp']");
+	    $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblStruct/tei:monogr/tei:imprint/tei:biblScope[@unit='page']");
             if ($tmp->length) {
                 $pubstmt->removeChild($tmp->item(0));
             }
@@ -1879,7 +1880,8 @@ class OTXserver
             $rend = $item->getAttribute("rend");
                 $lang = null;
             $div = $dom->createElement("note");
-            $div->setAttribute('resp', "editor");
+	    //$div->setAttribute('resp', "editor");
+	    $div->setAttribute('type', "publisher");
             if ( isset($lang)) {
                 $div->setAttribute('xml:lang', $lang);
             }
@@ -1902,8 +1904,9 @@ class OTXserver
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
                 $lang = null;
-            $div = $dom->createElement("note");
-            $div->setAttribute('resp', "author");
+	    $div = $dom->createElement("note");
+	    //$div->setAttribute('resp', "author");
+	    $div->setAttribute('type', "author");
             if ( isset($lang)) {
                 $div->setAttribute('xml:lang', $lang);
             }
