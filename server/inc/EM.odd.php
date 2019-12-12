@@ -21,9 +21,7 @@ function _em2tei($schema="revorg") {
 # dc:date
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:date"
     => 'header:date',
-// 
-"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:date"
-    => 'header:creationdate',
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDec/tei:biblStruct/tei:monogr/tei:imprint/tei:date[@type='published']"=> 'header:creationdate',
 # dc:language
 "/tei:TEI/tei:teiHeader/tei:profileDesc/tei:langUsage/tei:language"
     => 'header:language',
@@ -95,8 +93,7 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:idno[@type='documentnumber']"
     => 'header:documentnumber',
 //
-"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:idno[@type='pp']"
-    => 'header:pagenumber',
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblStruct/tei:monogr/tei:imprint/tei:biblScope[@unit='page']" => 'header:pagenumber',
 // licence, droitsauteur
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:availability"
     => 'header:license',
@@ -108,11 +105,9 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:text/tei:front/tei:div[@type='correction']"
     => 'front:correction',
 // ndlr
-"/tei:TEI/tei:text/tei:front/tei:note[@resp='editor']/tei:p"
-    => 'front:editornote',
+"/tei:TEI/tei:text/tei:front/tei:note[@type='publisher']/tei:p" => 'front:editornote',
 // ndla
-"/tei:TEI/tei:text/tei:front/tei:note[@resp='author']/tei:p"
-    => 'front:authornote',
+"/tei:TEI/tei:text/tei:front/tei:note[@type='author']/tei:p" => 'front:authornote',
 // dedicace
 "/tei:TEI/tei:text/tei:front/tei:div[@type='dedication']"
     => 'front:dedication',
@@ -164,8 +159,8 @@ function _em2tei($schema="revorg") {
     => 'text:break',
 
 // bibliographiereference
-"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:notesStmt/tei:note[@type='bibl']"
-    => 'header:bibl',
+//"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:notesStmt/tei:note[@type='bibl']"
+//    => 'header:bibl',
 
 //
 "/tei:TEI/tei:text/tei:back/tei:div[@type='appendix']"

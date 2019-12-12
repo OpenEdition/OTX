@@ -135,37 +135,14 @@ nt types of documents accepted by OTX.
                         </xsl:if>
                     </date>
                 </publicationStmt>
-                <sourceDesc>
-                    <biblFull>
-                        <titleStmt>
-                            <title>
-                                <xsl:if test="$otxmode='soffice'">
-                                    <xsl:value-of select="/office:document/office:meta/dc:title"/>
-                                </xsl:if>
-                            </title>
-                            <author>
-                                <xsl:if test="$otxmode='soffice'">
-                                    <xsl:value-of select="/office:document/office:meta/meta:initial-creator"/>
-                                </xsl:if>
-                            </author>
-                        </titleStmt>
-                        <publicationStmt>
-                            <date>
-                                <xsl:if test="$otxmode='soffice'">
-                                    <xsl:value-of select="/office:document/office:meta/meta:creation-date"/>
-                                </xsl:if>
-                            </date>
-                        </publicationStmt>
-                    </biblFull>
-                </sourceDesc>
             </fileDesc>
             <encodingDesc>
                 <projectDesc>
-                    <p>Revues.org -centre for open electronic publishing- is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
+                    <p>OpenEdition -centre for open electronic publishing- is the platform for journals in the humanities and social sciences, open to quality periodicals looking to publish full-text articles online.</p>
                 </projectDesc>
                 <appInfo>
-                    <application version="2.32" ident="OTX">
-                        <label>Opentext - CLEO / Revues.org</label>
+                    <application version="1.2.0" ident="OTX">
+                        <label>Opentext - OpenEdition</label>
                         <desc>
                             <ref target="http://www.tei-c.org/">We use TEI</ref>
                         </desc>
