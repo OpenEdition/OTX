@@ -1582,8 +1582,8 @@ class OTXserver
 	$entries = $xpath->query("//tei:teiHeader/tei:fileDesc"); $filedesc = $entries->item(0);
         
 	# /tei/teiHeader/sourceDesc/biblStruct
-	$datepublipapier_entries = $xpath->query("//tei:p[@rend='datepublipapier']");
-	$pagination_entries = $xpath->query("//tei:p[@rend='pagination']");
+	$datepublipapier_entries = $xpath->query("//tei:p[@rend='creationdate']");
+	$pagination_entries = $xpath->query("//tei:p[@rend='pagenumber']");
 	if($datepublipapier_entries->length || $pagination_entries->length){
 	    $sourcedesc = $dom->createElement('sourceDesc');
             $monogr = $dom->createElement('monogr');
@@ -2896,9 +2896,9 @@ class OTXserver
                             }
                             array_push($this->meta['dc:creator'], $item->nodeValue);
                             break;
-                        //case "creationdate":
-                        //    $this->meta['meta:creation-date'] = $this->_oodate($item->nodeValue);
-                        //    break;
+                        case "creationdate":
+                            $this->meta['meta:creation-date'] = $this->_oodate($item->nodeValue);
+                            break;
                         case "date":
                             $this->meta['dc:date'] = $this->_oodate($item->nodeValue);
 			    break;

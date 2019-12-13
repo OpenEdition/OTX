@@ -21,7 +21,8 @@ function _em2tei($schema="revorg") {
 # dc:date
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:date"
     => 'header:date',
-"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDec/tei:biblStruct/tei:monogr/tei:imprint/tei:date[@type='published']"=> 'header:creationdate',
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblStruct/tei:monogr/tei:imprint/tei:date[@type='published']"
+    => 'header:creationdate',
 # dc:language
 "/tei:TEI/tei:teiHeader/tei:profileDesc/tei:langUsage/tei:language"
     => 'header:language',
@@ -93,7 +94,8 @@ function _em2tei($schema="revorg") {
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:idno[@type='documentnumber']"
     => 'header:documentnumber',
 //
-"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblStruct/tei:monogr/tei:imprint/tei:biblScope[@unit='page']" => 'header:pagenumber',
+"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblStruct/tei:monogr/tei:imprint/tei:biblScope[@unit='page']" 
+    => 'header:pagenumber',
 // licence, droitsauteur
 "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:availability"
     => 'header:license',
