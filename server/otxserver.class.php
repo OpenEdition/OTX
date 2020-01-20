@@ -1579,123 +1579,39 @@ class OTXserver
         // TODO : idno@doi
 
         # /tei/teiHeader/sourceDesc
-        $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc"); $srcdesc = $entries->item(0);
-        $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull"); $biblfull = $entries->item(0);
-        $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt"); $titlestmt = $entries->item(0);
-        $entries=$xpath->query("//tei:p[@rend='title']");
-        if ($entries->length) {
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:title");
-            if ($tmp->length) { $titlestmt->removeChild($tmp->item(0)); }
-            $entry = $entries->item(0);
-            $parent = $entry->parentNode;
-            $new = $dom->createElement('title', $lodelmeta['title']);
-            $titlestmt->appendChild($new);
-        }
-        // Lodel:auteurs as tei:respStmt
-        $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:titleStmt/tei:author");
-        if ($tmp->length) { $titlestmt->removeChild($tmp->item(0)); }
-        if(array_key_exists('author', $lodelmeta))
-	        foreach ($lodelmeta["author"] as $author) {
-	            $respstmt = $dom->createElement('respStmt');
-	            $titlestmt->appendChild($respstmt);
-	            $resp = $dom->createElement('resp', "author");
-	            $respstmt->appendChild($resp);
-	            $name = $dom->createElement('name', $author);
-	            $respstmt->appendChild($name);
-	        }
-	    if(array_key_exists('editor', $lodelmeta))
-	        foreach ($lodelmeta["editor"] as $editor) {
-	            $respstmt = $dom->createElement('respStmt');
-	            $titlestmt->appendChild($respstmt);
-	            $resp = $dom->createElement('resp', "editor");
-	            $respstmt->appendChild($resp);
-	            $name = $dom->createElement('name', $editor);
-	            $respstmt->appendChild($name);
-	        }
-	    if(array_key_exists('translator', $lodelmeta))
-	        foreach ($lodelmeta["translator"] as $translator) {
-	            $respstmt = $dom->createElement('respStmt');
-	            $titlestmt->appendChild($respstmt);
-	            $resp = $dom->createElement('resp', "translator");
-	            $respstmt->appendChild($resp);
-	            $name = $dom->createElement('name', $translator);
-	            $respstmt->appendChild($name);
-	        }
-            if(array_key_exists('excavationsdirector', $lodelmeta)){
-                foreach ($lodelmeta["excavationsdirector"] as $excavationsdirector) {
-                    $respstmt = $dom->createElement('respStmt');
-                    $titlestmt->appendChild($respstmt);
-                    $resp = $dom->createElement('resp', "excavationsdirector");
-                    $respstmt->appendChild($resp);
-                    $name = $dom->createElement('name', $excavationsdirector);
-                    $respstmt->appendChild($name);
-                }
+	$entries = $xpath->query("//tei:teiHeader/tei:fileDesc"); $filedesc = $entries->item(0);
+        
+	# /tei/teiHeader/sourceDesc/biblStruct
+	$datepublipapier_entries = $xpath->query("//tei:p[@rend='creationdate']");
+	$pagination_entries = $xpath->query("//tei:p[@rend='pagenumber']");
+	if($datepublipapier_entries->length || $pagination_entries->length){
+	    $sourcedesc = $dom->createElement('sourceDesc');
+            $monogr = $dom->createElement('monogr');
+	    $imprint = $dom->createElement('imprint');
+	    $biblstruct = $dom->createElement('biblStruct');
+	    if($datepublipapier_entries->length){
+		$datepublipapier = $datepublipapier_entries->item(0);
+                $parent = $datepublipapier->parentNode;
+		$new_datepublipapier = $dom->createElement('date', $datepublipapier->nodeValue);
+		$new_datepublipapier->setAttribute('type','published');
+		if($id=$datepublipapier->getAttribute('xml:id')) { $new_datepublipapier->setAttribute('xml:id', $id); }
+		$imprint->appendChild($new_datepublipapier);
+		$parent->removeChild($datepublipapier);
+	    }
+	    if($pagination_entries->length){
+	        $pagination = $pagination_entries->item(0);
+		$parent = $pagination->parentNode;
+		$new_pagination = $dom->createElement('biblScope', $pagination->nodeValue);
+		$new_pagination->setAttribute('unit', 'page');
+		if($id=$pagination->getAttribute('xml:id')) { $new_pagination->setAttribute('xml:id', $id); }
+		$imprint->appendChild($new_pagination);
+		$parent->removeChild($pagination);
             }
-            if(array_key_exists('collaborator', $lodelmeta)){
-                foreach($lodelmeta["collaborator"] as $collaborator) {
-                    $respstmt = $dom->createElement('respStmt');
-                    $titlestmt->appendChild($respstmt);
-                    $resp = $dom->createElement('resp', "collaborator");
-                    $respstmt->appendChild($resp);
-                    $name = $dom->createElement('name', $collaborator);
-                    $respstmt->appendChild($name);
-                }
-            }
-        # /tei/teiHeader/sourceDesc/biblFull/publicationStmt
-        $entries = $xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt"); $pubstmt = $entries->item(0);
-        # LodelEM:creationdate
-        $entries=$xpath->query("//tei:p[@rend='creationdate']");
-        if ($entries->length) {
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:date");
-            if ($tmp->length) {
-                $pubstmt->removeChild($tmp->item(0));
-            }
-            $entry = $entries->item(0);
-            $parent = $entry->parentNode;
-            $new = $dom->createElement('date', $entry->nodeValue);
-            $new->setAttribute('when', "");
-            if ( $id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
-            $pubstmt->appendChild($new);
-            $parent->removeChild($entry);
-        }
-        # LodelEM:pagenumber
-        $entries=$xpath->query("//tei:p[@rend='pagenumber']");
-        if ($entries->length) {
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:publicationStmt/tei:idno[@type='pp']");
-            if ($tmp->length) {
-                $pubstmt->removeChild($tmp->item(0));
-            }
-            $entry = $entries->item(0);
-            $parent = $entry->parentNode;
-            $new = $dom->createElement('idno', $entry->nodeValue);
-            $new->setAttribute('type', "pp");
-            if ($id=$entry->getAttribute('xml:id')) { $new->setAttribute('xml:id', $id); }
-            $pubstmt->appendChild($new);
-            $parent->removeChild($entry);
-        }
-        # /tei/teiHeader/sourceDesc/biblFull/notesStmt
-        $entries=$xpath->query("//tei:p[@rend='bibl']");
-        if ($entries->length) {
-            $entry = $entries->item(0);
-            $parent = $entry->parentNode;
-            $tmp=$xpath->query("//tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:biblFull/tei:notesStmt");
-            if ($tmp->length) {
-                $biblfull->removeChild($tmp->item(0));
-            }
-            $notesstmt = $dom->createElement('notesStmt');
-            $biblfull->appendChild($notesstmt);
-            $newnode = $dom->createElement('note');
-
-            foreach($entry->childNodes as $child){
-                $newnode->appendChild($child->cloneNode(true));
-            }
-
-            $newnode->setAttribute('type', "bibl");
-            if ($lang=$entry->getAttribute('xml:lang')) { $newnode->setAttribute('xml:lang', $lang); }
-            if ($id=$entry->getAttribute('xml:id')) { $newnode->setAttribute('xml:id', $id); }
-            $notesstmt->appendChild($newnode);
-            $parent->removeChild($entry);
-        }
+	    $monogr->appendChild($imprint);
+	    $biblstruct->appendChild($monogr);
+	    $sourcedesc->appendChild($biblstruct);
+	    $filedesc->appendChild($sourcedesc);
+	}
 
         # /tei/teiHeader/profileDesc
         $entries = $xpath->query("//tei:teiHeader/tei:profileDesc"); $profiledesc = $entries->item(0);
@@ -1879,7 +1795,8 @@ class OTXserver
             $rend = $item->getAttribute("rend");
                 $lang = null;
             $div = $dom->createElement("note");
-            $div->setAttribute('resp', "editor");
+	    //$div->setAttribute('resp', "editor");
+	    $div->setAttribute('type', "publisher");
             if ( isset($lang)) {
                 $div->setAttribute('xml:lang', $lang);
             }
@@ -1902,8 +1819,9 @@ class OTXserver
             $parent = $item->parentNode;
             $rend = $item->getAttribute("rend");
                 $lang = null;
-            $div = $dom->createElement("note");
-            $div->setAttribute('resp', "author");
+	    $div = $dom->createElement("note");
+	    //$div->setAttribute('resp', "author");
+	    $div->setAttribute('type', "author");
             if ( isset($lang)) {
                 $div->setAttribute('xml:lang', $lang);
             }
@@ -2983,7 +2901,7 @@ class OTXserver
                             break;
                         case "date":
                             $this->meta['dc:date'] = $this->_oodate($item->nodeValue);
-                            break;
+			    break;
                     }
                 }
                 else continue;
